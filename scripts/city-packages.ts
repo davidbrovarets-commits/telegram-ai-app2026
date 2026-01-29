@@ -255,3 +255,16 @@ export const BOCHUM_PACKAGE = createCityPackage(
         appointments: 'https://www.bochum.de/Online-Terminbuchung'
     }
 );
+
+// WUPPERTAL (Nordrhein-Westfalen)
+export const WUPPERTAL_PACKAGE = createCityPackage(
+    'Wuppertal',
+    'WUP',
+    'Nordrhein-Westfalen',
+    {
+        jobcenter: 'https://www.jobcenter-wuppertal.de/',
+        immigration: 'https://www.wuppertal.de/auslaenderbehoerde',
+        ukraineHelp: 'https://www.wuppertal.de/migration',
+        appointments: 'https://termine.wuppertal.de/'
+    }
+);

@@ -281,3 +281,16 @@ export const BIELEFELD_PACKAGE = createCityPackage(
         appointments: 'https://termine.bielefeld.de/'
     }
 );
+
+// BONN (Nordrhein-Westfalen)
+export const BONN_PACKAGE = createCityPackage(
+    'Bonn',
+    'BON',
+    'Nordrhein-Westfalen',
+    {
+        jobcenter: 'https://www.jobcenter-bonn.de/',
+        immigration: 'https://www.bonn.de/auslaenderamt',
+        ukraineHelp: 'https://www.bonn.de/ukraine',
+        appointments: 'https://termine.bonn.de/'
+    }
+);

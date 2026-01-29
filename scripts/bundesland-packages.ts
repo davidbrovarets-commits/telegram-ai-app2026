@@ -167,3 +167,16 @@ export const HESSEN_PACKAGE = createBundeslandPackage(
         integration: 'https://integrationskompass.hessen.de/'
     }
 );
+
+// BADEN-WÜRTTEMBERG (Official v1.0)
+export const BW_PACKAGE = createBundeslandPackage(
+    'Baden-Württemberg',
+    'BW',
+    {
+        ukrainePortal: 'https://www.baden-wuerttemberg.de/de/service/ukraine/',
+        landAdministration: 'https://rp.baden-wuerttemberg.de/themen/migration/',
+        education: 'https://km-bw.de/,Lde/Startseite/Schule/Ukraine',
+        integration: 'https://www.integrationsministerium-bw.de/de/ankommen/ukraine/'
+    }
+);
+

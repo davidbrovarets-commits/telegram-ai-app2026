@@ -216,3 +216,16 @@ export const NUERNBERG_PACKAGE = createCityPackage(
         appointments: 'https://termin.nuernberg.de/'
     }
 );
+
+// DRESDEN (Sachsen)
+export const DRESDEN_PACKAGE = createCityPackage(
+    'Dresden',
+    'DRS',
+    'Sachsen',
+    {
+        jobcenter: 'https://www.jobcenter-dresden.de/',
+        immigration: 'https://www.dresden.de/auslaenderbehoerde',
+        ukraineHelp: 'https://www.dresden.de/ukraine',
+        appointments: 'https://termine.dresden.de/'
+    }
+);

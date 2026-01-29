@@ -20,9 +20,14 @@ export interface SourceConfig {
     enabled: boolean;
 }
 
-// Official Source Registry v1.0
-export const SOURCES: SourceConfig[] = [
-    // === DE (Federal) ===
+// Import Bundesland packages
+import { NRW_PACKAGE, BAYERN_PACKAGE, BERLIN_PACKAGE, HAMBURG_PACKAGE } from './bundesland-packages';
+
+// =============================================
+// DE — FEDERAL LEVEL SOURCES
+// =============================================
+
+const DE_SOURCES: SourceConfig[] = [
     {
         source_id: 'de_ba_news',
         source_name: 'Bundesagentur für Arbeit',
@@ -33,7 +38,7 @@ export const SOURCES: SourceConfig[] = [
         default_priority: 'MEDIUM',
         default_actions: ['info'],
         dedupe_group: 'de_ba',
-        parser_notes: 'Only official news and warnings. Exclude HR/B2B content.',
+        parser_notes: 'Only official news and warnings.',
         enabled: true
     },
     {
@@ -46,11 +51,11 @@ export const SOURCES: SourceConfig[] = [
         default_priority: 'HIGH',
         default_actions: ['procedure_change', 'info'],
         dedupe_group: 'de_status',
-        parser_notes: 'Primary source of truth for §24 and refugee rules.',
+        parser_notes: 'Primary source for §24 and refugee rules.',
         enabled: true
     },
     {
-        source_id: 'de_g4u_start',
+        source_id: 'de_g4u',
         source_name: 'Germany4Ukraine Portal',
         scope: 'DE',
         geo: { country: 'DE' },
@@ -59,7 +64,7 @@ export const SOURCES: SourceConfig[] = [
         default_priority: 'MEDIUM',
         default_actions: ['info'],
         dedupe_group: 'de_status',
-        parser_notes: 'Government aggregator. Track changes of key sections.',
+        parser_notes: 'Government aggregator.',
         enabled: true
     },
     {
@@ -72,13 +77,18 @@ export const SOURCES: SourceConfig[] = [
         default_priority: 'MEDIUM',
         default_actions: ['payment_change', 'info'],
         dedupe_group: 'de_bmas',
-        parser_notes: 'Only rule changes and official explanations.',
+        parser_notes: 'Only rule changes.',
         enabled: true
-    },
+    }
+];
 
-    // === LAND (Sachsen) ===
+// =============================================
+// LAND — SACHSEN
+// =============================================
+
+const SACHSEN_SOURCES: SourceConfig[] = [
     {
-        source_id: 'land_snx_ukrainehilfe',
+        source_id: 'land_sachsen_ukrainehilfe',
         source_name: 'Sachsen — Ukrainehilfe Portal',
         scope: 'LAND',
         geo: { country: 'DE', land: 'Sachsen' },
@@ -86,12 +96,12 @@ export const SOURCES: SourceConfig[] = [
         default_topics: ['status', 'documents', 'housing', 'benefits', 'work', 'children', 'health'],
         default_priority: 'HIGH',
         default_actions: ['procedure_change', 'info'],
-        dedupe_group: 'land_snx_main',
+        dedupe_group: 'land_sachsen_main',
         parser_notes: 'Main official portal for Saxony.',
         enabled: true
     },
     {
-        source_id: 'land_snx_lds_ukr_aktuelles',
+        source_id: 'land_sachsen_lds',
         source_name: 'Landesdirektion Sachsen',
         scope: 'LAND',
         geo: { country: 'DE', land: 'Sachsen' },
@@ -99,12 +109,12 @@ export const SOURCES: SourceConfig[] = [
         default_topics: ['status', 'procedures', 'accommodation', 'distribution'],
         default_priority: 'HIGH',
         default_actions: ['procedure_change', 'document_required', 'info'],
-        dedupe_group: 'land_snx_lds',
-        parser_notes: 'Administrative instructions for municipalities.',
+        dedupe_group: 'land_sachsen_lds',
+        parser_notes: 'Administrative instructions.',
         enabled: true
     },
     {
-        source_id: 'land_snx_smk_daz_tag',
+        source_id: 'land_sachsen_smk_daz',
         source_name: 'SMK Sachsen — DaZ',
         scope: 'LAND',
         geo: { country: 'DE', land: 'Sachsen' },
@@ -112,14 +122,19 @@ export const SOURCES: SourceConfig[] = [
         default_topics: ['children', 'school', 'language_integration'],
         default_priority: 'MEDIUM',
         default_actions: ['info'],
-        dedupe_group: 'land_snx_edu',
-        parser_notes: 'Only practical changes affecting access or rules.',
+        dedupe_group: 'land_sachsen_edu',
+        parser_notes: 'Only practical education changes.',
         enabled: true
-    },
+    }
+];
 
-    // === CITY (Leipzig) ===
+// =============================================
+// CITY — LEIPZIG
+// =============================================
+
+const LEIPZIG_SOURCES: SourceConfig[] = [
     {
-        source_id: 'city_le_jc_aktuelles',
+        source_id: 'city_leipzig_jobcenter',
         source_name: 'Jobcenter Leipzig',
         scope: 'CITY',
         geo: { country: 'DE', land: 'Sachsen', city: 'Leipzig' },
@@ -127,12 +142,12 @@ export const SOURCES: SourceConfig[] = [
         default_topics: ['jobcenter', 'benefits', 'documents', 'appointments'],
         default_priority: 'HIGH',
         default_actions: ['deadline', 'document_required', 'appointment'],
-        dedupe_group: 'city_le_jobcenter',
+        dedupe_group: 'city_leipzig_jobcenter',
         parser_notes: 'Primary action feed for Leipzig.',
         enabled: true
     },
     {
-        source_id: 'city_le_ukraine_hilfe',
+        source_id: 'city_leipzig_ukraine',
         source_name: 'Leipzig — Ukraine Hilfe',
         scope: 'CITY',
         geo: { country: 'DE', land: 'Sachsen', city: 'Leipzig' },
@@ -140,12 +155,12 @@ export const SOURCES: SourceConfig[] = [
         default_topics: ['status', 'first_steps', 'help', 'housing'],
         default_priority: 'HIGH',
         default_actions: ['procedure_change', 'info'],
-        dedupe_group: 'city_le_ukraine',
-        parser_notes: 'Only practical changes. No general city news.',
+        dedupe_group: 'city_leipzig_ukraine',
+        parser_notes: 'Only practical changes.',
         enabled: true
     },
     {
-        source_id: 'city_le_auslaenderbehoerde',
+        source_id: 'city_leipzig_auslaenderbehoerde',
         source_name: 'Leipzig — Ausländerbehörde',
         scope: 'CITY',
         geo: { country: 'DE', land: 'Sachsen', city: 'Leipzig' },
@@ -153,12 +168,12 @@ export const SOURCES: SourceConfig[] = [
         default_topics: ['status', 'documents', 'appointments'],
         default_priority: 'HIGH',
         default_actions: ['appointment', 'document_required', 'status_risk'],
-        dedupe_group: 'city_le_status',
-        parser_notes: 'Any change in procedure or availability is critical.',
+        dedupe_group: 'city_leipzig_status',
+        parser_notes: 'Any change is critical.',
         enabled: true
     },
     {
-        source_id: 'city_le_termine',
+        source_id: 'city_leipzig_termine',
         source_name: 'Leipzig — Online Termine',
         scope: 'CITY',
         geo: { country: 'DE', land: 'Sachsen', city: 'Leipzig' },
@@ -166,8 +181,23 @@ export const SOURCES: SourceConfig[] = [
         default_topics: ['appointments'],
         default_priority: 'HIGH',
         default_actions: ['appointment'],
-        dedupe_group: 'city_le_termine',
-        parser_notes: 'Track changes in appointment availability or rules.',
+        dedupe_group: 'city_leipzig_termine',
+        parser_notes: 'Track appointment availability.',
         enabled: true
     }
+];
+
+// =============================================
+// COMBINED SOURCES EXPORT
+// =============================================
+
+export const SOURCES: SourceConfig[] = [
+    ...DE_SOURCES,
+    ...SACHSEN_SOURCES,
+    ...LEIPZIG_SOURCES,
+    // Add more Bundesland packages below:
+    // ...NRW_PACKAGE,
+    // ...BAYERN_PACKAGE,
+    // ...BERLIN_PACKAGE,
+    // ...HAMBURG_PACKAGE,
 ];

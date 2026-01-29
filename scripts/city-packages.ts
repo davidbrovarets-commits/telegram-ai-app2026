@@ -177,3 +177,16 @@ export const DORTMUND_PACKAGE = createCityPackage(
         appointments: 'https://termine.dortmund.de/'
     }
 );
+
+// ESSEN (Nordrhein-Westfalen)
+export const ESSEN_PACKAGE = createCityPackage(
+    'Essen',
+    'ESS',
+    'Nordrhein-Westfalen',
+    {
+        jobcenter: 'https://www.jobcenter-essen.de/',
+        immigration: 'https://www.essen.de/auslaenderbehoerde',
+        ukraineHelp: 'https://www.essen.de/ukraine',
+        appointments: 'https://termine.essen.de/'
+    }
+);

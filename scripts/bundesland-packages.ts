@@ -218,6 +218,18 @@ export const RP_PACKAGE = createBundeslandPackage(
     }
 );
 
+// SAARLAND (Official v1.0)
+export const SL_PACKAGE = createBundeslandPackage(
+    'Saarland',
+    'SL',
+    {
+        ukrainePortal: 'https://www.saarland.de/ukraine',
+        landAdministration: 'https://www.saarland.de/DE/portale/inneres/inhalt/migration-und-integration',
+        education: 'https://www.saarland.de/DE/portale/bildung/inhalt/ukraine',
+        integration: 'https://www.saarland.de/DE/portale/soziales/inhalt/integration'
+    }
+);
+
 // HESSEN (Official v1.0)
 export const HESSEN_PACKAGE = createBundeslandPackage(
     'Hessen',

@@ -268,3 +268,16 @@ export const WUPPERTAL_PACKAGE = createCityPackage(
         appointments: 'https://termine.wuppertal.de/'
     }
 );
+
+// BIELEFELD (Nordrhein-Westfalen)
+export const BIELEFELD_PACKAGE = createCityPackage(
+    'Bielefeld',
+    'BIE',
+    'Nordrhein-Westfalen',
+    {
+        jobcenter: 'https://www.jobcenter-bielefeld.de/',
+        immigration: 'https://www.bielefeld.de/auslaenderbehoerde',
+        ukraineHelp: 'https://www.bielefeld.de/ukraine',
+        appointments: 'https://termine.bielefeld.de/'
+    }
+);

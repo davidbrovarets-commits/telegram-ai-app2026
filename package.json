@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "scrape-news": "tsx scripts/scrape-news.ts"
+    "scrape-news": "tsx scripts/scrape-news.ts",
+    "test:city": "tsx scripts/tests/city-feed.test.ts"
   },
   "dependencies": {
     "@huggingface/inference": "^4.13.11",

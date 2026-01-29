@@ -151,3 +151,16 @@ export const STUTTGART_PACKAGE = createCityPackage(
         appointments: 'https://www.stuttgart.de/service/terminvereinbarung'
     }
 );
+
+// DÜSSELDORF (Nordrhein-Westfalen)
+export const DUESSELDORF_PACKAGE = createCityPackage(
+    'Düsseldorf',
+    'DUS',
+    'Nordrhein-Westfalen',
+    {
+        jobcenter: 'https://www.jobcenter-duesseldorf.de/',
+        immigration: 'https://www.duesseldorf.de/auslaenderamt',
+        ukraineHelp: 'https://www.duesseldorf.de/ukraine',
+        appointments: 'https://termine.duesseldorf.de/'
+    }
+);

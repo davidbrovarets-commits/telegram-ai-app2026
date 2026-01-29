@@ -230,6 +230,18 @@ export const SL_PACKAGE = createBundeslandPackage(
     }
 );
 
+// SACHSEN-ANHALT (Official v1.0)
+export const ST_PACKAGE = createBundeslandPackage(
+    'Sachsen-Anhalt',
+    'ST',
+    {
+        ukrainePortal: 'https://www.sachsen-anhalt.de/ukraine',
+        landAdministration: 'https://mi.sachsen-anhalt.de/themen/auslaenderrecht',
+        education: 'https://mb.sachsen-anhalt.de/themen/schule/ukraine',
+        integration: 'https://ms.sachsen-anhalt.de/themen/integration/'
+    }
+);
+
 // HESSEN (Official v1.0)
 export const HESSEN_PACKAGE = createBundeslandPackage(
     'Hessen',

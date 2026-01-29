@@ -59,23 +59,36 @@ export const useAppData = (): UseAppDataReturn => {
             .order('created_at', { ascending: false });
 
         if (newsData && newsData.length > 0) {
-            let filtered = newsData.filter(
-                (n: any) => n.region === 'all' || n.region === userLand
-            );
+            // V2: Geo-Scoped 3-layer filter (DE + user's Land + user's City)
+            const now = new Date();
+            const filtered = newsData.filter((n: News) => {
+                // Expiry check: skip if expires_at is set and past
+                if (n.expires_at && new Date(n.expires_at) < now) return false;
 
-            // Prioritize city matches if city is set
-            if (userCity && userCity.length > 2) {
-                const cityLower = userCity.toLowerCase();
-                filtered = filtered.sort((a, b) => {
-                    const aContent = (a.title + a.content).toLowerCase();
-                    const bContent = (b.title + b.content).toLowerCase();
-                    const aMatch = aContent.includes(cityLower);
-                    const bMatch = bContent.includes(cityLower);
-                    if (aMatch && !bMatch) return -1;
-                    if (!aMatch && bMatch) return 1;
-                    return 0;
-                });
-            }
+                // Always show DE-level (national) news
+                if (n.scope === 'DE') return true;
+
+                // Show LAND-level news matching user's federal state
+                if (n.scope === 'LAND' && n.land === userLand) return true;
+
+                // Show CITY-level news matching user's city
+                if (n.scope === 'CITY' && userCity && n.city === userCity) return true;
+
+                // Legacy fallback: region matching
+                if (!n.scope && (n.region === 'all' || n.region === userLand)) return true;
+
+                return false;
+            });
+
+            // Sort by priority (HIGH > MEDIUM > LOW) then by date
+            const priorityOrder: Record<string, number> = { 'HIGH': 0, 'MEDIUM': 1, 'LOW': 2 };
+            filtered.sort((a, b) => {
+                const aPriority = priorityOrder[a.priority || 'LOW'] ?? 2;
+                const bPriority = priorityOrder[b.priority || 'LOW'] ?? 2;
+                if (aPriority !== bPriority) return aPriority - bPriority;
+                // Secondary sort by date (newest first)
+                return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+            });
 
             setNews(filtered.length > 0 ? filtered : BACKUP_NEWS);
         }

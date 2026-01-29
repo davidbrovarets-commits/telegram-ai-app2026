@@ -125,14 +125,27 @@ async function scrape() {
             for (const item of rawItems) {
                 const analysis: ScoredItem = calculateScore(item.title + ' ' + item.content, source.baseScore, source.scope);
 
+                // Dedup 1: Exact link match
                 const { data: existing } = await supabase.from('news').select('id').eq('link', item.link).maybeSingle();
+                if (existing) continue;
 
-                if (!existing) {
-                    const success = insertViaCurl(item, analysis, source);
-                    if (success) {
-                        console.log(`   + [${analysis.priority}] ${item.title.substring(0, 40)}...`);
-                        totalAdded++;
-                    }
+                // Dedup 2: Similar title check (first 40 chars normalized)
+                const titleNorm = item.title.toLowerCase().replace(/[^a-zäöüß0-9]/g, '').substring(0, 40);
+                const { data: similar } = await supabase
+                    .from('news')
+                    .select('id, title')
+                    .ilike('title', `%${item.title.substring(0, 30)}%`)
+                    .limit(1);
+
+                if (similar && similar.length > 0) {
+                    console.log(`   ~ Skipped (similar): ${item.title.substring(0, 30)}...`);
+                    continue;
+                }
+
+                const success = insertViaCurl(item, analysis, source);
+                if (success) {
+                    console.log(`   + [${analysis.priority}] ${item.title.substring(0, 40)}...`);
+                    totalAdded++;
                 }
             }
 

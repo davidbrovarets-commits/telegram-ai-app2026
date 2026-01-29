@@ -158,6 +158,18 @@ export const BRANDENBURG_PACKAGE = createBundeslandPackage(
     }
 );
 
+// BREMEN (Special Case: City == Land)
+export const BREMEN_PACKAGE = createBundeslandPackage(
+    'Bremen',
+    'HB',
+    {
+        ukrainePortal: 'https://www.bremen.de/leben-in-bremen/ukraine',
+        landAdministration: 'https://www.inneres.bremen.de/inneres-und-sport/migration-13164',
+        education: 'https://www.bildung.bremen.de/ukraine-173463',
+        integration: 'https://www.soziales.bremen.de/integration-17802'
+    }
+);
+
 // HAMBURG
 export const HAMBURG_PACKAGE = createBundeslandPackage(
     'Hamburg',

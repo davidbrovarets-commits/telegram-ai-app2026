@@ -307,3 +307,16 @@ export const MUENSTER_PACKAGE = createCityPackage(
         appointments: 'https://termine.stadt-muenster.de/'
     }
 );
+
+// KARLSRUHE (Baden-Württemberg)
+export const KARLSRUHE_PACKAGE = createCityPackage(
+    'Karlsruhe',
+    'KAE',
+    'Baden-Württemberg',
+    {
+        jobcenter: 'https://www.jobcenter-stadt-karlsruhe.de/',
+        immigration: 'https://www.karlsruhe.de/auslaenderbehoerde',
+        ukraineHelp: 'https://www.karlsruhe.de/ukraine',
+        appointments: 'https://termin.karlsruhe.de/'
+    }
+);

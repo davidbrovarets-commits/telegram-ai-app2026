@@ -333,3 +333,16 @@ export const MANNHEIM_PACKAGE = createCityPackage(
         appointments: 'https://termin.mannheim.de/'
     }
 );
+
+// AUGSBURG (Bayern)
+export const AUGSBURG_PACKAGE = createCityPackage(
+    'Augsburg',
+    'AGB',
+    'Bayern',
+    {
+        jobcenter: 'https://www.jobcenter-augsburg-stadt.de/',
+        immigration: 'https://www.augsburg.de/buergerservice-rathaus/auslaenderbehoerde',
+        ukraineHelp: 'https://www.augsburg.de/ukraine',
+        appointments: 'https://termine.augsburg.de/'
+    }
+);

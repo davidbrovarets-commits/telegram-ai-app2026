@@ -122,14 +122,15 @@ export const NRW_PACKAGE = createBundeslandPackage(
     }
 );
 
-// BAYERN
+// BAYERN (Official v1.0)
 export const BAYERN_PACKAGE = createBundeslandPackage(
     'Bayern',
     'bayern',
     {
-        ukrainePortal: 'https://www.stmi.bayern.de/mui/ukraine/index.php',
-        landAdministration: 'https://www.regierung.oberbayern.bayern.de/aufgaben/17180/',
-        education: 'https://www.isb.bayern.de/schularten/foerderschulen/uebersicht/ukraine/'
+        ukrainePortal: 'https://www.stmi.bayern.de/mui/ukrainehilfe/',
+        landAdministration: 'https://www.regierung.oberbayern.bayern.de/aufgaben/37172/37193/ukraine-hilfe',
+        education: 'https://www.km.bayern.de/ukraine.html',
+        integration: 'https://www.integrationsbeauftragter.bayern.de/ukraine/'
     }
 );
 

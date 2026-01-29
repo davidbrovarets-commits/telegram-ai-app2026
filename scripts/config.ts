@@ -203,5 +203,5 @@ export const SOURCES: SourceConfig[] = [
     ...BERLIN_PACKAGE,
     ...BRANDENBURG_PACKAGE,
     ...BREMEN_PACKAGE,
-    // ...HAMBURG_PACKAGE,
+    ...HAMBURG_PACKAGE,
 ];

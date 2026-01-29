@@ -170,14 +170,15 @@ export const BREMEN_PACKAGE = createBundeslandPackage(
     }
 );
 
-// HAMBURG
+// HAMBURG (Special Case: City == Land)
 export const HAMBURG_PACKAGE = createBundeslandPackage(
     'Hamburg',
-    'hamburg',
+    'HH',
     {
         ukrainePortal: 'https://www.hamburg.de/ukraine/',
-        landAdministration: 'https://www.hamburg.de/basfi/',
-        education: 'https://www.hamburg.de/bsb/willkommensklassen/'
+        landAdministration: 'https://www.hamburg.de/behorde-fuer-inneres-und-sport/',
+        education: 'https://www.hamburg.de/bsb/ukraine/',
+        integration: 'https://www.hamburg.de/flucht-und-integration/'
     }
 );
 

@@ -146,6 +146,18 @@ export const BERLIN_PACKAGE = createBundeslandPackage(
     }
 );
 
+// BRANDENBURG (Official v1.0)
+export const BRANDENBURG_PACKAGE = createBundeslandPackage(
+    'Brandenburg',
+    'BB',
+    {
+        ukrainePortal: 'https://www.brandenburg.de/ukraine',
+        landAdministration: 'https://msgiv.brandenburg.de/msgiv/de/themen/migration-und-integration/flucht-aus-der-ukraine/',
+        education: 'https://mbjs.brandenburg.de/mbjs/de/bildung/schule/ukraine/',
+        integration: 'https://www.mik.brandenburg.de/mik/de/migration/'
+    }
+);
+
 // HAMBURG
 export const HAMBURG_PACKAGE = createBundeslandPackage(
     'Hamburg',

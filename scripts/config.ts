@@ -21,7 +21,7 @@ export interface SourceConfig {
 }
 
 // Import Bundesland packages
-import { NRW_PACKAGE, BAYERN_PACKAGE, BERLIN_PACKAGE, HAMBURG_PACKAGE, HESSEN_PACKAGE, BW_PACKAGE } from './bundesland-packages';
+import { NRW_PACKAGE, BAYERN_PACKAGE, BERLIN_PACKAGE, HAMBURG_PACKAGE, HESSEN_PACKAGE, BW_PACKAGE, BRANDENBURG_PACKAGE } from './bundesland-packages';
 
 // =============================================
 // DE — FEDERAL LEVEL SOURCES
@@ -201,5 +201,6 @@ export const SOURCES: SourceConfig[] = [
     ...HESSEN_PACKAGE,
     ...BW_PACKAGE,
     ...BERLIN_PACKAGE,
+    ...BRANDENBURG_PACKAGE,
     // ...HAMBURG_PACKAGE,
 ];

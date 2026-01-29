@@ -74,7 +74,7 @@ function App() {
   // Load app data when user is authenticated
   useEffect(() => {
     if (session?.user && userData) {
-      loadAppData(session.user.id, userData.land);
+      loadAppData(session.user.id, userData.land, userData.city);
       setView("app");
     } else if (!authLoading && !session) {
       setView("login");

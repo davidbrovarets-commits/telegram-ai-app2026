@@ -19,12 +19,22 @@ export interface News {
   title: string;
   date?: string;
   created_at?: string;
-  region: string;
+  region: string; // Legacy field, keeping for compatibility
   image_url?: string;
   image?: string;
   content: string;
   link?: string;
   type?: 'news';
+  // Geo-Scoped V2 fields
+  scope?: 'DE' | 'LAND' | 'CITY';
+  country?: string;
+  land?: string;
+  city?: string;
+  topics?: string[];
+  priority?: 'HIGH' | 'MEDIUM' | 'LOW';
+  actions?: string[];
+  expires_at?: string;
+  score?: number;
 }
 
 export interface UserData {
@@ -32,6 +42,7 @@ export interface UserData {
   email: string;
   username: string;
   land: string;
+  city?: string;
   residence_permit: string;
   credits: number;
   completed_tasks?: string[];

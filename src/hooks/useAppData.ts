@@ -13,7 +13,7 @@ interface UseAppDataReturn {
     unlockedTasks: string[];
 
     // Actions
-    loadAppData: (userId: string, userLand: string) => Promise<void>;
+    loadAppData: (userId: string, userLand: string, userCity?: string) => Promise<void>;
     toggleTask: (taskId: string, userId: string) => Promise<void>;
     unlockTask: (task: Task, userId: string, currentCredits: number) => Promise<{ newCredits: number } | null>;
 
@@ -39,7 +39,7 @@ export const useAppData = (): UseAppDataReturn => {
     const [completedTasks, setCompletedTasks] = useState<string[]>([]);
     const [unlockedTasks, setUnlockedTasks] = useState<string[]>([]);
 
-    const loadAppData = useCallback(async (userId: string, userLand: string) => {
+    const loadAppData = useCallback(async (userId: string, userLand: string, userCity?: string) => {
         // Load completed/unlocked tasks from profile
         const { data: profile } = await supabase
             .from('profiles')
@@ -59,9 +59,24 @@ export const useAppData = (): UseAppDataReturn => {
             .order('created_at', { ascending: false });
 
         if (newsData && newsData.length > 0) {
-            const filtered = newsData.filter(
+            let filtered = newsData.filter(
                 (n: any) => n.region === 'all' || n.region === userLand
             );
+
+            // Prioritize city matches if city is set
+            if (userCity && userCity.length > 2) {
+                const cityLower = userCity.toLowerCase();
+                filtered = filtered.sort((a, b) => {
+                    const aContent = (a.title + a.content).toLowerCase();
+                    const bContent = (b.title + b.content).toLowerCase();
+                    const aMatch = aContent.includes(cityLower);
+                    const bMatch = bContent.includes(cityLower);
+                    if (aMatch && !bMatch) return -1;
+                    if (!aMatch && bMatch) return 1;
+                    return 0;
+                });
+            }
+
             setNews(filtered.length > 0 ? filtered : BACKUP_NEWS);
         }
 

@@ -15,7 +15,7 @@ interface UseAuthReturn {
     userData: UserData | null;
     loading: boolean;
     login: (email: string, password: string) => Promise<{ error?: string }>;
-    register: (email: string, password: string, username: string, land: string, residencePermit: string) => Promise<{ error?: string }>;
+    register: (email: string, password: string, username: string, land: string, residencePermit: string, city: string) => Promise<{ error?: string }>;
     recovery: (email: string) => Promise<{ error?: string }>;
     logout: () => Promise<void>;
     updatePassword: (newPassword: string) => Promise<{ error?: string }>;
@@ -84,7 +84,8 @@ export const useAuth = (): UseAuthReturn => {
         password: string,
         username: string,
         land: string,
-        residencePermit: string
+        residencePermit: string,
+        city: string
     ) => {
         if (!email || !password || !username || !land) {
             return { error: 'Täida kõik väljad!' };
@@ -104,6 +105,7 @@ export const useAuth = (): UseAuthReturn => {
                 email,
                 username,
                 land,
+                city: city || null,
                 residence_permit: residencePermit,
                 credits: 5,
                 created_at: new Date()

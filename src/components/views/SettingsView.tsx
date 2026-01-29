@@ -29,6 +29,7 @@ export const SettingsView = ({
     const [editForm, setEditForm] = useState({
         username: userData.username,
         land: userData.land,
+        city: userData.city || '',
         residence_permit: userData.residence_permit
     });
     const [showPasswordForm, setShowPasswordForm] = useState(false);
@@ -89,6 +90,7 @@ export const SettingsView = ({
                     <>
                         <SettingsRow icon={User} color="#0071E3" label="Ім'я" value={userData.username} />
                         <SettingsRow icon={MapPin} color="#34C759" label="Земля" value={userData.land} />
+                        <SettingsRow icon={MapPin} color="#30B0C7" label="Місто" value={userData.city || '-'} />
                         <SettingsRow icon={Briefcase} color="#FF9500" label="Статус" value={userData.residence_permit} />
                         <SettingsRow icon={Mail} color="#5856D6" label="Email" value={userData.email} />
 
@@ -120,6 +122,14 @@ export const SettingsView = ({
                                     <option key={state} value={state}>{state}</option>
                                 ))}
                             </select>
+                        </div>
+                        <div className="input-group">
+                            <label className="info-label" style={{ marginBottom: '8px', display: 'block' }}>Місто</label>
+                            <input
+                                type="text"
+                                value={editForm.city}
+                                onChange={e => setEditForm({ ...editForm, city: e.target.value })}
+                            />
                         </div>
                         <div className="input-group">
                             <label className="info-label" style={{ marginBottom: '8px', display: 'block' }}>Статус</label>

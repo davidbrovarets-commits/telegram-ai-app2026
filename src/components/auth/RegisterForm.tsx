@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { GERMAN_STATES, RESIDENCE_PERMITS } from '../../utils/constants';
 
 interface RegisterFormProps {
-    onRegister: (email: string, password: string, username: string, land: string, residencePermit: string) => Promise<{ error?: string }>;
+    onRegister: (email: string, password: string, username: string, land: string, residencePermit: string, city: string) => Promise<{ error?: string }>;
     onSwitchToLogin: () => void;
     loading: boolean;
 }
@@ -12,10 +12,11 @@ export const RegisterForm = ({ onRegister, onSwitchToLogin, loading }: RegisterF
     const [password, setPassword] = useState('');
     const [username, setUsername] = useState('');
     const [land, setLand] = useState('');
+    const [city, setCity] = useState('');
     const [residencePermit, setResidencePermit] = useState('');
 
     const handleSubmit = async () => {
-        const result = await onRegister(email, password, username, land, residencePermit);
+        const result = await onRegister(email, password, username, land, residencePermit, city);
         if (result.error) {
             alert('Viga: ' + result.error);
         } else {
@@ -65,6 +66,15 @@ export const RegisterForm = ({ onRegister, onSwitchToLogin, loading }: RegisterF
                         <option key={state} value={state}>{state}</option>
                     ))}
                 </select>
+            </div>
+
+            <div className="input-group">
+                <input
+                    type="text"
+                    placeholder="Ваше місто/село"
+                    value={city}
+                    onChange={e => setCity(e.target.value)}
+                />
             </div>
 
             <div className="input-group">

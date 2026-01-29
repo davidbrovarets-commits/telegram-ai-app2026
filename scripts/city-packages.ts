@@ -164,3 +164,16 @@ export const DUESSELDORF_PACKAGE = createCityPackage(
         appointments: 'https://termine.duesseldorf.de/'
     }
 );
+
+// DORTMUND (Nordrhein-Westfalen)
+export const DORTMUND_PACKAGE = createCityPackage(
+    'Dortmund',
+    'DTM',
+    'Nordrhein-Westfalen',
+    {
+        jobcenter: 'https://www.jobcenter-dortmund.de/',
+        immigration: 'https://www.dortmund.de/auslaenderbehoerde',
+        ukraineHelp: 'https://www.dortmund.de/ukraine',
+        appointments: 'https://termine.dortmund.de/'
+    }
+);

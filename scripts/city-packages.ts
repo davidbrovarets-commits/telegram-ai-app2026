@@ -294,3 +294,16 @@ export const BONN_PACKAGE = createCityPackage(
         appointments: 'https://termine.bonn.de/'
     }
 );
+
+// MÜNSTER (Nordrhein-Westfalen)
+export const MUENSTER_PACKAGE = createCityPackage(
+    'Münster',
+    'MS',
+    'Nordrhein-Westfalen',
+    {
+        jobcenter: 'https://www.jobcenter-muenster.de/',
+        immigration: 'https://www.stadt-muenster.de/auslaenderamt',
+        ukraineHelp: 'https://www.stadt-muenster.de/ukraine',
+        appointments: 'https://termine.stadt-muenster.de/'
+    }
+);

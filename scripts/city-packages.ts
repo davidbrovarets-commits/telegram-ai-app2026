@@ -203,3 +203,16 @@ export const HANNOVER_PACKAGE = createCityPackage(
         appointments: 'https://termin.hannover-stadt.de/'
     }
 );
+
+// NÜRNBERG (Bayern)
+export const NUERNBERG_PACKAGE = createCityPackage(
+    'Nürnberg',
+    'NUE',
+    'Bayern',
+    {
+        jobcenter: 'https://www.jobcenter-nuernberg.de/',
+        immigration: 'https://www.nuernberg.de/internet/auslaenderbehoerde/',
+        ukraineHelp: 'https://www.nuernberg.de/internet/integration/ukraine.html',
+        appointments: 'https://termin.nuernberg.de/'
+    }
+);

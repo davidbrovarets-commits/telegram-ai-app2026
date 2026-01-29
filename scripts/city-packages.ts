@@ -138,3 +138,16 @@ export const FRANKFURT_PACKAGE = createCityPackage(
         appointments: 'https://frankfurt.de/service-und-rathaus/verwaltung/aemter-und-institutionen/terminvereinbarung'
     }
 );
+
+// STUTTGART (Baden-Württemberg)
+export const STUTTGART_PACKAGE = createCityPackage(
+    'Stuttgart',
+    'STR',
+    'Baden-Württemberg',
+    {
+        jobcenter: 'https://www.jobcenter-stuttgart.de/',
+        immigration: 'https://www.stuttgart.de/auslaenderbehoerde',
+        ukraineHelp: 'https://www.stuttgart.de/ukraine',
+        appointments: 'https://www.stuttgart.de/service/terminvereinbarung'
+    }
+);

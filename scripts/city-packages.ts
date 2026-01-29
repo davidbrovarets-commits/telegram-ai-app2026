@@ -99,3 +99,16 @@ export const LEIPZIG_PACKAGE = createCityPackage(
         appointments: 'https://www.leipzig.de/service-portal/aemtertermine-online'
     }
 );
+
+// MÜNCHEN (Bayern)
+export const MUENCHEN_PACKAGE = createCityPackage(
+    'München',
+    'MUC',
+    'Bayern',
+    {
+        jobcenter: 'https://www.arbeitsagentur.de/vor-ort/muenchen/jobcenter',
+        immigration: 'https://stadt.muenchen.de/infos/auslaenderbehoerde.html',
+        ukraineHelp: 'https://stadt.muenchen.de/infos/ukraine-hilfe.html',
+        appointments: 'https://terminvereinbarung.muenchen.de/'
+    }
+);

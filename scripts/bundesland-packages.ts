@@ -254,6 +254,18 @@ export const SH_PACKAGE = createBundeslandPackage(
     }
 );
 
+// THÜRINGEN (Official v1.0)
+export const TH_PACKAGE = createBundeslandPackage(
+    'Thüringen',
+    'TH',
+    {
+        ukrainePortal: 'https://www.thueringen.de/ukraine',
+        landAdministration: 'https://www.thueringen.de/th3/tim/migration/',
+        education: 'https://bildung.thueringen.de/ministerium/ukraine',
+        integration: 'https://www.integration.thueringen.de/'
+    }
+);
+
 // HESSEN (Official v1.0)
 export const HESSEN_PACKAGE = createBundeslandPackage(
     'Hessen',

@@ -112,3 +112,16 @@ export const MUENCHEN_PACKAGE = createCityPackage(
         appointments: 'https://terminvereinbarung.muenchen.de/'
     }
 );
+
+// KÖLN (Nordrhein-Westfalen)
+export const KOELN_PACKAGE = createCityPackage(
+    'Köln',
+    'CGN',
+    'Nordrhein-Westfalen',
+    {
+        jobcenter: 'https://www.jobcenter-koeln.de/',
+        immigration: 'https://www.stadt-koeln.de/service/auslaenderangelegenheiten',
+        ukraineHelp: 'https://www.stadt-koeln.de/artikel/70238/',
+        appointments: 'https://termine.stadt-koeln.de/'
+    }
+);

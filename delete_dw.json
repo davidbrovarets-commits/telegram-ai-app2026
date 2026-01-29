@@ -1,0 +1,3 @@
+{
+    "query": "DELETE FROM news WHERE source ILIKE '%Deutsche Welle%' OR source ILIKE '%DW%';"
+}

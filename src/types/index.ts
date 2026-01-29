@@ -16,16 +16,17 @@ export interface Task {
 export interface News {
   id: number;
   source: string;
+  source_id?: string;
   title: string;
   date?: string;
   created_at?: string;
-  region: string; // Legacy field, keeping for compatibility
+  region: string; // Legacy field
   image_url?: string;
   image?: string;
   content: string;
   link?: string;
   type?: 'news';
-  // Geo-Scoped V2 fields
+  // Geo-Scoped V2/V3 fields
   scope?: 'DE' | 'LAND' | 'CITY';
   country?: string;
   land?: string;
@@ -35,6 +36,7 @@ export interface News {
   actions?: string[];
   expires_at?: string;
   score?: number;
+  dedupe_group?: string;
 }
 
 export interface UserData {

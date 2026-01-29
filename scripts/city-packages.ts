@@ -320,3 +320,16 @@ export const KARLSRUHE_PACKAGE = createCityPackage(
         appointments: 'https://termin.karlsruhe.de/'
     }
 );
+
+// MANNHEIM (Baden-Württemberg)
+export const MANNHEIM_PACKAGE = createCityPackage(
+    'Mannheim',
+    'MA',
+    'Baden-Württemberg',
+    {
+        jobcenter: 'https://www.jobcenter-mannheim.de/',
+        immigration: 'https://www.mannheim.de/auslaenderbehoerde',
+        ukraineHelp: 'https://www.mannheim.de/ukraine',
+        appointments: 'https://termin.mannheim.de/'
+    }
+);

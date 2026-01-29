@@ -22,7 +22,7 @@ export interface SourceConfig {
 
 // Import Bundesland packages
 import { NRW_PACKAGE, BAYERN_PACKAGE, BERLIN_PACKAGE, HAMBURG_PACKAGE, HESSEN_PACKAGE, BW_PACKAGE, BRANDENBURG_PACKAGE, BREMEN_PACKAGE, MV_PACKAGE, NI_PACKAGE, RP_PACKAGE, SL_PACKAGE, ST_PACKAGE, SH_PACKAGE, TH_PACKAGE } from './bundesland-packages';
-import { LEIPZIG_PACKAGE, MUENCHEN_PACKAGE, KOELN_PACKAGE } from './city-packages';
+import { LEIPZIG_PACKAGE, MUENCHEN_PACKAGE, KOELN_PACKAGE, FRANKFURT_PACKAGE } from './city-packages';
 
 // =============================================
 // DE — FEDERAL LEVEL SOURCES
@@ -145,6 +145,7 @@ export const SOURCES: SourceConfig[] = [
     ...LEIPZIG_PACKAGE,
     ...MUENCHEN_PACKAGE,
     ...KOELN_PACKAGE,
+    ...FRANKFURT_PACKAGE,
     // Add more Bundesland packages below:
     ...NRW_PACKAGE,
     ...BAYERN_PACKAGE,

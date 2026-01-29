@@ -125,3 +125,16 @@ export const KOELN_PACKAGE = createCityPackage(
         appointments: 'https://termine.stadt-koeln.de/'
     }
 );
+
+// FRANKFURT AM MAIN (Hessen)
+export const FRANKFURT_PACKAGE = createCityPackage(
+    'Frankfurt am Main',
+    'FRA',
+    'Hessen',
+    {
+        jobcenter: 'https://www.jobcenter-frankfurt.de/',
+        immigration: 'https://frankfurt.de/auslaenderbehoerde',
+        ukraineHelp: 'https://frankfurt.de/ukraine-hilfe',
+        appointments: 'https://frankfurt.de/service-und-rathaus/verwaltung/aemter-und-institutionen/terminvereinbarung'
+    }
+);

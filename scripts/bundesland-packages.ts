@@ -155,3 +155,15 @@ export const HAMBURG_PACKAGE = createBundeslandPackage(
         education: 'https://www.hamburg.de/bsb/willkommensklassen/'
     }
 );
+
+// HESSEN (Official v1.0)
+export const HESSEN_PACKAGE = createBundeslandPackage(
+    'Hessen',
+    'HE',
+    {
+        ukrainePortal: 'https://innen.hessen.de/fluechtlinge-aus-der-ukraine',
+        landAdministration: 'https://rp-giessen.hessen.de/flucht-und-asyl/ukraine',
+        education: 'https://kultusministerium.hessen.de/unterricht/ukraine',
+        integration: 'https://integrationskompass.hessen.de/'
+    }
+);

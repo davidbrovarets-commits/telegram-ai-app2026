@@ -196,7 +196,7 @@ export const SOURCES: SourceConfig[] = [
     ...SACHSEN_SOURCES,
     ...LEIPZIG_SOURCES,
     // Add more Bundesland packages below:
-    // ...NRW_PACKAGE,
+    ...NRW_PACKAGE,
     // ...BAYERN_PACKAGE,
     // ...BERLIN_PACKAGE,
     // ...HAMBURG_PACKAGE,

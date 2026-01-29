@@ -110,14 +110,15 @@ export const SACHSEN_PACKAGE = createBundeslandPackage(
     }
 );
 
-// NORDRHEIN-WESTFALEN
+// NORDRHEIN-WESTFALEN (Official v1.0)
 export const NRW_PACKAGE = createBundeslandPackage(
     'Nordrhein-Westfalen',
     'nrw',
     {
         ukrainePortal: 'https://www.mkjfgfi.nrw/ukraine',
-        landAdministration: 'https://www.bezreg-arnsberg.nrw.de/themen/f/flucht_asyl/',
-        education: 'https://www.schulministerium.nrw/schule-bildung/integration-durch-bildung'
+        landAdministration: 'https://www.bra.nrw.de/integration-migration/fluechtlinge-nrw',
+        education: 'https://www.schulministerium.nrw/umgang-mit-den-auswirkungen-des-russland-ukraine-krieges',
+        integration: 'https://www.mkjfgfi.nrw/kommunale-integrationszentren'
     }
 );
 

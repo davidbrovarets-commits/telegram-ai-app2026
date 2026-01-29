@@ -1,0 +1,149 @@
+{
+    "index_version": "v1.0",
+    "country": "DE",
+    "scope": "CITY",
+    "content_language": "ua",
+    "total_cities": 20,
+    "packages": [
+        {
+            "city": "Leipzig",
+            "land": "Sachsen",
+            "city_code": "LEJ",
+            "package_id": "city_LEJ",
+            "status": "active"
+        },
+        {
+            "city": "München",
+            "land": "Bayern",
+            "city_code": "MUC",
+            "package_id": "city_MUC",
+            "status": "active"
+        },
+        {
+            "city": "Köln",
+            "land": "Nordrhein-Westfalen",
+            "city_code": "CGN",
+            "package_id": "city_CGN",
+            "status": "active"
+        },
+        {
+            "city": "Frankfurt am Main",
+            "land": "Hessen",
+            "city_code": "FRA",
+            "package_id": "city_FRA",
+            "status": "active"
+        },
+        {
+            "city": "Stuttgart",
+            "land": "Baden-Württemberg",
+            "city_code": "STR",
+            "package_id": "city_STR",
+            "status": "active"
+        },
+        {
+            "city": "Düsseldorf",
+            "land": "Nordrhein-Westfalen",
+            "city_code": "DUS",
+            "package_id": "city_DUS",
+            "status": "active"
+        },
+        {
+            "city": "Dortmund",
+            "land": "Nordrhein-Westfalen",
+            "city_code": "DTM",
+            "package_id": "city_DTM",
+            "status": "active"
+        },
+        {
+            "city": "Essen",
+            "land": "Nordrhein-Westfalen",
+            "city_code": "ESS",
+            "package_id": "city_ESS",
+            "status": "active"
+        },
+        {
+            "city": "Hannover",
+            "land": "Niedersachsen",
+            "city_code": "HAJ",
+            "package_id": "city_HAJ",
+            "status": "active"
+        },
+        {
+            "city": "Nürnberg",
+            "land": "Bayern",
+            "city_code": "NUE",
+            "package_id": "city_NUE",
+            "status": "active"
+        },
+        {
+            "city": "Dresden",
+            "land": "Sachsen",
+            "city_code": "DRS",
+            "package_id": "city_DRS",
+            "status": "active"
+        },
+        {
+            "city": "Duisburg",
+            "land": "Nordrhein-Westfalen",
+            "city_code": "DUI",
+            "package_id": "city_DUI",
+            "status": "active"
+        },
+        {
+            "city": "Bochum",
+            "land": "Nordrhein-Westfalen",
+            "city_code": "BOC",
+            "package_id": "city_BOC",
+            "status": "active"
+        },
+        {
+            "city": "Wuppertal",
+            "land": "Nordrhein-Westfalen",
+            "city_code": "WUP",
+            "package_id": "city_WUP",
+            "status": "active"
+        },
+        {
+            "city": "Bielefeld",
+            "land": "Nordrhein-Westfalen",
+            "city_code": "BIE",
+            "package_id": "city_BIE",
+            "status": "active"
+        },
+        {
+            "city": "Bonn",
+            "land": "Nordrhein-Westfalen",
+            "city_code": "BON",
+            "package_id": "city_BON",
+            "status": "active"
+        },
+        {
+            "city": "Münster",
+            "land": "Nordrhein-Westfalen",
+            "city_code": "MS",
+            "package_id": "city_MS",
+            "status": "active"
+        },
+        {
+            "city": "Karlsruhe",
+            "land": "Baden-Württemberg",
+            "city_code": "KAE",
+            "package_id": "city_KAE",
+            "status": "active"
+        },
+        {
+            "city": "Mannheim",
+            "land": "Baden-Württemberg",
+            "city_code": "MA",
+            "package_id": "city_MA",
+            "status": "active"
+        },
+        {
+            "city": "Augsburg",
+            "land": "Bayern",
+            "city_code": "AGB",
+            "package_id": "city_AGB",
+            "status": "active"
+        }
+    ]
+}

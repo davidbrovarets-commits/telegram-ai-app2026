@@ -229,3 +229,16 @@ export const DRESDEN_PACKAGE = createCityPackage(
         appointments: 'https://termine.dresden.de/'
     }
 );
+
+// DUISBURG (Nordrhein-Westfalen)
+export const DUISBURG_PACKAGE = createCityPackage(
+    'Duisburg',
+    'DUI',
+    'Nordrhein-Westfalen',
+    {
+        jobcenter: 'https://www.jobcenter-duisburg.de/',
+        immigration: 'https://www.duisburg.de/auslaenderbehoerde',
+        ukraineHelp: 'https://www.duisburg.de/ukraine',
+        appointments: 'https://termine.duisburg.de/'
+    }
+);

@@ -206,6 +206,18 @@ export const NI_PACKAGE = createBundeslandPackage(
     }
 );
 
+// RHEINLAND-PFALZ (Official v1.0)
+export const RP_PACKAGE = createBundeslandPackage(
+    'Rheinland-Pfalz',
+    'RP',
+    {
+        ukrainePortal: 'https://www.ukraine.rlp.de/',
+        landAdministration: 'https://mdi.rlp.de/themen/migration-und-integration',
+        education: 'https://bm.rlp.de/service/ukraine',
+        integration: 'https://integrationsportal.rlp.de/'
+    }
+);
+
 // HESSEN (Official v1.0)
 export const HESSEN_PACKAGE = createBundeslandPackage(
     'Hessen',

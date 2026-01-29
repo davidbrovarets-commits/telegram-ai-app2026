@@ -242,6 +242,18 @@ export const ST_PACKAGE = createBundeslandPackage(
     }
 );
 
+// SCHLESWIG-HOLSTEIN (Official v1.0)
+export const SH_PACKAGE = createBundeslandPackage(
+    'Schleswig-Holstein',
+    'SH',
+    {
+        ukrainePortal: 'https://www.schleswig-holstein.de/DE/landesregierung/themen/migration-integration/ukraine/ukraine_node.html',
+        landAdministration: 'https://www.schleswig-holstein.de/DE/landesregierung/ministerien-behoerden/IM/inhalt/themen/migration/migration_node.html',
+        education: 'https://www.schleswig-holstein.de/DE/landesregierung/ministerien-behoerden/BILDUNG/ukraine/ukraine_node.html',
+        integration: 'https://www.schleswig-holstein.de/DE/landesregierung/themen/migration-integration/integration/integration_node.html'
+    }
+);
+
 // HESSEN (Official v1.0)
 export const HESSEN_PACKAGE = createBundeslandPackage(
     'Hessen',

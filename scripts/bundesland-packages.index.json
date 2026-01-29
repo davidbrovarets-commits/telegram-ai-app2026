@@ -1,0 +1,108 @@
+{
+    "index_version": "v1.0",
+    "country": "DE",
+    "scope": "LAND",
+    "content_language": "ua",
+    "total_bundeslaender": 16,
+    "packages": [
+        {
+            "land": "Baden-Württemberg",
+            "code": "BW",
+            "package_id": "land_BW",
+            "status": "active"
+        },
+        {
+            "land": "Bayern",
+            "code": "BY",
+            "package_id": "land_BY",
+            "status": "active"
+        },
+        {
+            "land": "Berlin",
+            "code": "BE",
+            "package_id": "land_BE",
+            "status": "active",
+            "special_case": "city_state"
+        },
+        {
+            "land": "Brandenburg",
+            "code": "BB",
+            "package_id": "land_BB",
+            "status": "active"
+        },
+        {
+            "land": "Bremen",
+            "code": "HB",
+            "package_id": "land_HB",
+            "status": "active",
+            "special_case": "city_state"
+        },
+        {
+            "land": "Hamburg",
+            "code": "HH",
+            "package_id": "land_HH",
+            "status": "active",
+            "special_case": "city_state"
+        },
+        {
+            "land": "Hessen",
+            "code": "HE",
+            "package_id": "land_HE",
+            "status": "active"
+        },
+        {
+            "land": "Mecklenburg-Vorpommern",
+            "code": "MV",
+            "package_id": "land_MV",
+            "status": "active"
+        },
+        {
+            "land": "Niedersachsen",
+            "code": "NI",
+            "package_id": "land_NI",
+            "status": "active"
+        },
+        {
+            "land": "Nordrhein-Westfalen",
+            "code": "NRW",
+            "package_id": "land_NRW",
+            "status": "active"
+        },
+        {
+            "land": "Rheinland-Pfalz",
+            "code": "RP",
+            "package_id": "land_RP",
+            "status": "active"
+        },
+        {
+            "land": "Saarland",
+            "code": "SL",
+            "package_id": "land_SL",
+            "status": "active"
+        },
+        {
+            "land": "Sachsen",
+            "code": "SN",
+            "package_id": "land_SN",
+            "status": "active"
+        },
+        {
+            "land": "Sachsen-Anhalt",
+            "code": "ST",
+            "package_id": "land_ST",
+            "status": "active"
+        },
+        {
+            "land": "Schleswig-Holstein",
+            "code": "SH",
+            "package_id": "land_SH",
+            "status": "active"
+        },
+        {
+            "land": "Thüringen",
+            "code": "TH",
+            "package_id": "land_TH",
+            "status": "active"
+        }
+    ]
+}

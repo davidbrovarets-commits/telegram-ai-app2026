@@ -22,6 +22,7 @@ export interface SourceConfig {
 
 // Import Bundesland packages
 import { NRW_PACKAGE, BAYERN_PACKAGE, BERLIN_PACKAGE, HAMBURG_PACKAGE, HESSEN_PACKAGE, BW_PACKAGE, BRANDENBURG_PACKAGE, BREMEN_PACKAGE, MV_PACKAGE, NI_PACKAGE, RP_PACKAGE, SL_PACKAGE, ST_PACKAGE, SH_PACKAGE, TH_PACKAGE } from './bundesland-packages';
+import { LEIPZIG_PACKAGE } from './city-packages';
 
 // =============================================
 // DE — FEDERAL LEVEL SOURCES
@@ -132,60 +133,7 @@ const SACHSEN_SOURCES: SourceConfig[] = [
 // CITY — LEIPZIG
 // =============================================
 
-const LEIPZIG_SOURCES: SourceConfig[] = [
-    {
-        source_id: 'city_leipzig_jobcenter',
-        source_name: 'Jobcenter Leipzig',
-        scope: 'CITY',
-        geo: { country: 'DE', land: 'Sachsen', city: 'Leipzig' },
-        base_url: 'https://jobcenter-leipzig.de/aktuelles/',
-        default_topics: ['jobcenter', 'benefits', 'documents', 'appointments'],
-        default_priority: 'HIGH',
-        default_actions: ['deadline', 'document_required', 'appointment'],
-        dedupe_group: 'city_leipzig_jobcenter',
-        parser_notes: 'Primary action feed for Leipzig.',
-        enabled: true
-    },
-    {
-        source_id: 'city_leipzig_ukraine',
-        source_name: 'Leipzig — Ukraine Hilfe',
-        scope: 'CITY',
-        geo: { country: 'DE', land: 'Sachsen', city: 'Leipzig' },
-        base_url: 'https://www.leipzig.de/leben-in-leipzig/soziales/migration-und-integration/ukraine-hilfe',
-        default_topics: ['status', 'first_steps', 'help', 'housing'],
-        default_priority: 'HIGH',
-        default_actions: ['procedure_change', 'info'],
-        dedupe_group: 'city_leipzig_ukraine',
-        parser_notes: 'Only practical changes.',
-        enabled: true
-    },
-    {
-        source_id: 'city_leipzig_auslaenderbehoerde',
-        source_name: 'Leipzig — Ausländerbehörde',
-        scope: 'CITY',
-        geo: { country: 'DE', land: 'Sachsen', city: 'Leipzig' },
-        base_url: 'https://www.leipzig.de/service-portal/dienststelle/auslaenderbehoerde-327',
-        default_topics: ['status', 'documents', 'appointments'],
-        default_priority: 'HIGH',
-        default_actions: ['appointment', 'document_required', 'status_risk'],
-        dedupe_group: 'city_leipzig_status',
-        parser_notes: 'Any change is critical.',
-        enabled: true
-    },
-    {
-        source_id: 'city_leipzig_termine',
-        source_name: 'Leipzig — Online Termine',
-        scope: 'CITY',
-        geo: { country: 'DE', land: 'Sachsen', city: 'Leipzig' },
-        base_url: 'https://www.leipzig.de/service-portal/aemtertermine-online',
-        default_topics: ['appointments'],
-        default_priority: 'HIGH',
-        default_actions: ['appointment'],
-        dedupe_group: 'city_leipzig_termine',
-        parser_notes: 'Track appointment availability.',
-        enabled: true
-    }
-];
+// LEIPZIG_SOURCES removed (Use LEIPZIG_PACKAGE from city-packages)
 
 // =============================================
 // COMBINED SOURCES EXPORT
@@ -194,7 +142,7 @@ const LEIPZIG_SOURCES: SourceConfig[] = [
 export const SOURCES: SourceConfig[] = [
     ...DE_SOURCES,
     ...SACHSEN_SOURCES,
-    ...LEIPZIG_SOURCES,
+    ...LEIPZIG_PACKAGE,
     // Add more Bundesland packages below:
     ...NRW_PACKAGE,
     ...BAYERN_PACKAGE,

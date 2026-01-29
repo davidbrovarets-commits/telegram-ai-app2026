@@ -134,14 +134,15 @@ export const BAYERN_PACKAGE = createBundeslandPackage(
     }
 );
 
-// BERLIN
+// BERLIN (Special Case: City == Land)
 export const BERLIN_PACKAGE = createBundeslandPackage(
     'Berlin',
-    'berlin',
+    'BE',
     {
         ukrainePortal: 'https://www.berlin.de/ukraine/',
         landAdministration: 'https://www.berlin.de/laf/',
-        education: 'https://www.berlin.de/sen/bjf/gefluechtete/'
+        education: 'https://www.berlin.de/sen/bjf/service/ukraine/',
+        integration: 'https://www.berlin.de/sen/integration/ukraine/'
     }
 );
 

@@ -182,6 +182,18 @@ export const HAMBURG_PACKAGE = createBundeslandPackage(
     }
 );
 
+// MECKLENBURG-VORPOMMERN (Official v1.0)
+export const MV_PACKAGE = createBundeslandPackage(
+    'Mecklenburg-Vorpommern',
+    'MV',
+    {
+        ukrainePortal: 'https://www.regierung-mv.de/Landesregierung/im/Ukraine/',
+        landAdministration: 'https://www.regierung-mv.de/Landesregierung/im/Themen/Ausl%C3%A4nderrecht/',
+        education: 'https://www.bildung-mv.de/ukraine/',
+        integration: 'https://www.regierung-mv.de/Landesregierung/sm/Themen/Integration/'
+    }
+);
+
 // HESSEN (Official v1.0)
 export const HESSEN_PACKAGE = createBundeslandPackage(
     'Hessen',

@@ -190,3 +190,16 @@ export const ESSEN_PACKAGE = createCityPackage(
         appointments: 'https://termine.essen.de/'
     }
 );
+
+// HANNOVER (Niedersachsen)
+export const HANNOVER_PACKAGE = createCityPackage(
+    'Hannover',
+    'HAJ',
+    'Niedersachsen',
+    {
+        jobcenter: 'https://www.jobcenter-hannover.de/',
+        immigration: 'https://www.hannover.de/Auslaenderbehoerde',
+        ukraineHelp: 'https://www.hannover.de/Ukraine',
+        appointments: 'https://termin.hannover-stadt.de/'
+    }
+);

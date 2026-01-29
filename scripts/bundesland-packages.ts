@@ -194,6 +194,18 @@ export const MV_PACKAGE = createBundeslandPackage(
     }
 );
 
+// NIEDERSACHSEN (Official v1.0)
+export const NI_PACKAGE = createBundeslandPackage(
+    'Niedersachsen',
+    'NI',
+    {
+        ukrainePortal: 'https://www.niedersachsen.de/Ukraine',
+        landAdministration: 'https://www.mi.niedersachsen.de/startseite/themen/migration_und_integration/',
+        education: 'https://www.mk.niedersachsen.de/startseite/schule/ukraine/',
+        integration: 'https://www.migrationsportal.de/'
+    }
+);
+
 // HESSEN (Official v1.0)
 export const HESSEN_PACKAGE = createBundeslandPackage(
     'Hessen',

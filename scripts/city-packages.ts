@@ -242,3 +242,16 @@ export const DUISBURG_PACKAGE = createCityPackage(
         appointments: 'https://termine.duisburg.de/'
     }
 );
+
+// BOCHUM (Nordrhein-Westfalen)
+export const BOCHUM_PACKAGE = createCityPackage(
+    'Bochum',
+    'BOC',
+    'Nordrhein-Westfalen',
+    {
+        jobcenter: 'https://jobcenter-bochum.de/',
+        immigration: 'https://www.bochum.de/Auslaenderbuero',
+        ukraineHelp: 'https://www.bochum.de/Aktuelle-Pressemeldungen/Fragen-und-Antworten-zur-Ukraine-Krise',
+        appointments: 'https://www.bochum.de/Online-Terminbuchung'
+    }
+);

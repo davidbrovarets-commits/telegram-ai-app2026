@@ -21,8 +21,9 @@ export class AIService {
             });
 
             // Initialize the generative model
+            // 1.5-flash retired in '25. Using 2.0-flash-exp for '26 context.
             this.genModel = getGenerativeModel(ai, {
-                model: this.modelIdentifier === 'gemini-3-pro-preview' ? 'gemini-1.5-flash' : this.modelIdentifier,
+                model: this.modelIdentifier === 'gemini-3-pro-preview' ? 'gemini-2.0-flash-exp' : this.modelIdentifier,
                 safetySettings: [
                     {
                         category: "HARM_CATEGORY_HARASSMENT",

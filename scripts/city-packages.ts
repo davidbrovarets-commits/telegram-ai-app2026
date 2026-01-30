@@ -411,3 +411,16 @@ export const WIESBADEN_PACKAGE = createCityPackage(
         appointments: 'https://termin.wiesbaden.de/'
     }
 );
+
+// MAINZ (Rheinland-Pfalz)
+export const MAINZ_PACKAGE = createCityPackage(
+    'Mainz',
+    'MNZ',
+    'Rheinland-Pfalz',
+    {
+        jobcenter: 'https://www.jobcenter-mainz.de/',
+        immigration: 'https://www.mainz.de/auslaenderbehoerde',
+        ukraineHelp: 'https://www.mainz.de/ukraine',
+        appointments: 'https://termin.mainz.de/'
+    }
+);

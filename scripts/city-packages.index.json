@@ -1,9 +1,9 @@
 {
-    "index_version": "v1.10",
+    "index_version": "v1.11",
     "country": "DE",
     "scope": "CITY",
     "content_language": "ua",
-    "total_cities": 30,
+    "total_cities": 31,
     "packages": [
         {
             "city": "Leipzig",
@@ -213,6 +213,13 @@
             "land": "Niedersachsen",
             "city_code": "BS",
             "package_id": "city_BS",
+            "status": "active"
+        },
+        {
+            "city": "Regensburg",
+            "land": "Bayern",
+            "city_code": "RBG",
+            "package_id": "city_RBG",
             "status": "active"
         }
     ]

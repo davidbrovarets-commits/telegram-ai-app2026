@@ -476,3 +476,16 @@ export const BRAUNSCHWEIG_PACKAGE = createCityPackage(
         appointments: 'https://termin.braunschweig.de/'
     }
 );
+
+// REGENSBURG (Bayern)
+export const REGENSBURG_PACKAGE = createCityPackage(
+    'Regensburg',
+    'RBG',
+    'Bayern',
+    {
+        jobcenter: 'https://www.jobcenter-regensburg.de/',
+        immigration: 'https://www.regensburg.de/auslaenderbehoerde',
+        ukraineHelp: 'https://www.regensburg.de/ukraine',
+        appointments: 'https://termin.regensburg.de/'
+    }
+);

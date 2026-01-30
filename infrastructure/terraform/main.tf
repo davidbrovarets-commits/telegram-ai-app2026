@@ -22,6 +22,7 @@ provider "google-beta" {
 }
 
 # 1. Enable Essential Services
+
 resource "google_project_service" "apis" {
   for_each = toset([
     "aiplatform.googleapis.com",      # Vertex AI (Imagen, Gemini)
@@ -42,65 +43,65 @@ resource "google_project_service" "apis" {
   disable_on_destroy = false
 }
 
-# 2. BigQuery Dataset for App Analytics
-resource "google_bigquery_dataset" "analytics" {
-  dataset_id                  = "telegram_app_analytics"
-  friendly_name               = "App Analytics"
-  description                 = "Raw events from Telegram Mini App"
-  location                    = "EU"
-}
+# 2. BigQuery Dataset (ALREADY CREATED - Commenting out to avoid 409)
+# resource "google_bigquery_dataset" "analytics" {
+#   dataset_id                  = "telegram_app_analytics"
+#   friendly_name               = "App Analytics"
+#   description                 = "Raw events from Telegram Mini App"
+#   location                    = "EU"
+# }
 
-# 3. Service Account for GitHub Actions
-resource "google_service_account" "github_actions" {
-  account_id   = "github-actions-deployer"
-  display_name = "GitHub Actions Service Account"
-}
+# 3. Service Account for GitHub Actions (ALREADY CREATED)
+# resource "google_service_account" "github_actions" {
+#   account_id   = "github-actions-deployer"
+#   display_name = "GitHub Actions Service Account"
+# }
 
 # 4. Permissions for GitHub Actions
 resource "google_project_iam_member" "vertex_ai_user" {
   project = var.project_id
   role    = "roles/aiplatform.user"
-  member  = "serviceAccount:${google_service_account.github_actions.email}"
+  member  = "serviceAccount:github-actions-deployer@${var.project_id}.iam.gserviceaccount.com"
 }
 
 resource "google_project_iam_member" "bigquery_editor" {
   project = var.project_id
   role    = "roles/bigquery.dataEditor"
-  member  = "serviceAccount:${google_service_account.github_actions.email}"
+  member  = "serviceAccount:github-actions-deployer@${var.project_id}.iam.gserviceaccount.com"
 }
 
 resource "google_project_iam_member" "firebase_admin" {
   project = var.project_id
   role    = "roles/firebase.admin"
-  member  = "serviceAccount:${google_service_account.github_actions.email}"
+  member  = "serviceAccount:github-actions-deployer@${var.project_id}.iam.gserviceaccount.com"
 }
 
 resource "google_project_iam_member" "api_keys_admin" {
   project = var.project_id
   role    = "roles/serviceusage.apiKeysAdmin"
-  member  = "serviceAccount:${google_service_account.github_actions.email}"
+  member  = "serviceAccount:github-actions-deployer@${var.project_id}.iam.gserviceaccount.com"
 }
 
-# 5. Firebase Configuration
-resource "google_firebase_project" "default" {
-  provider = google-beta
-  project  = var.project_id
-  
-  depends_on = [google_project_service.apis]
-}
+# 5. Firebase Configuration (ALREADY CREATED)
+# resource "google_firebase_project" "default" {
+#   provider = google-beta
+#   project  = var.project_id
+#   
+#   depends_on = [google_project_service.apis]
+# }
 
-resource "google_firebase_web_app" "default" {
-  provider     = google-beta
-  project      = var.project_id
-  display_name = "Telegram AI App"
+# resource "google_firebase_web_app" "default" {
+#   provider     = google-beta
+#   project      = var.project_id
+#   display_name = "Telegram AI App"
+# 
+#   # depends_on = [google_firebase_project.default]
+# }
 
-  depends_on = [google_firebase_project.default]
-}
-
-resource "google_firebase_hosting_site" "default" {
-  provider = google-beta
-  project  = var.project_id
-  site_id  = var.project_id # Default site often matches project ID
-
-  depends_on = [google_firebase_project.default]
-}
+# resource "google_firebase_hosting_site" "default" {
+#   provider = google-beta
+#   project  = var.project_id
+#   site_id  = var.project_id # Default site often matches project ID
+# 
+#   # depends_on = [google_firebase_project.default]
+# }

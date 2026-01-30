@@ -38,3 +38,19 @@ jobs:
           firebaseServiceAccount: '${{ secrets.GOOGLE_CREDENTIALS }}'
           channelId: live
           projectId: '${{ secrets.GOOGLE_PROJECT_ID }}'
+
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
+
+      - name: 'Deploy Cloud Function'
+        uses: 'google-github-actions/deploy-cloud-functions@v2'
+        with:
+          name: 'generate-banner-weekly'
+          runtime: 'nodejs20'
+          entry_point: 'generateBanner'
+          source_dir: './functions/generate-banner'
+          region: 'europe-west1'
+          project_id: '${{ secrets.GOOGLE_PROJECT_ID }}'
+

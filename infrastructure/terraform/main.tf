@@ -34,7 +34,8 @@ resource "google_project_service" "apis" {
     "serviceusage.googleapis.com",    # Service Usage
     "firebasehosting.googleapis.com", # Firebase Hosting
     "cloudresourcemanager.googleapis.com",
-    "cloudbilling.googleapis.com"
+    "cloudbilling.googleapis.com",
+    "iam.googleapis.com"
   ])
 
   service = each.key

@@ -37,7 +37,6 @@ export const ChatInput = ({ onSend, disabled, placeholder }: ChatInputProps) => 
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 onKeyDown={handleKeyDown}
-                onKeyDown={handleKeyDown}
                 placeholder={placeholder || "Küsi midagi..."}
                 disabled={disabled}
                 style={{

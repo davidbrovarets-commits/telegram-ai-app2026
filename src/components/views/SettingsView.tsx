@@ -3,8 +3,7 @@ import type { UserData, Theme } from '../../types';
 import { GERMAN_STATES, RESIDENCE_PERMITS } from '../../utils/constants';
 import {
     User, MapPin, Briefcase, Mail, Edit2, Check, X,
-    Settings,
-    Moon, Sun, Cloud, Lock, LogOut, ChevronRight, CreditCard, ChevronDown, ChevronUp
+    Moon, Sun, Lock, LogOut, ChevronRight, CreditCard, ChevronDown, ChevronUp
 } from 'lucide-react';
 
 interface SettingsViewProps {
@@ -170,9 +169,6 @@ export const SettingsView = ({
                 <div className="theme-switcher">
                     <button className={theme === 'light' ? 'active' : ''} onClick={() => onThemeChange('light')}>
                         <Sun size={16} style={{ marginBottom: '-2px' }} /> Світла
-                    </button>
-                    <button className={theme === 'neutral' ? 'active' : ''} onClick={() => onThemeChange('neutral')}>
-                        <Cloud size={16} /> М'яка
                     </button>
                     <button className={theme === 'dark' ? 'active' : ''} onClick={() => onThemeChange('dark')}>
                         <Moon size={16} /> Темна

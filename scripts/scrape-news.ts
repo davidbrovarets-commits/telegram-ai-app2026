@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { SOURCES, SourceConfig } from './config';
 import { calculateScore } from './scorer';
+import { validateUrlHealth, isDeepLink, isRecentNews } from './helpers';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
@@ -68,6 +69,25 @@ async function scrape() {
                     .maybeSingle();
 
                 if (existing) continue;
+
+                // CRITICAL: Link Health Check
+                // Ensures we never capture/send broken links (404, DNS errors, etc.)
+                const isAlive = await validateUrlHealth(item.link);
+                if (!isAlive) {
+                    console.log(`   ❌ Dead/Broken link detected: ${item.link}`);
+                    continue;
+                }
+
+                // NEW: Smart Filters (Deep Link & Freshness)
+                if (!isDeepLink(item.link)) {
+                    console.log(`   ⚠️  Skipping landing page/root domain: ${item.link}`);
+                    continue;
+                }
+
+                if (!isRecentNews(item.title + " " + item.content, item.link)) {
+                    console.log(`   ⏳ Skipping old/outdated news: ${item.title}`);
+                    continue;
+                }
 
                 // Calculate score
                 const baseScore = source.default_priority === 'HIGH' ? 30 : source.default_priority === 'MEDIUM' ? 15 : 5;

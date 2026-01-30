@@ -1,5 +1,4 @@
-
-import { AIContext, UserData } from '../../types';
+import type { AIContext, UserData } from '../../types';
 
 export class ContextBuilder {
 
@@ -15,9 +14,10 @@ export class ContextBuilder {
             userProfile: {
                 name: userData.username,
                 city: userData.city || 'Unknown',
-                status: userData.residence_permit || 'Unknown'
+                status: userData.residence_permit || 'Unknown',
+                credits: userData.credits || 0
             },
-            activeTasks: activeTasks.map(t => t.title),
+            activeTasks: activeTasks,
             unreadNewsCount: 0, // Placeholder
             currentView
         };

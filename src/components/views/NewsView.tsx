@@ -30,7 +30,9 @@ const PRIORITY_LABELS: Record<string, { label: string; bg: string }> = {
 export const NewsView = ({ news, onNewsClick }: NewsViewProps) => {
     return (
         <div className="news-view">
-            <h4 className="section-title">ВСІ НОВИНИ</h4>
+            <div className="task-card" style={{ justifyContent: 'center', marginBottom: '20px', background: 'linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%)', color: 'white' }}>
+                <h4 style={{ fontSize: '18px', fontWeight: '700', color: 'white', margin: 0 }}>📰 ВСІ НОВИНИ</h4>
+            </div>
 
             {news.map(item => {
                 const priority = PRIORITY_LABELS[item.priority || ''];

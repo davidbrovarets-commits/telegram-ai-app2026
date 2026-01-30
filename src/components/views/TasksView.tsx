@@ -23,6 +23,12 @@ export const TasksView = ({
 }: TasksViewProps) => {
     const [expandedStep, setExpandedStep] = useState<number | null>(1);
 
+    const getPointsText = (count: number) => {
+        if (count === 1) return 'пункт';
+        if (count > 1 && count < 5) return 'пункти';
+        return 'пунктів';
+    };
+
     const renderStepGroup = (stepNum: number, title: string, color: string, Icon: React.ElementType) => {
         const stepTasks = tasks.filter(t => t.step === stepNum);
         const finalTasks = stepNum === 0
@@ -48,7 +54,7 @@ export const TasksView = ({
                     <div className="task-details">
                         <h4>{title}</h4>
                         <p>
-                            {finalTasks.length} {finalTasks.length === 1 ? 'завдання' : 'завдань'}
+                            {finalTasks.length} {getPointsText(finalTasks.length)}
                         </p>
                     </div>
                     <span className="arrow-icon">
@@ -107,8 +113,10 @@ export const TasksView = ({
 
     return (
         <div className="task-list-container">
-            <h4 className="section-title">ВАШ ПЛАН ДІЙ 🚀</h4>
-            {renderStepGroup(1, 'ЕТАП 1: ФУНДАМЕНТ', '#FF3B30', MapPin)}   {/* Apple Red */}
+            <div className="task-card" style={{ justifyContent: 'center', marginBottom: '20px', background: 'linear-gradient(135deg, #007AFF 0%, #0056b3 100%)', color: 'white' }}>
+                <h4 style={{ fontSize: '18px', fontWeight: '700', color: 'white', margin: 0 }}>🏛️ Дорожня карта: Життя в Німеччині 🇩🇪</h4>
+            </div>
+            {renderStepGroup(1, 'ЕТАП 1: ОСНОВА', '#FF3B30', MapPin)}   {/* Apple Red */}
             {renderStepGroup(2, 'ЕТАП 2: ФІНАНСИ', '#FF9500', Wallet)}     {/* Apple Orange */}
             {renderStepGroup(3, 'ЕТАП 3: СТАТУС', '#34C759', FileText)}    {/* Apple Green */}
             {renderStepGroup(0, 'ЕКСТРА (PREMIUM)', '#0071E3', Gem)}       {/* Apple Blue */}

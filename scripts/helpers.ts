@@ -211,8 +211,7 @@ export function isAllowedCityURL(url: string, citySlug: string): boolean {
         /kultur/,
         /sport/,
         /tourismus/,
-        /pressefoto/,
-        /nachrichten/ // general news, not official
+        /pressefoto/
     ];
 
     // Check rejects first

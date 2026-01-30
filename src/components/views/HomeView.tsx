@@ -1,70 +1,136 @@
-import { useState } from 'react';
 import type { News } from '../../types';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronRight, FileText, MessageSquare, Map } from 'lucide-react';
 
 interface HomeViewProps {
-    username: string;
     news: News[];
     onNewsClick: (news: News & { type: 'news' }) => void;
+    onNavigate: (view: 'documents' | 'chat' | 'roadmap') => void;
 }
 
-export const HomeView = ({ username, news, onNewsClick }: HomeViewProps) => {
-    const [currentSlide, setCurrentSlide] = useState(0);
-
-    const nextSlide = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setCurrentSlide((prev) => (prev + 1) % news.length);
-    };
-
-    const prevSlide = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setCurrentSlide((prev) => (prev - 1 + news.length) % news.length);
-    };
+export const HomeView = ({ news, onNewsClick, onNavigate }: HomeViewProps) => {
+    const featuredNews = news.length > 0 ? news[0] : null;
 
     return (
-        <div className="home-container">
-            <h1 className="welcome-text">Ласкаво просимо, {username}!</h1>
-            <p className="welcome-sub">Ось важливі новини для вас:</p>
+        <div className="home-container" style={{ padding: '0 4px' }}>
 
-            {news.length > 0 ? (
-                <div className="news-carousel-container">
+
+            {/* Bento Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+
+                {/* 1. Featured News (Full Width) */}
+                {featuredNews && (
                     <div
-                        className="news-carousel-card"
-                        onClick={() => onNewsClick({ ...news[currentSlide], type: 'news' })}
+                        style={{
+                            gridColumn: 'span 2', height: '260px', borderRadius: '24px',
+                            overflow: 'hidden', position: 'relative', cursor: 'pointer',
+                            boxShadow: 'var(--shadow-md)', transition: 'transform 0.2s'
+                        }}
+                        onClick={() => onNewsClick({ ...featuredNews, type: 'news' })}
+                        className="bento-card"
                     >
                         <img
-                            src={news[currentSlide].image_url || news[currentSlide].image}
+                            src={featuredNews.image_url || featuredNews.image}
                             alt="News"
-                            className="carousel-img"
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         />
-                        <div className="carousel-overlay">
-                            <span className="carousel-source">{news[currentSlide].source}</span>
-                            <h3 className="carousel-title">{news[currentSlide].title}</h3>
+                        <div style={{
+                            position: 'absolute', bottom: 0, left: 0, right: 0,
+                            padding: '24px', paddingTop: '80px',
+                            background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)',
+                            color: 'white'
+                        }}>
+                            <div style={{
+                                fontSize: '11px', fontWeight: '700', textTransform: 'uppercase',
+                                background: 'rgba(255,255,255,0.3)', backdropFilter: 'blur(4px)',
+                                padding: '4px 8px', borderRadius: '6px', display: 'inline-block', marginBottom: '8px'
+                            }}>
+                                Головна новина
+                            </div>
+                            <h3 style={{ fontSize: '22px', fontWeight: '700', lineHeight: '1.2', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
+                                {featuredNews.title}
+                            </h3>
                         </div>
                     </div>
+                )}
 
-                    <button className="carousel-btn prev" onClick={prevSlide}>
-                        <ChevronLeft size={24} />
-                    </button>
-                    <button className="carousel-btn next" onClick={nextSlide}>
-                        <ChevronRight size={24} />
-                    </button>
-
-                    <div className="carousel-indicators">
-                        {news.map((_, idx) => (
-                            <span key={idx} className={`dot ${idx === currentSlide ? 'active' : ''}`}></span>
-                        ))}
+                {/* 2. Quick Action: Documents (Half) */}
+                <div
+                    onClick={() => onNavigate('documents')}
+                    style={{
+                        background: 'linear-gradient(135deg, #007AFF 0%, #00C7BE 100%)',
+                        borderRadius: '24px', padding: '20px', height: '160px', color: 'white',
+                        display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+                        boxShadow: 'var(--shadow-md)', cursor: 'pointer'
+                    }}
+                >
+                    <div style={{
+                        width: '36px', height: '36px', background: 'rgba(255,255,255,0.2)',
+                        borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    }}>
+                        <FileText size={20} color="white" />
+                    </div>
+                    <div>
+                        <div style={{ fontSize: '16px', fontWeight: '700', marginBottom: '4px' }}>Документи</div>
+                        <div style={{ fontSize: '13px', opacity: 0.9 }}>Скан та архів</div>
                     </div>
                 </div>
-            ) : (
-                <div style={{
-                    height: '240px', background: 'var(--card-bg)', borderRadius: '20px',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    boxShadow: 'var(--shadow-lg)'
-                }}>
-                    <div className="loader"></div>
+
+                {/* 3. Quick Action: AI Chat (Half) */}
+                <div
+                    onClick={() => onNavigate('chat')}
+                    style={{
+                        background: 'linear-gradient(135deg, #AF52DE 0%, #5856D6 100%)',
+                        borderRadius: '24px', padding: '20px', height: '160px', color: 'white',
+                        display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+                        boxShadow: 'var(--shadow-md)', cursor: 'pointer'
+                    }}
+                >
+                    <div style={{
+                        width: '36px', height: '36px', background: 'rgba(255,255,255,0.2)',
+                        borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    }}>
+                        <MessageSquare size={20} color="white" />
+                    </div>
+                    <div>
+                        <div style={{ fontSize: '16px', fontWeight: '700', marginBottom: '4px' }}>Асистент</div>
+                        <div style={{ fontSize: '13px', opacity: 0.9 }}>Запитати AI</div>
+                    </div>
                 </div>
-            )}
+
+                {/* 4. Roadmap Status (Full Width) */}
+                <div
+                    onClick={() => onNavigate('roadmap')}
+                    style={{
+                        gridColumn: 'span 2', background: 'var(--card-bg)',
+                        borderRadius: '24px', padding: '20px',
+                        boxShadow: 'var(--shadow-sm)', cursor: 'pointer',
+                        border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '16px'
+                    }}
+                >
+                    <div style={{
+                        width: '48px', height: '48px', borderRadius: '14px',
+                        background: '#007AFF', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        flexShrink: 0
+                    }}>
+                        <Map size={24} color="white" />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-main)', marginBottom: '4px' }}>
+                            Ваш прогрес
+                        </div>
+                        <div style={{
+                            width: '100%', height: '6px', background: 'var(--bg-secondary)', borderRadius: '3px', overflow: 'hidden'
+                        }}>
+                            <div style={{ width: '35%', height: '100%', background: '#34C759', borderRadius: '3px' }}></div>
+                        </div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-sub)', marginTop: '6px' }}>
+                            Продовжити: Етап 1 (Основа)
+                        </div>
+                    </div>
+                    <ChevronRight size={20} color="var(--text-sub)" />
+                </div>
+
+            </div>
         </div>
     );
 };

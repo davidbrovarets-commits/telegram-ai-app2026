@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 import type { UserFile } from '../../types';
 import { analyzeDocument } from '../../utils/api';
 
@@ -13,6 +15,7 @@ export const FileModal = ({ file, onClose, onDelete }: FileModalProps) => {
     const [analysisResult, setAnalysisResult] = useState<string | null>(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [isSavingPdf, setIsSavingPdf] = useState(false);
+    const resultRef = useRef<HTMLDivElement>(null);
 
     const handleAnalyze = async () => {
         setIsAnalyzing(true);
@@ -22,66 +25,38 @@ export const FileModal = ({ file, onClose, onDelete }: FileModalProps) => {
             const result = await analyzeDocument(file.file_url);
             setAnalysisResult(result);
         } catch (error: unknown) {
-            const message = error instanceof Error ? error.message : 'Ühendus AI-ga ebaõnnestus';
-            alert('Viga: ' + message);
+            const message = error instanceof Error ? error.message : "Помилка з'єднання зі ШІ";
+            alert('Помилка: ' + message);
         }
 
         setIsAnalyzing(false);
     };
 
     const handleSavePdf = async () => {
-        if (!analysisResult) return;
+        if (!analysisResult || !resultRef.current) return;
 
         setIsSavingPdf(true);
 
         try {
+            // 1. Capture the analysis text area as an image
+            const canvas = await html2canvas(resultRef.current, { scale: 2 });
+            const imgData = canvas.toDataURL('image/png');
+
+            // 2. Create PDF
             const pdf = new jsPDF();
-            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageWidth = pdf.internal.pageSize.getWidth(); // 210mm
+            const imgProps = pdf.getImageProperties(imgData);
+
             const margin = 15;
-            const maxWidth = pageWidth - margin * 2;
+            const pdfImgWidth = pageWidth - (margin * 2);
+            const pdfImgHeight = (imgProps.height * pdfImgWidth) / imgProps.width;
 
-            // Title
-            pdf.setFontSize(18);
-            pdf.setTextColor(0, 87, 184); // Ukrainian blue
-            pdf.text('Аналіз документа', margin, 20);
+            // Header removed as per request
 
-            // Date
-            pdf.setFontSize(10);
-            pdf.setTextColor(100, 100, 100);
-            const dateStr = new Date().toLocaleDateString('uk-UA', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-            pdf.text(`Дата: ${dateStr}`, margin, 28);
+            // Add the capture image (moved up slightly)
+            pdf.addImage(imgData, 'PNG', margin, 20, pdfImgWidth, pdfImgHeight);
 
-            // Filename
-            pdf.text(`Файл: ${file.file_name}`, margin, 34);
-
-            // Divider line
-            pdf.setDrawColor(186, 230, 253);
-            pdf.line(margin, 40, pageWidth - margin, 40);
-
-            // Analysis result
-            pdf.setFontSize(11);
-            pdf.setTextColor(0, 0, 0);
-
-            // Split text into lines that fit the page width
-            const lines = pdf.splitTextToSize(analysisResult, maxWidth);
-            let yPosition = 50;
-
-            for (const line of lines) {
-                if (yPosition > 270) {
-                    pdf.addPage();
-                    yPosition = 20;
-                }
-                pdf.text(line, margin, yPosition);
-                yPosition += 6;
-            }
-
-            // Try to add image on a new page
+            // Add original image on next page
             try {
                 const response = await fetch(file.file_url);
                 const blob = await response.blob();
@@ -92,35 +67,24 @@ export const FileModal = ({ file, onClose, onDelete }: FileModalProps) => {
                 });
 
                 pdf.addPage();
-                pdf.setFontSize(14);
-                pdf.setTextColor(0, 87, 184);
-                pdf.text('Оригінальний документ:', margin, 20);
-
-                // Add image (centered, max 180mm wide, max 200mm tall)
-                const imgWidth = 180;
-                const imgHeight = 200;
-                const xPos = (pageWidth - imgWidth) / 2;
-                pdf.addImage(base64, 'JPEG', xPos, 30, imgWidth, imgHeight, undefined, 'FAST');
-            } catch {
-                // If image fails to load, just skip it
-                console.log('Could not add image to PDF');
+                pdf.text('Original Document:', margin, 20); // English to avoid encoding issues
+                const xPos = (pageWidth - 180) / 2;
+                pdf.addImage(base64, 'JPEG', xPos, 30, 180, 200, undefined, 'FAST');
+            } catch (e) {
+                console.warn("Original image skip", e);
             }
 
-            // Save the PDF
             const pdfName = `Analiz_${file.file_name.replace(/\.[^/.]+$/, '')}_${Date.now()}.pdf`;
             pdf.save(pdfName);
 
-            alert('✅ PDF збережено!');
-        } catch (error: unknown) {
-            const message = error instanceof Error ? error.message : 'PDF loomine ebaõnnestus';
-            alert('Viga: ' + message);
+        } catch (error: any) {
+            alert('Помилка при створенні PDF: ' + error.message);
         }
-
         setIsSavingPdf(false);
     };
 
     const handleDelete = () => {
-        if (confirm('Kustutada fail?')) {
+        if (confirm('Видалити файл?')) {
             onDelete(file.id);
             onClose();
         }
@@ -134,7 +98,7 @@ export const FileModal = ({ file, onClose, onDelete }: FileModalProps) => {
                 style={{ maxHeight: '90vh', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}
             >
                 <div className="modal-header">
-                    <h3>Перегляд (Vaade)</h3>
+                    <h3>Перегляд</h3>
                     <button className="close-btn" onClick={onClose}>✕</button>
                 </div>
 
@@ -164,34 +128,51 @@ export const FileModal = ({ file, onClose, onDelete }: FileModalProps) => {
                         disabled={isAnalyzing}
                         style={{ background: 'linear-gradient(45deg, #0057B8, #60a5fa)', marginBottom: '10px' }}
                     >
-                        {isAnalyzing ? '⏳ Analüüsin...' : '🤖 AI: Що це за документ?'}
+                        {isAnalyzing ? '⏳ Аналіз...' : 'Отримати огляд'}
                     </button>
                 )}
 
                 {/* Analysis result */}
                 {analysisResult && (
                     <div
+                        ref={resultRef}
                         style={{
-                            background: '#f0f9ff',
-                            padding: '15px',
-                            borderRadius: '12px',
-                            border: '1px solid #bae6fd',
-                            marginTop: '10px'
+                            background: '#ffffff', // White background for better print
+                            padding: '20px',
+                            borderRadius: '0px',
+                            border: '1px solid #e0e0e0',
+                            marginTop: '10px',
+                            color: '#000000'
                         }}
                     >
-                        <h4 style={{ marginTop: 0, color: '#0369a1' }}>💡 Результат аналізу:</h4>
-                        <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.5', fontSize: '0.9rem' }}>
-                            {analysisResult}
+                        <h4 style={{ marginTop: 0, color: '#0057B8', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
+                            📄 Результат аналізу
+                        </h4>
+
+                        <div style={{ lineHeight: '1.6', fontSize: '14px', fontFamily: 'Arial, sans-serif' }}>
+                            <ReactMarkdown
+                                components={{
+                                    h2: ({ ...props }) => <h2 style={{ fontSize: '16px', color: '#0057B8', marginTop: '15px', marginBottom: '10px' }} {...props} />,
+                                    ul: ({ ...props }) => <ul style={{ paddingLeft: '20px', listStyleType: 'disc' }} {...props} />,
+                                    li: ({ ...props }) => <li style={{ marginBottom: '5px', paddingLeft: '5px' }} {...props} />
+                                }}
+                            >
+                                {analysisResult}
+                            </ReactMarkdown>
                         </div>
-                        <button
-                            className="external-link-btn"
-                            style={{ marginTop: '15px' }}
-                            onClick={handleSavePdf}
-                            disabled={isSavingPdf}
-                        >
-                            {isSavingPdf ? '⏳ Salvestamine...' : '💾 Зберегти як PDF'}
-                        </button>
                     </div>
+                )}
+
+                {/* Save Button */}
+                {analysisResult && (
+                    <button
+                        className="external-link-btn"
+                        style={{ marginTop: '15px' }}
+                        onClick={handleSavePdf}
+                        disabled={isSavingPdf}
+                    >
+                        {isSavingPdf ? '⏳ Збереження...' : '💾 Зберегти як PDF'}
+                    </button>
                 )}
 
                 <button
@@ -204,7 +185,7 @@ export const FileModal = ({ file, onClose, onDelete }: FileModalProps) => {
                         cursor: 'pointer'
                     }}
                 >
-                    🗑️ Видалити файл (Kustuta)
+                    🗑️ Видалити файл
                 </button>
             </div>
         </div>

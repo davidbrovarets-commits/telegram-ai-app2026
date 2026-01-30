@@ -208,9 +208,13 @@ function App() {
         <div className="content-scroll">
           {activeTab === "home" && (
             <HomeView
-              username={userData.username}
               news={news}
               onNewsClick={(item) => setSelectedTask(item)}
+              onNavigate={(view) => {
+                if (view === 'documents') setActiveTab('portfolio');
+                if (view === 'chat') setActiveTab('assistant');
+                if (view === 'roadmap') setActiveTab('tasks');
+              }}
             />
           )}
 
@@ -239,12 +243,13 @@ function App() {
             />
           )}
 
-          {activeTab === "assistant" && (
+
+          <div style={{ display: activeTab === 'assistant' ? 'block' : 'none', height: '100%' }}>
             <ChatView
               userData={userData}
               activeTasks={tasks.filter(t => !completedTasks.includes(t.id))}
             />
-          )}
+          </div>
 
           {activeTab === "news" && (
             <NewsView

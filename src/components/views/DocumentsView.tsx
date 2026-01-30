@@ -64,18 +64,22 @@ export const DocumentsView = ({
                 </button>
             </div>
 
-            <h4 className="section-title">ВАШІ ДОКУМЕНТИ</h4>
+            <div className="task-card" style={{ justifyContent: 'center', marginBottom: '20px', background: 'linear-gradient(135deg, #007AFF 0%, #0056b3 100%)', color: 'white' }}>
+                <h4 style={{ fontSize: '18px', fontWeight: '700', color: 'white', margin: 0 }}>📂 ВАШІ ДОКУМЕНТИ</h4>
+            </div>
 
-            {userFiles.length === 0 && (
-                <div style={{
-                    textAlign: 'center', color: 'var(--text-sub)',
-                    padding: '40px 20px', background: 'var(--card-bg)',
-                    borderRadius: 'var(--radius-card)', border: '2px dashed var(--border)'
-                }}>
-                    <FileText size={48} style={{ opacity: 0.2, marginBottom: '10px' }} />
-                    <p>Немає документів. Зробіть фото!</p>
-                </div>
-            )}
+            {
+                userFiles.length === 0 && (
+                    <div style={{
+                        textAlign: 'center', color: 'var(--text-sub)',
+                        padding: '40px 20px', background: 'var(--card-bg)',
+                        borderRadius: 'var(--radius-card)', border: '2px dashed var(--border)'
+                    }}>
+                        <FileText size={48} style={{ opacity: 0.2, marginBottom: '10px' }} />
+                        <p>Немає документів. Зробіть фото!</p>
+                    </div>
+                )
+            }
 
             {/* Files list */}
             <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
@@ -189,6 +193,6 @@ export const DocumentsView = ({
                     )}
                 </div>
             </div>
-        </div>
+        </div >
     );
 };

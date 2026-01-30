@@ -90,8 +90,9 @@ export interface AIContext {
     name: string;
     city: string;
     status: string;
+    credits: number;
   };
-  activeTasks: string[];
+  activeTasks: Task[];
   unreadNewsCount: number;
   currentView: string;
 }

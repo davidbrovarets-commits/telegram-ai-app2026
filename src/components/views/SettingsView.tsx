@@ -3,6 +3,7 @@ import type { UserData, Theme } from '../../types';
 import { GERMAN_STATES, RESIDENCE_PERMITS } from '../../utils/constants';
 import {
     User, MapPin, Briefcase, Mail, Edit2, Check, X,
+    Settings,
     Moon, Sun, Cloud, Lock, LogOut, ChevronRight, CreditCard, ChevronDown, ChevronUp
 } from 'lucide-react';
 
@@ -82,7 +83,9 @@ export const SettingsView = ({
 
     return (
         <div className="settings-view">
-            <h1 className="welcome-text" style={{ marginBottom: '20px' }}>Налаштування</h1>
+            <div className="task-card" style={{ justifyContent: 'center', marginBottom: '20px', background: 'linear-gradient(135deg, #8E8E93 0%, #636366 100%)', color: 'white' }}>
+                <h4 style={{ fontSize: '18px', fontWeight: '700', color: 'white', margin: 0 }}>⚙️ Налаштування</h4>
+            </div>
 
             <h4 className="section-title">Мій профіль</h4>
             <div className="settings-group">

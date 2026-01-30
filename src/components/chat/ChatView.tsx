@@ -1,8 +1,7 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { ChatBubble } from './ChatBubble';
 import { ChatInput } from './ChatInput';
-import { ChatMessage, UserData, Task } from '../../types';
+import type { ChatMessage, UserData, Task } from '../../types';
 import { aiService } from '../../services/ai/AIService';
 import { ContextBuilder } from '../../services/ai/ContextBuilder';
 
@@ -16,7 +15,7 @@ export const ChatView = ({ userData, activeTasks }: ChatViewProps) => {
         {
             id: 'welcome',
             role: 'assistant',
-            content: `Tere, ${userData.username}! 👋\nMa olen Sinu isiklik assistent.\nKuidas saan täna aidata?`,
+            content: `Привіт, ${userData.username}! 👋\nЯ твій персональний асистент.\nЧим я можу допомогти тобі сьогодні?`,
             timestamp: new Date()
         }
     ]);
@@ -70,13 +69,10 @@ export const ChatView = ({ userData, activeTasks }: ChatViewProps) => {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
             {/* Header */}
-            <div style={{
-                padding: '16px',
-                borderBottom: '1px solid var(--border-color)',
-                textAlign: 'center',
-                fontWeight: 'bold'
-            }}>
-                🤖 Personaalne Assistent
+            {/* Header */}
+            <div className="task-card" style={{ marginBottom: '20px', justifyContent: 'center', background: 'linear-gradient(135deg, #007AFF 0%, #0056b3 100%)', color: 'white' }}>
+                <span style={{ fontSize: '24px' }}>🤖</span>
+                <h4 style={{ fontSize: '18px', fontWeight: '700', color: 'white' }}>AI Асистент</h4>
             </div>
 
             {/* Messages Area */}
@@ -93,7 +89,7 @@ export const ChatView = ({ userData, activeTasks }: ChatViewProps) => {
             </div>
 
             {/* Input Area */}
-            <ChatInput onSend={handleSend} disabled={loading} />
+            <ChatInput onSend={handleSend} disabled={loading} placeholder="Запитайте щось..." />
         </div>
     );
 };

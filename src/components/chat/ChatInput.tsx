@@ -5,9 +5,10 @@ import { Send } from 'lucide-react';
 interface ChatInputProps {
     onSend: (text: string) => void;
     disabled?: boolean;
+    placeholder?: string;
 }
 
-export const ChatInput = ({ onSend, disabled }: ChatInputProps) => {
+export const ChatInput = ({ onSend, disabled, placeholder }: ChatInputProps) => {
     const [text, setText] = useState('');
 
     const handleSend = () => {
@@ -36,7 +37,8 @@ export const ChatInput = ({ onSend, disabled }: ChatInputProps) => {
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Küsi midagi..."
+                onKeyDown={handleKeyDown}
+                placeholder={placeholder || "Küsi midagi..."}
                 disabled={disabled}
                 style={{
                     flex: 1,

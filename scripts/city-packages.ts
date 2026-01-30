@@ -90,7 +90,7 @@ export function createCityPackage(
 // LEIPZIG (Sachsen)
 export const LEIPZIG_PACKAGE = createCityPackage(
     'Leipzig',
-    'leipzig',
+    'LEJ',
     'Sachsen',
     {
         jobcenter: 'https://jobcenter-leipzig.de/aktuelles/',

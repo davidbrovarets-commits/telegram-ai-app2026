@@ -71,4 +71,28 @@ export interface UserFile {
 
 export type Theme = 'light' | 'dark' | 'neutral';
 export type View = 'login' | 'register' | 'recovery' | 'app';
-export type TabType = 'home' | 'tasks' | 'portfolio' | 'news' | 'menu';
+export type TabType = 'home' | 'tasks' | 'portfolio' | 'news' | 'menu' | 'assistant'; // Added 'assistant'
+
+// --- L7 AI ASSISTANT TYPES ---
+
+export type ChatRole = 'system' | 'user' | 'assistant';
+
+export interface ChatMessage {
+  id: string;
+  role: ChatRole;
+  content: string;
+  timestamp: Date;
+  isStreaming?: boolean;
+}
+
+export interface AIContext {
+  userProfile: {
+    name: string;
+    city: string;
+    status: string;
+  };
+  activeTasks: string[];
+  unreadNewsCount: number;
+  currentView: string;
+}
+

@@ -9,3 +9,6 @@ export * from './views';
 
 // Modals
 export * from './modals';
+
+// Chat L7
+export * from './chat';

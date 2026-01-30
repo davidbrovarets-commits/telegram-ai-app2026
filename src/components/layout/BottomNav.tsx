@@ -1,5 +1,6 @@
+
 import type { TabType } from '../../types';
-import { Home, CheckSquare, FolderOpen, Newspaper, Menu } from 'lucide-react';
+import { Home, CheckSquare, FolderOpen, Newspaper, Menu, Bot } from 'lucide-react';
 
 interface BottomNavProps {
     activeTab: TabType;
@@ -20,6 +21,7 @@ export const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
             case 'portfolio': return <FolderOpen {...props} />;
             case 'news': return <Newspaper {...props} />;
             case 'menu': return <Menu {...props} />;
+            case 'assistant': return <Bot {...props} />;
             default: return <Home {...props} />;
         }
     };
@@ -27,6 +29,7 @@ export const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
     const tabs: { id: TabType; label: string }[] = [
         { id: 'home', label: 'Головна' },
         { id: 'tasks', label: 'Завдання' },
+        { id: 'assistant', label: 'AI Асистент' }, // NEW CENTER TAB
         { id: 'portfolio', label: 'Документи' },
         { id: 'news', label: 'Новини' },
         { id: 'menu', label: 'Меню' },
@@ -50,4 +53,3 @@ export const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
         </nav>
     );
 };
-

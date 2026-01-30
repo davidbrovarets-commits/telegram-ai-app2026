@@ -22,6 +22,7 @@ import {
   DocumentsView,
   NewsView,
   SettingsView,
+  ChatView,
   TaskModal,
   FileModal,
 } from "./components";
@@ -223,6 +224,7 @@ function App() {
             />
           )}
 
+
           {activeTab === "portfolio" && (
             <DocumentsView
               userFiles={userFiles}
@@ -234,6 +236,13 @@ function App() {
               }
               onTogglePersonalTask={togglePersonalTask}
               onDeletePersonalTask={deletePersonalTask}
+            />
+          )}
+
+          {activeTab === "assistant" && (
+            <ChatView
+              userData={userData}
+              activeTasks={tasks.filter(t => !completedTasks.includes(t.id))}
             />
           )}
 
@@ -255,6 +264,7 @@ function App() {
               onLogout={logout}
             />
           )}
+
         </div>
 
         {/* Modals */}

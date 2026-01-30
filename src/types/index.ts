@@ -69,7 +69,7 @@ export interface UserFile {
   created_at: string;
 }
 
-export type Theme = 'light' | 'dark' | 'neutral';
+export type Theme = 'light' | 'dark';
 export type View = 'login' | 'register' | 'recovery' | 'app';
 export type TabType = 'home' | 'tasks' | 'portfolio' | 'news' | 'menu' | 'assistant'; // Added 'assistant'
 
@@ -95,5 +95,7 @@ export interface AIContext {
   activeTasks: Task[];
   unreadNewsCount: number;
   currentView: string;
+  location?: string;
+  preferences?: Record<string, any>;
 }
 

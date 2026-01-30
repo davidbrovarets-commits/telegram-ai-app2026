@@ -1,27 +1,26 @@
-import { getVertexAI, getGenerativeModel, GenerativeModel } from "firebase/vertexai-preview";
+import { getAI, VertexAIBackend, getGenerativeModel, GenerativeModel } from "firebase/ai";
 import { app } from "../../firebaseConfig";
 import type { ChatMessage, AIContext } from '../../types';
 
 export interface AIServiceConfig {
-    // Legacy apiKey support not strictly needed for Vertex AI via Firebase, 
-    // but keeping config interface structure for compatibility if needed.
     model?: string;
 }
 
 export class AIService {
-    private modelIdentifier: string;
     private genModel: GenerativeModel | null = null;
+    private modelIdentifier: string;
 
     constructor(config: AIServiceConfig = {}) {
-        // Use the user-requested model or fallback
         this.modelIdentifier = config.model || 'gemini-3-pro-preview';
 
         try {
-            // Initialize Vertex AI service
-            const vertexAI = getVertexAI(app);
+            // Initialize Vertex AI service with new API (Firebase v12.8+)
+            const ai = getAI(app, {
+                backend: new VertexAIBackend('europe-west1')
+            });
 
             // Initialize the generative model
-            this.genModel = getGenerativeModel(vertexAI, {
+            this.genModel = getGenerativeModel(ai, {
                 model: this.modelIdentifier,
                 safetySettings: [
                     {
@@ -35,9 +34,26 @@ export class AIService {
         }
     }
 
-    /**
-     * Sends a message to the AI and returns the response.
-     */
+    private createSystemPrompt(context: AIContext): string {
+        const today = new Date().toISOString().split('T')[0];
+        const tasks = context.activeTasks ? context.activeTasks.map(t => `- [${t.title}] (${t.price} 💎)`).join('\n') : "No active tasks.";
+        const location = context.location || context.userProfile?.city || 'Unknown';
+
+        return `
+You are a helpful AI assistant for the 'Telegram AI App'.
+IDENTITY: You are Gemini 3 Pro, a large language model trained by Google. You are NOT ChatGPT.
+Current Date: ${today}
+User Location: ${location}
+User Context:
+- Name: ${context.userProfile?.name || 'User'}
+- Credits: ${context.userProfile?.credits || 0} 💎
+- Tasks:
+${tasks}
+
+Goal: Be helpful, concise, and friendly. Answer in the same language as the user (default Estonian).
+`;
+    }
+
     async sendMessage(
         history: ChatMessage[],
         context: AIContext,
@@ -53,18 +69,11 @@ export class AIService {
         try {
             const systemPrompt = this.createSystemPrompt(context);
 
-            // Vertex AI via Firebase uses 'startChat' or 'generateContent'.
-            // For history, startChat is best.
-            // Convert our simplified ChatMessage[] to Vertex AI Content format if needed,
-            // or just use the history directly if the SDK supports 'role: user|model'.
-            // Note: OpenAI uses 'assistant', Gemini uses 'model'.
-
             const vertexHistory = history.slice(0, -1).map(m => ({
-                role: m.role === 'assistant' ? 'model' : 'user',
+                role: (m.role === 'assistant' ? 'model' : 'user') as 'model' | 'user',
                 parts: [{ text: m.content }]
             }));
 
-            // The last message is the new user prompt
             const lastMsg = history[history.length - 1];
             const prompt = lastMsg.content;
 
@@ -84,7 +93,6 @@ export class AIService {
 
         } catch (error: any) {
             console.error("Vertex AI Error:", error);
-            // Fallback mock if completely failed?
             if (error.message?.includes("403") || error.message?.includes("API key")) {
                 return "Viga: Ligipääs keelatud. Kontrolli Firebase/Google Cloud õigusi.";
             }
@@ -92,34 +100,20 @@ export class AIService {
         }
     }
 
-    /**
-     * Analyzes an image (document) using Gemini Vision capabilities.
-     * @param imageUrl Public URL or Base64 data of the image
-     */
-    async analyzeImage(imageUrl: string): Promise<string> {
-        if (!this.genModel) {
-            return "Viga: Vertex AI ei tööta.";
-        }
+    async analyzeImage(imageUrl: string, prompt: string = "Analyze this image"): Promise<string> {
+        if (!this.genModel) return "AI Service not initialized";
 
         try {
-            console.log("👁️ AI Vision: Analyzing image...");
-
-            // For images, we can use the same model (gemini-pro/1.5/3 are multimodal).
-            // Fetch the image to get base64 if it's a URL, or expect base64.
-            // The SDK often handles base64.
-
-            // Simple approach: Assume imageUrl is base64 data URI?
-            // If it's a URL, we might need to fetch it first.
-            // Let's implement a quick fetcher if it's http.
-
             let inlineData;
+
             if (imageUrl.startsWith('data:')) {
+                // Handle Base64 Data URI
                 const base64 = imageUrl.split(',')[1];
                 const mimeType = imageUrl.split(';')[0].split(':')[1];
                 inlineData = { inlineData: { data: base64, mimeType } };
             } else {
-                // Fetch URL
-                // Note: CORS might be an issue for external URLs.
+                // Fetch URL and convert to base64
+                // Note: CORS might block this in browser if not same-origin or allowed
                 const resp = await fetch(imageUrl);
                 const blob = await resp.blob();
                 const base64 = await new Promise<string>((resolve) => {
@@ -131,36 +125,16 @@ export class AIService {
                 inlineData = { inlineData: { data: realBase64, mimeType: blob.type } };
             }
 
-            const prompt = "Analyze this document image. Summarize key points (Dates, Amounts, Actions). Respond in Ukrainian.";
-
             const result = await this.genModel.generateContent([
                 prompt,
                 inlineData
             ]);
-
             return result.response.text();
 
-        } catch (error: any) {
-            console.error("AI Vision Error:", error);
-            return "Vabandust, pildi analüüs ebaõnnestus.";
+        } catch (e: any) {
+            console.error("AI Vision Error:", e);
+            return "Viga pildi analüüsimisel: " + e.message;
         }
-    }
-
-    private createSystemPrompt(context: AIContext): string {
-        const tasks = context.activeTasks.map(t => `- [${t.title}] (${t.price} 💎)`).join('\n');
-
-        return `You are a helpful personal assistant for ${context.userProfile.name} living in ${context.userProfile.city}.
-        
-        CURRENT CONTEXT:
-        - Credits: ${context.userProfile.credits} 💎
-        - Active Tasks (${context.activeTasks.length}):
-        ${tasks}
-
-        GUIDELINES:
-        - Answer in the same language as the user (mostly Estonian).
-        - Be concise, friendly, and helpful.
-        - You have access to the user's tasks and portfolio data context.
-        - Encourage completing tasks to earn gems.`;
     }
 }
 

@@ -463,3 +463,16 @@ export const CHEMNITZ_PACKAGE = createCityPackage(
         appointments: 'https://termin.chemnitz.de/'
     }
 );
+
+// BRAUNSCHWEIG (Niedersachsen)
+export const BRAUNSCHWEIG_PACKAGE = createCityPackage(
+    'Braunschweig',
+    'BS',
+    'Niedersachsen',
+    {
+        jobcenter: 'https://www.jobcenter-braunschweig.de/',
+        immigration: 'https://www.braunschweig.de/auslaenderbehoerde',
+        ukraineHelp: 'https://www.braunschweig.de/ukraine',
+        appointments: 'https://termin.braunschweig.de/'
+    }
+);

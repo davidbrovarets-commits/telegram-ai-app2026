@@ -1,9 +1,9 @@
 {
-    "index_version": "v1.0",
+    "index_version": "v1.5",
     "country": "DE",
     "scope": "CITY",
     "content_language": "ua",
-    "total_cities": 20,
+    "total_cities": 25,
     "packages": [
         {
             "city": "Leipzig",
@@ -143,6 +143,41 @@
             "land": "Bayern",
             "city_code": "AGB",
             "package_id": "city_AGB",
+            "status": "active"
+        },
+        {
+            "city": "Potsdam",
+            "land": "Brandenburg",
+            "city_code": "POT",
+            "package_id": "city_POT",
+            "status": "active"
+        },
+        {
+            "city": "Schwerin",
+            "land": "Mecklenburg-Vorpommern",
+            "city_code": "SZW",
+            "package_id": "city_SZW",
+            "status": "active"
+        },
+        {
+            "city": "Magdeburg",
+            "land": "Sachsen-Anhalt",
+            "city_code": "MD",
+            "package_id": "city_MD",
+            "status": "active"
+        },
+        {
+            "city": "Kiel",
+            "land": "Schleswig-Holstein",
+            "city_code": "KEL",
+            "package_id": "city_KEL",
+            "status": "active"
+        },
+        {
+            "city": "Wiesbaden",
+            "land": "Hessen",
+            "city_code": "WIE",
+            "package_id": "city_WIE",
             "status": "active"
         }
     ]

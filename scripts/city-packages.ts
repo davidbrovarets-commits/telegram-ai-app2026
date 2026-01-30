@@ -346,3 +346,68 @@ export const AUGSBURG_PACKAGE = createCityPackage(
         appointments: 'https://termine.augsburg.de/'
     }
 );
+
+// POTSDAM (Brandenburg)
+export const POTSDAM_PACKAGE = createCityPackage(
+    'Potsdam',
+    'POT',
+    'Brandenburg',
+    {
+        jobcenter: 'https://jobcenter-potsdam.de/',
+        immigration: 'https://www.potsdam.de/auslaenderbehoerde',
+        ukraineHelp: 'https://www.potsdam.de/ukraine',
+        appointments: 'https://termine.potsdam.de/'
+    }
+);
+
+// SCHWERIN (Mecklenburg-Vorpommern)
+export const SCHWERIN_PACKAGE = createCityPackage(
+    'Schwerin',
+    'SZW',
+    'Mecklenburg-Vorpommern',
+    {
+        jobcenter: 'https://www.jobcenter-schwerin.de/',
+        immigration: 'https://www.schwerin.de/auslaenderbehoerde',
+        ukraineHelp: 'https://www.schwerin.de/ukraine',
+        appointments: 'https://termin.schwerin.de/'
+    }
+);
+
+// MAGDEBURG (Sachsen-Anhalt)
+export const MAGDEBURG_PACKAGE = createCityPackage(
+    'Magdeburg',
+    'MD',
+    'Sachsen-Anhalt',
+    {
+        jobcenter: 'https://www.jobcenter-magdeburg.de/',
+        immigration: 'https://www.magdeburg.de/auslaenderbehoerde',
+        ukraineHelp: 'https://www.magdeburg.de/ukraine',
+        appointments: 'https://termine.magdeburg.de/'
+    }
+);
+
+// KIEL (Schleswig-Holstein)
+export const KIEL_PACKAGE = createCityPackage(
+    'Kiel',
+    'KEL',
+    'Schleswig-Holstein',
+    {
+        jobcenter: 'https://www.jobcenter-kiel.de/',
+        immigration: 'https://www.kiel.de/auslaenderbehoerde',
+        ukraineHelp: 'https://www.kiel.de/ukraine',
+        appointments: 'https://termin.kiel.de/'
+    }
+);
+
+// WIESBADEN (Hessen)
+export const WIESBADEN_PACKAGE = createCityPackage(
+    'Wiesbaden',
+    'WIE',
+    'Hessen',
+    {
+        jobcenter: 'https://www.jobcenter-wiesbaden.de/',
+        immigration: 'https://www.wiesbaden.de/auslaenderbehoerde',
+        ukraineHelp: 'https://www.wiesbaden.de/ukraine',
+        appointments: 'https://termin.wiesbaden.de/'
+    }
+);

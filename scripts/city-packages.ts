@@ -489,3 +489,16 @@ export const REGENSBURG_PACKAGE = createCityPackage(
         appointments: 'https://termin.regensburg.de/'
     }
 );
+
+// FREIBURG IM BREISGAU (Baden-Württemberg)
+export const FREIBURG_PACKAGE = createCityPackage(
+    'Freiburg im Breisgau',
+    'FRB',
+    'Baden-Württemberg',
+    {
+        jobcenter: 'https://www.jobcenter-freiburg.de/',
+        immigration: 'https://www.freiburg.de/auslaenderbehoerde',
+        ukraineHelp: 'https://www.freiburg.de/ukraine',
+        appointments: 'https://termine.freiburg.de/'
+    }
+);

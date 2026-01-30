@@ -1,9 +1,9 @@
 {
-    "index_version": "v1.11",
+    "index_version": "v1.12",
     "country": "DE",
     "scope": "CITY",
     "content_language": "ua",
-    "total_cities": 31,
+    "total_cities": 32,
     "packages": [
         {
             "city": "Leipzig",
@@ -220,6 +220,13 @@
             "land": "Bayern",
             "city_code": "RBG",
             "package_id": "city_RBG",
+            "status": "active"
+        },
+        {
+            "city": "Freiburg im Breisgau",
+            "land": "Baden-Württemberg",
+            "city_code": "FRB",
+            "package_id": "city_FRB",
             "status": "active"
         }
     ]

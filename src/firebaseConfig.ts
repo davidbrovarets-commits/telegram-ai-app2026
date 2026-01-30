@@ -10,4 +10,7 @@ const firebaseConfig = {
     measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
+import { getStorage } from "firebase/storage";
+
 export const app = initializeApp(firebaseConfig);
+export const storage = getStorage(app);

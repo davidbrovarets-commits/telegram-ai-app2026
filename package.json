@@ -13,10 +13,12 @@
     "test:analytics": "tsx scripts/tests/push-analytics.test.ts"
   },
   "dependencies": {
+    "@google-cloud/vertexai": "^1.10.0",
     "@huggingface/inference": "^4.13.11",
     "@supabase/supabase-js": "^2.90.1",
     "cheerio": "^1.2.0",
     "dotenv": "^17.2.3",
+    "firebase": "^12.8.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.0.0",
     "lucide-react": "^0.563.0",

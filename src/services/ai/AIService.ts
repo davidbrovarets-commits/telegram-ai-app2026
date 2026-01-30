@@ -1,30 +1,42 @@
-import OpenAI from 'openai';
+import { getVertexAI, getGenerativeModel, GenerativeModel } from "firebase/vertexai-preview";
+import { app } from "../../firebaseConfig";
 import type { ChatMessage, AIContext } from '../../types';
 
 export interface AIServiceConfig {
-    apiKey?: string;
+    // Legacy apiKey support not strictly needed for Vertex AI via Firebase, 
+    // but keeping config interface structure for compatibility if needed.
     model?: string;
 }
 
 export class AIService {
-    private client: OpenAI | null = null;
-    private model: string;
+    private modelIdentifier: string;
+    private genModel: GenerativeModel | null = null;
 
     constructor(config: AIServiceConfig = {}) {
-        const apiKey = config.apiKey || '';
-        this.model = config.model || 'gpt-4o-mini';
+        // Use the user-requested model or fallback
+        this.modelIdentifier = config.model || 'gemini-3-pro-preview';
 
-        if (apiKey) {
-            this.client = new OpenAI({
-                apiKey: apiKey,
-                dangerouslyAllowBrowser: true // Client-side execution
+        try {
+            // Initialize Vertex AI service
+            const vertexAI = getVertexAI(app);
+
+            // Initialize the generative model
+            this.genModel = getGenerativeModel(vertexAI, {
+                model: this.modelIdentifier,
+                safetySettings: [
+                    {
+                        category: "HARM_CATEGORY_HARASSMENT",
+                        threshold: "BLOCK_MEDIUM_AND_ABOVE"
+                    }
+                ]
             });
+        } catch (e) {
+            console.error("Failed to initialize Vertex AI:", e);
         }
     }
 
     /**
      * Sends a message to the AI and returns the response.
-     * Uses OpenAI if API key is present, otherwise falls back to Mock.
      */
     async sendMessage(
         history: ChatMessage[],
@@ -32,71 +44,105 @@ export class AIService {
         _onStream?: (chunk: string) => void
     ): Promise<string> {
 
-        console.log("🤖 AI Service: Sending message...", { context, lastUserMessage: history[history.length - 1] });
+        console.log("🤖 AI Service (Vertex): Sending message...", { context, lastUserMessage: history[history.length - 1] });
 
-        // 1. FALLBACK TO MOCK IF NO API KEY
-        if (!this.client) {
-            console.warn("⚠️ No API Key found. Using Mock response.");
-            return new Promise((resolve) => {
-                setTimeout(() => {
-                    resolve(`[MOCK GLOBAL] Tere, ${context.userProfile.name}! 👋\n\nMul puudub 'VITE_OPENAI_API_KEY'. Lisa see .env faili, et ma saaksin päriselt mõelda.\n\nSeni näen vaid, et sul on **${context.activeTasks.length}** aktiivset ülesannet.`);
-                }, 1000);
-            });
+        if (!this.genModel) {
+            return "Viga: Google Vertex AI ei ole initsialiseeritud. Kontrolli Firebase seadistust.";
         }
 
-        // 2. REAL OPENAI CALL
         try {
             const systemPrompt = this.createSystemPrompt(context);
 
-            const messages = [
-                { role: 'system' as const, content: systemPrompt },
-                ...history.map(m => ({
-                    role: m.role as 'user' | 'assistant' | 'system',
-                    content: m.content
-                }))
-            ];
+            // Vertex AI via Firebase uses 'startChat' or 'generateContent'.
+            // For history, startChat is best.
+            // Convert our simplified ChatMessage[] to Vertex AI Content format if needed,
+            // or just use the history directly if the SDK supports 'role: user|model'.
+            // Note: OpenAI uses 'assistant', Gemini uses 'model'.
 
-            const completion = await this.client.chat.completions.create({
-                model: this.model,
-                messages: messages,
+            const vertexHistory = history.slice(0, -1).map(m => ({
+                role: m.role === 'assistant' ? 'model' : 'user',
+                parts: [{ text: m.content }]
+            }));
+
+            // The last message is the new user prompt
+            const lastMsg = history[history.length - 1];
+            const prompt = lastMsg.content;
+
+            const chat = this.genModel.startChat({
+                history: [
+                    { role: 'user', parts: [{ text: `SYSTEM INSTRUCTION:\n${systemPrompt}` }] },
+                    { role: 'model', parts: [{ text: "Arusaadav. Olen valmis aitama." }] },
+                    ...vertexHistory
+                ]
             });
 
-            return completion.choices[0].message.content || "Vabandust, ma ei saanud vastust.";
+            const result = await chat.sendMessage(prompt);
+            const response = result.response;
+            const text = response.text();
 
-        } catch (error) {
-            console.error("OpenAI Error:", error);
-            return "Vabandust, tekkis viga AI ühendusega. Palun kontrolli konsooli.";
+            return text || "Vabandust, tühi vastus.";
+
+        } catch (error: any) {
+            console.error("Vertex AI Error:", error);
+            // Fallback mock if completely failed?
+            if (error.message?.includes("403") || error.message?.includes("API key")) {
+                return "Viga: Ligipääs keelatud. Kontrolli Firebase/Google Cloud õigusi.";
+            }
+            return `Vabandust, tekkis viga: ${error.message}`;
         }
     }
 
     /**
-     * Analyzes an image (document) using GPT-4o-mini Vision capabilities.
+     * Analyzes an image (document) using Gemini Vision capabilities.
      * @param imageUrl Public URL or Base64 data of the image
      */
     async analyzeImage(imageUrl: string): Promise<string> {
-        if (!this.client) {
-            return "⚠️ [MOCK] Pildianalüüs nõuab toimivat OpenAI võtit (.env).";
+        if (!this.genModel) {
+            return "Viga: Vertex AI ei tööta.";
         }
 
         try {
             console.log("👁️ AI Vision: Analyzing image...");
-            const response = await this.client.chat.completions.create({
-                model: this.model, // gpt-4o-mini supports vision
-                messages: [
-                    {
-                        role: "user",
-                        content: [
-                            { type: "text", text: "Analyze this document image. Summarize key points (Dates, Amounts, Actions). Respond in Ukrainian. FORMATTING RULES:\n- Do NOT use numbered lists for main sections (No '1.', '2.').\n- Use '## ' for Section Headers (e.g. '## Dates').\n- Use bullet points ('- ') for details.\n- Make headers bold." },
-                            { type: "image_url", image_url: { url: imageUrl } }
-                        ],
-                    },
-                ],
-            });
 
-            return response.choices[0].message.content || "Viga: Tühi vastus.";
-        } catch (error) {
+            // For images, we can use the same model (gemini-pro/1.5/3 are multimodal).
+            // Fetch the image to get base64 if it's a URL, or expect base64.
+            // The SDK often handles base64.
+
+            // Simple approach: Assume imageUrl is base64 data URI?
+            // If it's a URL, we might need to fetch it first.
+            // Let's implement a quick fetcher if it's http.
+
+            let inlineData;
+            if (imageUrl.startsWith('data:')) {
+                const base64 = imageUrl.split(',')[1];
+                const mimeType = imageUrl.split(';')[0].split(':')[1];
+                inlineData = { inlineData: { data: base64, mimeType } };
+            } else {
+                // Fetch URL
+                // Note: CORS might be an issue for external URLs.
+                const resp = await fetch(imageUrl);
+                const blob = await resp.blob();
+                const base64 = await new Promise<string>((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result as string);
+                    reader.readAsDataURL(blob);
+                });
+                const realBase64 = base64.split(',')[1];
+                inlineData = { inlineData: { data: realBase64, mimeType: blob.type } };
+            }
+
+            const prompt = "Analyze this document image. Summarize key points (Dates, Amounts, Actions). Respond in Ukrainian.";
+
+            const result = await this.genModel.generateContent([
+                prompt,
+                inlineData
+            ]);
+
+            return result.response.text();
+
+        } catch (error: any) {
             console.error("AI Vision Error:", error);
-            return "Vabandust, pildi analüüs ebaõnnestus. Veendu, et fail on avalikult kättesaadav või korrektne.";
+            return "Vabandust, pildi analüüs ebaõnnestus.";
         }
     }
 
@@ -118,6 +164,4 @@ export class AIService {
     }
 }
 
-export const aiService = new AIService({
-    apiKey: import.meta.env.VITE_OPENAI_API_KEY
-});
+export const aiService = new AIService();

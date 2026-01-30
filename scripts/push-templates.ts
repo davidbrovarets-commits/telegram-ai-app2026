@@ -191,6 +191,8 @@ export function generateCityPush(
 // ANTI-NOISE RULES
 // =============================================
 
+import { checkRateLimit, recordHighPush } from './rate-limiter';
+
 export interface DedupeRecord {
     dedupeGroup: string;
     lastPushHash: string;
@@ -198,30 +200,40 @@ export interface DedupeRecord {
 }
 
 /**
- * Checks if a push should be sent based on anti-noise rules
+ * Checks if a push should be sent based on anti-noise rules.
+ * Now async to support Supabase rate limiting.
  */
-export function shouldSendPush(
+export async function shouldSendPush(
+    user_hash: string,
+    priority: 'HIGH' | 'MEDIUM' | 'LOW',
     dedupeGroup: string,
     contentHash: string,
     deadline: Date | null,
     existingRecords: DedupeRecord[]
-): { send: boolean; reason?: string } {
+): Promise<{ send: boolean; reason?: string }> {
+    // Rule 1: Check rate limit (max 2 HIGH / 24h) - NOW ASYNC
+    const rateLimitCheck = await checkRateLimit(user_hash, priority);
+    if (!rateLimitCheck.allowed) {
+        return { send: false, reason: rateLimitCheck.reason };
+    }
+
     const existing = existingRecords.find(r => r.dedupeGroup === dedupeGroup);
 
-    // Rule: Do NOT resend identical message
+    // Rule 2: Do NOT resend identical message
     if (existing && existing.lastPushHash === contentHash) {
         return { send: false, reason: 'Identical message already sent' };
     }
 
-    // Rule: Do NOT send after deadline passed
+    // Rule 3: Do NOT send after deadline passed
     if (deadline && deadline < new Date()) {
         return { send: false, reason: 'Deadline has passed' };
     }
 
-    // Rule: One push per dedupe_group (rate limit check would go here)
-
-    return { send: true };
+    return { send: true, reason: rateLimitCheck.reason };
 }
+
+// Export recordHighPush for use after successful push
+export { recordHighPush };
 
 // =============================================
 // EXAMPLE USAGE

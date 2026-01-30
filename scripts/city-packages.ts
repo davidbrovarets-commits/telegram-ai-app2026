@@ -1,11 +1,12 @@
 /**
- * CITY SOURCE PACKAGE TEMPLATE v1
+ * CITY SOURCE PACKAGE TEMPLATE v2
  * 
  * Helper to configure CITY-level source packages.
- * Enforces strict structure: Jobcenter, Immigration, Help, Appointments.
+ * Now includes automatic NEWS_HUB injection (5th source) for all cities.
  */
 
 import type { SourceConfig } from './config';
+import { generateCityNewsHub } from './news-hub-template';
 
 export function createCityPackage(
     cityName: string,
@@ -19,6 +20,14 @@ export function createCityPackage(
     }
 ): SourceConfig[] {
     const code = cityCode.toLowerCase();
+
+    // Generate NEWS_HUB source for this city
+    const newsHubSource = generateCityNewsHub({
+        name: cityName,
+        code: cityCode,
+        land: landName,
+        package_id: `city_${code}`
+    });
 
     return [
         // SOURCE 1: JOBCENTER (CITY)
@@ -79,7 +88,11 @@ export function createCityPackage(
             dedupe_group: `city_${code}_termine`,
             parser_notes: 'Appointment availability changes. HIGH push when slots open or rules change.',
             enabled: true
-        }
+        },
+
+        // SOURCE 5: NEWS_HUB (AUTO-INJECTED FOR ALL CITIES)
+        // Web search-based discovery with action filtering
+        newsHubSource as SourceConfig
     ];
 }
 

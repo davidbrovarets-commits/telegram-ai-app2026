@@ -1,0 +1,5018 @@
+{
+  "LEJ": {
+    "source_id": "city_lej_news_hub",
+    "source_name": "Leipzig — News Hub (Action Filter)",
+    "scope": "CITY",
+    "geo": {
+      "country": "DE",
+      "land": "Sachsen",
+      "city": "Leipzig"
+    },
+    "mode": "DISCOVER_AND_FILTER",
+    "base_url": "https://www.google.com/search?q=Leipzig%20Ukraine",
+    "discovery": {
+      "provider": "WEB_SEARCH",
+      "max_results": 25,
+      "queries": [
+        "Leipzig Stadt Ukraine Inform ationen",
+        "Leipzig Ukraine Hilfe Aufenthalt §24",
+        "Leipzig Migration Integration Gefluechtete",
+        "Leipzig Auslaenderbehoerde Termin §24",
+        "Leipzig Jobcenter Termin Unterlagen Frist",
+        "Leipzig Aufenthaltstitel Verlaengerung Termin",
+        "Leipzig Leistungszahlung eingestellt Jobcenter",
+        "Leipzig Vorsprache erforderlich Unterlagen"
+      ],
+      "city_slug": "leipzig"
+    },
+    "allowlist": {
+      "url_must_match_any": [
+        ".*\\bleipzig\\b.*\\.de/.*",
+        ".*stadt\\..*\\.de/.*",
+        ".*rathaus.*",
+        ".*buergerservice.*",
+        ".*service-portal.*",
+        ".*termin.*",
+        ".*auslaender.*",
+        ".*jobcenter.*"
+      ],
+      "reject_if_match_any": [
+        ".*veranstalt.*",
+        ".*event.*",
+        ".*kultur.*",
+        ".*sport.*",
+        ".*tourismus.*",
+        ".*pressefoto.*"
+      ]
+    },
+    "filters": {
+      "keywords_any": {
+        "de_en": [
+          "ukraine",
+          "ukrain",
+          "gefluecht",
+          "flucht",
+          "geflücht",
+          "migration",
+          "integration",
+          "aufenthalt",
+          "aufenthaltstitel",
+          "§24",
+          "paragraf 24",
+          "auslaenderbehoerde",
+          "ausländerbehörde",
+          "jobcenter",
+          "buergergeld",
+          "bürgergeld",
+          "unterkunft",
+          "termin",
+          "frist",
+          "unterlagen",
+          "vorsprache",
+          "pflicht",
+          "zahlung",
+          "eingestellt"
+        ],
+        "ua": [
+          "україн",
+          "біжен",
+          "міграц",
+          "інтеграц",
+          "документ",
+          "термін",
+          "запис",
+          "прийом",
+          "довідк",
+          "виплат",
+          "припинен",
+          "обов"
+        ]
+      },
+      "action_triggers_any": [
+        "frist",
+        "spätestens",
+        "spaetestens",
+        "bis zum",
+        "deadline",
+        "unterlagen",
+        "nachweis",
+        "mitbringen",
+        "termin",
+        "online buchen",
+        "buchung",
+        "terminvereinbarung",
+        "vorsprache",
+        "persönlich",
+        "persoenlich",
+        "pflicht",
+        "zahlung",
+        "eingestellt",
+        "stopp",
+        "rückforderung",
+        "rueckforderung"
+      ],
+      "action_strength_rules": [
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "strong"
+          },
+          "then": {
+            "priority": "HIGH",
+            "push": "ALLOW"
+          }
+        },
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "weak_or_none"
+          },
+          "then": {
+            "priority": "MEDIUM",
+            "push": "BLOCK"
+          }
+        }
+      ]
+    },
+    "default_topics": [
+      "ukraine",
+      "migration",
+      "deadlines",
+      "documents"
+    ],
+    "default_priority": "HIGH",
+    "default_actions": [
+      "deadline",
+      "document_required",
+      "appointment",
+      "info"
+    ],
+    "dedupe_group": "city_lej_news_hub",
+    "parser_notes": "FALLBACK: Web search-based discovery for official city portal content. Filters by Ukraine/migration keywords + action triggers. Strong action→HIGH+push, weak→MEDIUM+no push. Prevents spam via dedupe + rate-limit.",
+    "enabled": true
+  },
+  "MUC": {
+    "source_id": "city_muc_news_hub",
+    "source_name": "München — News Hub (Action Filter)",
+    "scope": "CITY",
+    "geo": {
+      "country": "DE",
+      "land": "Bayern",
+      "city": "München"
+    },
+    "mode": "DISCOVER_AND_FILTER",
+    "base_url": "https://www.google.com/search?q=M%C3%BCnchen%20Ukraine",
+    "discovery": {
+      "provider": "WEB_SEARCH",
+      "max_results": 25,
+      "queries": [
+        "München Stadt Ukraine Inform ationen",
+        "München Ukraine Hilfe Aufenthalt §24",
+        "München Migration Integration Gefluechtete",
+        "München Auslaenderbehoerde Termin §24",
+        "München Jobcenter Termin Unterlagen Frist",
+        "München Aufenthaltstitel Verlaengerung Termin",
+        "München Leistungszahlung eingestellt Jobcenter",
+        "München Vorsprache erforderlich Unterlagen"
+      ],
+      "city_slug": "muenchen"
+    },
+    "allowlist": {
+      "url_must_match_any": [
+        ".*\\bmuenchen\\b.*\\.de/.*",
+        ".*stadt\\..*\\.de/.*",
+        ".*rathaus.*",
+        ".*buergerservice.*",
+        ".*service-portal.*",
+        ".*termin.*",
+        ".*auslaender.*",
+        ".*jobcenter.*"
+      ],
+      "reject_if_match_any": [
+        ".*veranstalt.*",
+        ".*event.*",
+        ".*kultur.*",
+        ".*sport.*",
+        ".*tourismus.*",
+        ".*pressefoto.*"
+      ]
+    },
+    "filters": {
+      "keywords_any": {
+        "de_en": [
+          "ukraine",
+          "ukrain",
+          "gefluecht",
+          "flucht",
+          "geflücht",
+          "migration",
+          "integration",
+          "aufenthalt",
+          "aufenthaltstitel",
+          "§24",
+          "paragraf 24",
+          "auslaenderbehoerde",
+          "ausländerbehörde",
+          "jobcenter",
+          "buergergeld",
+          "bürgergeld",
+          "unterkunft",
+          "termin",
+          "frist",
+          "unterlagen",
+          "vorsprache",
+          "pflicht",
+          "zahlung",
+          "eingestellt"
+        ],
+        "ua": [
+          "україн",
+          "біжен",
+          "міграц",
+          "інтеграц",
+          "документ",
+          "термін",
+          "запис",
+          "прийом",
+          "довідк",
+          "виплат",
+          "припинен",
+          "обов"
+        ]
+      },
+      "action_triggers_any": [
+        "frist",
+        "spätestens",
+        "spaetestens",
+        "bis zum",
+        "deadline",
+        "unterlagen",
+        "nachweis",
+        "mitbringen",
+        "termin",
+        "online buchen",
+        "buchung",
+        "terminvereinbarung",
+        "vorsprache",
+        "persönlich",
+        "persoenlich",
+        "pflicht",
+        "zahlung",
+        "eingestellt",
+        "stopp",
+        "rückforderung",
+        "rueckforderung"
+      ],
+      "action_strength_rules": [
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "strong"
+          },
+          "then": {
+            "priority": "HIGH",
+            "push": "ALLOW"
+          }
+        },
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "weak_or_none"
+          },
+          "then": {
+            "priority": "MEDIUM",
+            "push": "BLOCK"
+          }
+        }
+      ]
+    },
+    "default_topics": [
+      "ukraine",
+      "migration",
+      "deadlines",
+      "documents"
+    ],
+    "default_priority": "HIGH",
+    "default_actions": [
+      "deadline",
+      "document_required",
+      "appointment",
+      "info"
+    ],
+    "dedupe_group": "city_muc_news_hub",
+    "parser_notes": "FALLBACK: Web search-based discovery for official city portal content. Filters by Ukraine/migration keywords + action triggers. Strong action→HIGH+push, weak→MEDIUM+no push. Prevents spam via dedupe + rate-limit.",
+    "enabled": true
+  },
+  "CGN": {
+    "source_id": "city_cgn_news_hub",
+    "source_name": "Köln — News Hub (Action Filter)",
+    "scope": "CITY",
+    "geo": {
+      "country": "DE",
+      "land": "Nordrhein-Westfalen",
+      "city": "Köln"
+    },
+    "mode": "DISCOVER_AND_FILTER",
+    "base_url": "https://www.google.com/search?q=K%C3%B6ln%20Ukraine",
+    "discovery": {
+      "provider": "WEB_SEARCH",
+      "max_results": 25,
+      "queries": [
+        "Köln Stadt Ukraine Inform ationen",
+        "Köln Ukraine Hilfe Aufenthalt §24",
+        "Köln Migration Integration Gefluechtete",
+        "Köln Auslaenderbehoerde Termin §24",
+        "Köln Jobcenter Termin Unterlagen Frist",
+        "Köln Aufenthaltstitel Verlaengerung Termin",
+        "Köln Leistungszahlung eingestellt Jobcenter",
+        "Köln Vorsprache erforderlich Unterlagen"
+      ],
+      "city_slug": "koeln"
+    },
+    "allowlist": {
+      "url_must_match_any": [
+        ".*\\bkoeln\\b.*\\.de/.*",
+        ".*stadt\\..*\\.de/.*",
+        ".*rathaus.*",
+        ".*buergerservice.*",
+        ".*service-portal.*",
+        ".*termin.*",
+        ".*auslaender.*",
+        ".*jobcenter.*"
+      ],
+      "reject_if_match_any": [
+        ".*veranstalt.*",
+        ".*event.*",
+        ".*kultur.*",
+        ".*sport.*",
+        ".*tourismus.*",
+        ".*pressefoto.*"
+      ]
+    },
+    "filters": {
+      "keywords_any": {
+        "de_en": [
+          "ukraine",
+          "ukrain",
+          "gefluecht",
+          "flucht",
+          "geflücht",
+          "migration",
+          "integration",
+          "aufenthalt",
+          "aufenthaltstitel",
+          "§24",
+          "paragraf 24",
+          "auslaenderbehoerde",
+          "ausländerbehörde",
+          "jobcenter",
+          "buergergeld",
+          "bürgergeld",
+          "unterkunft",
+          "termin",
+          "frist",
+          "unterlagen",
+          "vorsprache",
+          "pflicht",
+          "zahlung",
+          "eingestellt"
+        ],
+        "ua": [
+          "україн",
+          "біжен",
+          "міграц",
+          "інтеграц",
+          "документ",
+          "термін",
+          "запис",
+          "прийом",
+          "довідк",
+          "виплат",
+          "припинен",
+          "обов"
+        ]
+      },
+      "action_triggers_any": [
+        "frist",
+        "spätestens",
+        "spaetestens",
+        "bis zum",
+        "deadline",
+        "unterlagen",
+        "nachweis",
+        "mitbringen",
+        "termin",
+        "online buchen",
+        "buchung",
+        "terminvereinbarung",
+        "vorsprache",
+        "persönlich",
+        "persoenlich",
+        "pflicht",
+        "zahlung",
+        "eingestellt",
+        "stopp",
+        "rückforderung",
+        "rueckforderung"
+      ],
+      "action_strength_rules": [
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "strong"
+          },
+          "then": {
+            "priority": "HIGH",
+            "push": "ALLOW"
+          }
+        },
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "weak_or_none"
+          },
+          "then": {
+            "priority": "MEDIUM",
+            "push": "BLOCK"
+          }
+        }
+      ]
+    },
+    "default_topics": [
+      "ukraine",
+      "migration",
+      "deadlines",
+      "documents"
+    ],
+    "default_priority": "HIGH",
+    "default_actions": [
+      "deadline",
+      "document_required",
+      "appointment",
+      "info"
+    ],
+    "dedupe_group": "city_cgn_news_hub",
+    "parser_notes": "FALLBACK: Web search-based discovery for official city portal content. Filters by Ukraine/migration keywords + action triggers. Strong action→HIGH+push, weak→MEDIUM+no push. Prevents spam via dedupe + rate-limit.",
+    "enabled": true
+  },
+  "FRA": {
+    "source_id": "city_fra_news_hub",
+    "source_name": "Frankfurt am Main — News Hub (Action Filter)",
+    "scope": "CITY",
+    "geo": {
+      "country": "DE",
+      "land": "Hessen",
+      "city": "Frankfurt am Main"
+    },
+    "mode": "DISCOVER_AND_FILTER",
+    "base_url": "https://www.google.com/search?q=Frankfurt%20am%20Main%20Ukraine",
+    "discovery": {
+      "provider": "WEB_SEARCH",
+      "max_results": 25,
+      "queries": [
+        "Frankfurt am Main Stadt Ukraine Inform ationen",
+        "Frankfurt am Main Ukraine Hilfe Aufenthalt §24",
+        "Frankfurt am Main Migration Integration Gefluechtete",
+        "Frankfurt am Main Auslaenderbehoerde Termin §24",
+        "Frankfurt am Main Jobcenter Termin Unterlagen Frist",
+        "Frankfurt am Main Aufenthaltstitel Verlaengerung Termin",
+        "Frankfurt am Main Leistungszahlung eingestellt Jobcenter",
+        "Frankfurt am Main Vorsprache erforderlich Unterlagen"
+      ],
+      "city_slug": "frankfurt-am-main"
+    },
+    "allowlist": {
+      "url_must_match_any": [
+        ".*\\bfrankfurt-am-main\\b.*\\.de/.*",
+        ".*stadt\\..*\\.de/.*",
+        ".*rathaus.*",
+        ".*buergerservice.*",
+        ".*service-portal.*",
+        ".*termin.*",
+        ".*auslaender.*",
+        ".*jobcenter.*"
+      ],
+      "reject_if_match_any": [
+        ".*veranstalt.*",
+        ".*event.*",
+        ".*kultur.*",
+        ".*sport.*",
+        ".*tourismus.*",
+        ".*pressefoto.*"
+      ]
+    },
+    "filters": {
+      "keywords_any": {
+        "de_en": [
+          "ukraine",
+          "ukrain",
+          "gefluecht",
+          "flucht",
+          "geflücht",
+          "migration",
+          "integration",
+          "aufenthalt",
+          "aufenthaltstitel",
+          "§24",
+          "paragraf 24",
+          "auslaenderbehoerde",
+          "ausländerbehörde",
+          "jobcenter",
+          "buergergeld",
+          "bürgergeld",
+          "unterkunft",
+          "termin",
+          "frist",
+          "unterlagen",
+          "vorsprache",
+          "pflicht",
+          "zahlung",
+          "eingestellt"
+        ],
+        "ua": [
+          "україн",
+          "біжен",
+          "міграц",
+          "інтеграц",
+          "документ",
+          "термін",
+          "запис",
+          "прийом",
+          "довідк",
+          "виплат",
+          "припинен",
+          "обов"
+        ]
+      },
+      "action_triggers_any": [
+        "frist",
+        "spätestens",
+        "spaetestens",
+        "bis zum",
+        "deadline",
+        "unterlagen",
+        "nachweis",
+        "mitbringen",
+        "termin",
+        "online buchen",
+        "buchung",
+        "terminvereinbarung",
+        "vorsprache",
+        "persönlich",
+        "persoenlich",
+        "pflicht",
+        "zahlung",
+        "eingestellt",
+        "stopp",
+        "rückforderung",
+        "rueckforderung"
+      ],
+      "action_strength_rules": [
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "strong"
+          },
+          "then": {
+            "priority": "HIGH",
+            "push": "ALLOW"
+          }
+        },
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "weak_or_none"
+          },
+          "then": {
+            "priority": "MEDIUM",
+            "push": "BLOCK"
+          }
+        }
+      ]
+    },
+    "default_topics": [
+      "ukraine",
+      "migration",
+      "deadlines",
+      "documents"
+    ],
+    "default_priority": "HIGH",
+    "default_actions": [
+      "deadline",
+      "document_required",
+      "appointment",
+      "info"
+    ],
+    "dedupe_group": "city_fra_news_hub",
+    "parser_notes": "FALLBACK: Web search-based discovery for official city portal content. Filters by Ukraine/migration keywords + action triggers. Strong action→HIGH+push, weak→MEDIUM+no push. Prevents spam via dedupe + rate-limit.",
+    "enabled": true
+  },
+  "STR": {
+    "source_id": "city_str_news_hub",
+    "source_name": "Stuttgart — News Hub (Action Filter)",
+    "scope": "CITY",
+    "geo": {
+      "country": "DE",
+      "land": "Baden-Württemberg",
+      "city": "Stuttgart"
+    },
+    "mode": "DISCOVER_AND_FILTER",
+    "base_url": "https://www.google.com/search?q=Stuttgart%20Ukraine",
+    "discovery": {
+      "provider": "WEB_SEARCH",
+      "max_results": 25,
+      "queries": [
+        "Stuttgart Stadt Ukraine Inform ationen",
+        "Stuttgart Ukraine Hilfe Aufenthalt §24",
+        "Stuttgart Migration Integration Gefluechtete",
+        "Stuttgart Auslaenderbehoerde Termin §24",
+        "Stuttgart Jobcenter Termin Unterlagen Frist",
+        "Stuttgart Aufenthaltstitel Verlaengerung Termin",
+        "Stuttgart Leistungszahlung eingestellt Jobcenter",
+        "Stuttgart Vorsprache erforderlich Unterlagen"
+      ],
+      "city_slug": "stuttgart"
+    },
+    "allowlist": {
+      "url_must_match_any": [
+        ".*\\bstuttgart\\b.*\\.de/.*",
+        ".*stadt\\..*\\.de/.*",
+        ".*rathaus.*",
+        ".*buergerservice.*",
+        ".*service-portal.*",
+        ".*termin.*",
+        ".*auslaender.*",
+        ".*jobcenter.*"
+      ],
+      "reject_if_match_any": [
+        ".*veranstalt.*",
+        ".*event.*",
+        ".*kultur.*",
+        ".*sport.*",
+        ".*tourismus.*",
+        ".*pressefoto.*"
+      ]
+    },
+    "filters": {
+      "keywords_any": {
+        "de_en": [
+          "ukraine",
+          "ukrain",
+          "gefluecht",
+          "flucht",
+          "geflücht",
+          "migration",
+          "integration",
+          "aufenthalt",
+          "aufenthaltstitel",
+          "§24",
+          "paragraf 24",
+          "auslaenderbehoerde",
+          "ausländerbehörde",
+          "jobcenter",
+          "buergergeld",
+          "bürgergeld",
+          "unterkunft",
+          "termin",
+          "frist",
+          "unterlagen",
+          "vorsprache",
+          "pflicht",
+          "zahlung",
+          "eingestellt"
+        ],
+        "ua": [
+          "україн",
+          "біжен",
+          "міграц",
+          "інтеграц",
+          "документ",
+          "термін",
+          "запис",
+          "прийом",
+          "довідк",
+          "виплат",
+          "припинен",
+          "обов"
+        ]
+      },
+      "action_triggers_any": [
+        "frist",
+        "spätestens",
+        "spaetestens",
+        "bis zum",
+        "deadline",
+        "unterlagen",
+        "nachweis",
+        "mitbringen",
+        "termin",
+        "online buchen",
+        "buchung",
+        "terminvereinbarung",
+        "vorsprache",
+        "persönlich",
+        "persoenlich",
+        "pflicht",
+        "zahlung",
+        "eingestellt",
+        "stopp",
+        "rückforderung",
+        "rueckforderung"
+      ],
+      "action_strength_rules": [
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "strong"
+          },
+          "then": {
+            "priority": "HIGH",
+            "push": "ALLOW"
+          }
+        },
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "weak_or_none"
+          },
+          "then": {
+            "priority": "MEDIUM",
+            "push": "BLOCK"
+          }
+        }
+      ]
+    },
+    "default_topics": [
+      "ukraine",
+      "migration",
+      "deadlines",
+      "documents"
+    ],
+    "default_priority": "HIGH",
+    "default_actions": [
+      "deadline",
+      "document_required",
+      "appointment",
+      "info"
+    ],
+    "dedupe_group": "city_str_news_hub",
+    "parser_notes": "FALLBACK: Web search-based discovery for official city portal content. Filters by Ukraine/migration keywords + action triggers. Strong action→HIGH+push, weak→MEDIUM+no push. Prevents spam via dedupe + rate-limit.",
+    "enabled": true
+  },
+  "DUS": {
+    "source_id": "city_dus_news_hub",
+    "source_name": "Düsseldorf — News Hub (Action Filter)",
+    "scope": "CITY",
+    "geo": {
+      "country": "DE",
+      "land": "Nordrhein-Westfalen",
+      "city": "Düsseldorf"
+    },
+    "mode": "DISCOVER_AND_FILTER",
+    "base_url": "https://www.google.com/search?q=D%C3%BCsseldorf%20Ukraine",
+    "discovery": {
+      "provider": "WEB_SEARCH",
+      "max_results": 25,
+      "queries": [
+        "Düsseldorf Stadt Ukraine Inform ationen",
+        "Düsseldorf Ukraine Hilfe Aufenthalt §24",
+        "Düsseldorf Migration Integration Gefluechtete",
+        "Düsseldorf Auslaenderbehoerde Termin §24",
+        "Düsseldorf Jobcenter Termin Unterlagen Frist",
+        "Düsseldorf Aufenthaltstitel Verlaengerung Termin",
+        "Düsseldorf Leistungszahlung eingestellt Jobcenter",
+        "Düsseldorf Vorsprache erforderlich Unterlagen"
+      ],
+      "city_slug": "duesseldorf"
+    },
+    "allowlist": {
+      "url_must_match_any": [
+        ".*\\bduesseldorf\\b.*\\.de/.*",
+        ".*stadt\\..*\\.de/.*",
+        ".*rathaus.*",
+        ".*buergerservice.*",
+        ".*service-portal.*",
+        ".*termin.*",
+        ".*auslaender.*",
+        ".*jobcenter.*"
+      ],
+      "reject_if_match_any": [
+        ".*veranstalt.*",
+        ".*event.*",
+        ".*kultur.*",
+        ".*sport.*",
+        ".*tourismus.*",
+        ".*pressefoto.*"
+      ]
+    },
+    "filters": {
+      "keywords_any": {
+        "de_en": [
+          "ukraine",
+          "ukrain",
+          "gefluecht",
+          "flucht",
+          "geflücht",
+          "migration",
+          "integration",
+          "aufenthalt",
+          "aufenthaltstitel",
+          "§24",
+          "paragraf 24",
+          "auslaenderbehoerde",
+          "ausländerbehörde",
+          "jobcenter",
+          "buergergeld",
+          "bürgergeld",
+          "unterkunft",
+          "termin",
+          "frist",
+          "unterlagen",
+          "vorsprache",
+          "pflicht",
+          "zahlung",
+          "eingestellt"
+        ],
+        "ua": [
+          "україн",
+          "біжен",
+          "міграц",
+          "інтеграц",
+          "документ",
+          "термін",
+          "запис",
+          "прийом",
+          "довідк",
+          "виплат",
+          "припинен",
+          "обов"
+        ]
+      },
+      "action_triggers_any": [
+        "frist",
+        "spätestens",
+        "spaetestens",
+        "bis zum",
+        "deadline",
+        "unterlagen",
+        "nachweis",
+        "mitbringen",
+        "termin",
+        "online buchen",
+        "buchung",
+        "terminvereinbarung",
+        "vorsprache",
+        "persönlich",
+        "persoenlich",
+        "pflicht",
+        "zahlung",
+        "eingestellt",
+        "stopp",
+        "rückforderung",
+        "rueckforderung"
+      ],
+      "action_strength_rules": [
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "strong"
+          },
+          "then": {
+            "priority": "HIGH",
+            "push": "ALLOW"
+          }
+        },
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "weak_or_none"
+          },
+          "then": {
+            "priority": "MEDIUM",
+            "push": "BLOCK"
+          }
+        }
+      ]
+    },
+    "default_topics": [
+      "ukraine",
+      "migration",
+      "deadlines",
+      "documents"
+    ],
+    "default_priority": "HIGH",
+    "default_actions": [
+      "deadline",
+      "document_required",
+      "appointment",
+      "info"
+    ],
+    "dedupe_group": "city_dus_news_hub",
+    "parser_notes": "FALLBACK: Web search-based discovery for official city portal content. Filters by Ukraine/migration keywords + action triggers. Strong action→HIGH+push, weak→MEDIUM+no push. Prevents spam via dedupe + rate-limit.",
+    "enabled": true
+  },
+  "DTM": {
+    "source_id": "city_dtm_news_hub",
+    "source_name": "Dortmund — News Hub (Action Filter)",
+    "scope": "CITY",
+    "geo": {
+      "country": "DE",
+      "land": "Nordrhein-Westfalen",
+      "city": "Dortmund"
+    },
+    "mode": "DISCOVER_AND_FILTER",
+    "base_url": "https://www.google.com/search?q=Dortmund%20Ukraine",
+    "discovery": {
+      "provider": "WEB_SEARCH",
+      "max_results": 25,
+      "queries": [
+        "Dortmund Stadt Ukraine Inform ationen",
+        "Dortmund Ukraine Hilfe Aufenthalt §24",
+        "Dortmund Migration Integration Gefluechtete",
+        "Dortmund Auslaenderbehoerde Termin §24",
+        "Dortmund Jobcenter Termin Unterlagen Frist",
+        "Dortmund Aufenthaltstitel Verlaengerung Termin",
+        "Dortmund Leistungszahlung eingestellt Jobcenter",
+        "Dortmund Vorsprache erforderlich Unterlagen"
+      ],
+      "city_slug": "dortmund"
+    },
+    "allowlist": {
+      "url_must_match_any": [
+        ".*\\bdortmund\\b.*\\.de/.*",
+        ".*stadt\\..*\\.de/.*",
+        ".*rathaus.*",
+        ".*buergerservice.*",
+        ".*service-portal.*",
+        ".*termin.*",
+        ".*auslaender.*",
+        ".*jobcenter.*"
+      ],
+      "reject_if_match_any": [
+        ".*veranstalt.*",
+        ".*event.*",
+        ".*kultur.*",
+        ".*sport.*",
+        ".*tourismus.*",
+        ".*pressefoto.*"
+      ]
+    },
+    "filters": {
+      "keywords_any": {
+        "de_en": [
+          "ukraine",
+          "ukrain",
+          "gefluecht",
+          "flucht",
+          "geflücht",
+          "migration",
+          "integration",
+          "aufenthalt",
+          "aufenthaltstitel",
+          "§24",
+          "paragraf 24",
+          "auslaenderbehoerde",
+          "ausländerbehörde",
+          "jobcenter",
+          "buergergeld",
+          "bürgergeld",
+          "unterkunft",
+          "termin",
+          "frist",
+          "unterlagen",
+          "vorsprache",
+          "pflicht",
+          "zahlung",
+          "eingestellt"
+        ],
+        "ua": [
+          "україн",
+          "біжен",
+          "міграц",
+          "інтеграц",
+          "документ",
+          "термін",
+          "запис",
+          "прийом",
+          "довідк",
+          "виплат",
+          "припинен",
+          "обов"
+        ]
+      },
+      "action_triggers_any": [
+        "frist",
+        "spätestens",
+        "spaetestens",
+        "bis zum",
+        "deadline",
+        "unterlagen",
+        "nachweis",
+        "mitbringen",
+        "termin",
+        "online buchen",
+        "buchung",
+        "terminvereinbarung",
+        "vorsprache",
+        "persönlich",
+        "persoenlich",
+        "pflicht",
+        "zahlung",
+        "eingestellt",
+        "stopp",
+        "rückforderung",
+        "rueckforderung"
+      ],
+      "action_strength_rules": [
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "strong"
+          },
+          "then": {
+            "priority": "HIGH",
+            "push": "ALLOW"
+          }
+        },
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "weak_or_none"
+          },
+          "then": {
+            "priority": "MEDIUM",
+            "push": "BLOCK"
+          }
+        }
+      ]
+    },
+    "default_topics": [
+      "ukraine",
+      "migration",
+      "deadlines",
+      "documents"
+    ],
+    "default_priority": "HIGH",
+    "default_actions": [
+      "deadline",
+      "document_required",
+      "appointment",
+      "info"
+    ],
+    "dedupe_group": "city_dtm_news_hub",
+    "parser_notes": "FALLBACK: Web search-based discovery for official city portal content. Filters by Ukraine/migration keywords + action triggers. Strong action→HIGH+push, weak→MEDIUM+no push. Prevents spam via dedupe + rate-limit.",
+    "enabled": true
+  },
+  "ESS": {
+    "source_id": "city_ess_news_hub",
+    "source_name": "Essen — News Hub (Action Filter)",
+    "scope": "CITY",
+    "geo": {
+      "country": "DE",
+      "land": "Nordrhein-Westfalen",
+      "city": "Essen"
+    },
+    "mode": "DISCOVER_AND_FILTER",
+    "base_url": "https://www.google.com/search?q=Essen%20Ukraine",
+    "discovery": {
+      "provider": "WEB_SEARCH",
+      "max_results": 25,
+      "queries": [
+        "Essen Stadt Ukraine Inform ationen",
+        "Essen Ukraine Hilfe Aufenthalt §24",
+        "Essen Migration Integration Gefluechtete",
+        "Essen Auslaenderbehoerde Termin §24",
+        "Essen Jobcenter Termin Unterlagen Frist",
+        "Essen Aufenthaltstitel Verlaengerung Termin",
+        "Essen Leistungszahlung eingestellt Jobcenter",
+        "Essen Vorsprache erforderlich Unterlagen"
+      ],
+      "city_slug": "essen"
+    },
+    "allowlist": {
+      "url_must_match_any": [
+        ".*\\bessen\\b.*\\.de/.*",
+        ".*stadt\\..*\\.de/.*",
+        ".*rathaus.*",
+        ".*buergerservice.*",
+        ".*service-portal.*",
+        ".*termin.*",
+        ".*auslaender.*",
+        ".*jobcenter.*"
+      ],
+      "reject_if_match_any": [
+        ".*veranstalt.*",
+        ".*event.*",
+        ".*kultur.*",
+        ".*sport.*",
+        ".*tourismus.*",
+        ".*pressefoto.*"
+      ]
+    },
+    "filters": {
+      "keywords_any": {
+        "de_en": [
+          "ukraine",
+          "ukrain",
+          "gefluecht",
+          "flucht",
+          "geflücht",
+          "migration",
+          "integration",
+          "aufenthalt",
+          "aufenthaltstitel",
+          "§24",
+          "paragraf 24",
+          "auslaenderbehoerde",
+          "ausländerbehörde",
+          "jobcenter",
+          "buergergeld",
+          "bürgergeld",
+          "unterkunft",
+          "termin",
+          "frist",
+          "unterlagen",
+          "vorsprache",
+          "pflicht",
+          "zahlung",
+          "eingestellt"
+        ],
+        "ua": [
+          "україн",
+          "біжен",
+          "міграц",
+          "інтеграц",
+          "документ",
+          "термін",
+          "запис",
+          "прийом",
+          "довідк",
+          "виплат",
+          "припинен",
+          "обов"
+        ]
+      },
+      "action_triggers_any": [
+        "frist",
+        "spätestens",
+        "spaetestens",
+        "bis zum",
+        "deadline",
+        "unterlagen",
+        "nachweis",
+        "mitbringen",
+        "termin",
+        "online buchen",
+        "buchung",
+        "terminvereinbarung",
+        "vorsprache",
+        "persönlich",
+        "persoenlich",
+        "pflicht",
+        "zahlung",
+        "eingestellt",
+        "stopp",
+        "rückforderung",
+        "rueckforderung"
+      ],
+      "action_strength_rules": [
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "strong"
+          },
+          "then": {
+            "priority": "HIGH",
+            "push": "ALLOW"
+          }
+        },
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "weak_or_none"
+          },
+          "then": {
+            "priority": "MEDIUM",
+            "push": "BLOCK"
+          }
+        }
+      ]
+    },
+    "default_topics": [
+      "ukraine",
+      "migration",
+      "deadlines",
+      "documents"
+    ],
+    "default_priority": "HIGH",
+    "default_actions": [
+      "deadline",
+      "document_required",
+      "appointment",
+      "info"
+    ],
+    "dedupe_group": "city_ess_news_hub",
+    "parser_notes": "FALLBACK: Web search-based discovery for official city portal content. Filters by Ukraine/migration keywords + action triggers. Strong action→HIGH+push, weak→MEDIUM+no push. Prevents spam via dedupe + rate-limit.",
+    "enabled": true
+  },
+  "HAJ": {
+    "source_id": "city_haj_news_hub",
+    "source_name": "Hannover — News Hub (Action Filter)",
+    "scope": "CITY",
+    "geo": {
+      "country": "DE",
+      "land": "Niedersachsen",
+      "city": "Hannover"
+    },
+    "mode": "DISCOVER_AND_FILTER",
+    "base_url": "https://www.google.com/search?q=Hannover%20Ukraine",
+    "discovery": {
+      "provider": "WEB_SEARCH",
+      "max_results": 25,
+      "queries": [
+        "Hannover Stadt Ukraine Inform ationen",
+        "Hannover Ukraine Hilfe Aufenthalt §24",
+        "Hannover Migration Integration Gefluechtete",
+        "Hannover Auslaenderbehoerde Termin §24",
+        "Hannover Jobcenter Termin Unterlagen Frist",
+        "Hannover Aufenthaltstitel Verlaengerung Termin",
+        "Hannover Leistungszahlung eingestellt Jobcenter",
+        "Hannover Vorsprache erforderlich Unterlagen"
+      ],
+      "city_slug": "hannover"
+    },
+    "allowlist": {
+      "url_must_match_any": [
+        ".*\\bhannover\\b.*\\.de/.*",
+        ".*stadt\\..*\\.de/.*",
+        ".*rathaus.*",
+        ".*buergerservice.*",
+        ".*service-portal.*",
+        ".*termin.*",
+        ".*auslaender.*",
+        ".*jobcenter.*"
+      ],
+      "reject_if_match_any": [
+        ".*veranstalt.*",
+        ".*event.*",
+        ".*kultur.*",
+        ".*sport.*",
+        ".*tourismus.*",
+        ".*pressefoto.*"
+      ]
+    },
+    "filters": {
+      "keywords_any": {
+        "de_en": [
+          "ukraine",
+          "ukrain",
+          "gefluecht",
+          "flucht",
+          "geflücht",
+          "migration",
+          "integration",
+          "aufenthalt",
+          "aufenthaltstitel",
+          "§24",
+          "paragraf 24",
+          "auslaenderbehoerde",
+          "ausländerbehörde",
+          "jobcenter",
+          "buergergeld",
+          "bürgergeld",
+          "unterkunft",
+          "termin",
+          "frist",
+          "unterlagen",
+          "vorsprache",
+          "pflicht",
+          "zahlung",
+          "eingestellt"
+        ],
+        "ua": [
+          "україн",
+          "біжен",
+          "міграц",
+          "інтеграц",
+          "документ",
+          "термін",
+          "запис",
+          "прийом",
+          "довідк",
+          "виплат",
+          "припинен",
+          "обов"
+        ]
+      },
+      "action_triggers_any": [
+        "frist",
+        "spätestens",
+        "spaetestens",
+        "bis zum",
+        "deadline",
+        "unterlagen",
+        "nachweis",
+        "mitbringen",
+        "termin",
+        "online buchen",
+        "buchung",
+        "terminvereinbarung",
+        "vorsprache",
+        "persönlich",
+        "persoenlich",
+        "pflicht",
+        "zahlung",
+        "eingestellt",
+        "stopp",
+        "rückforderung",
+        "rueckforderung"
+      ],
+      "action_strength_rules": [
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "strong"
+          },
+          "then": {
+            "priority": "HIGH",
+            "push": "ALLOW"
+          }
+        },
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "weak_or_none"
+          },
+          "then": {
+            "priority": "MEDIUM",
+            "push": "BLOCK"
+          }
+        }
+      ]
+    },
+    "default_topics": [
+      "ukraine",
+      "migration",
+      "deadlines",
+      "documents"
+    ],
+    "default_priority": "HIGH",
+    "default_actions": [
+      "deadline",
+      "document_required",
+      "appointment",
+      "info"
+    ],
+    "dedupe_group": "city_haj_news_hub",
+    "parser_notes": "FALLBACK: Web search-based discovery for official city portal content. Filters by Ukraine/migration keywords + action triggers. Strong action→HIGH+push, weak→MEDIUM+no push. Prevents spam via dedupe + rate-limit.",
+    "enabled": true
+  },
+  "NUE": {
+    "source_id": "city_nue_news_hub",
+    "source_name": "Nürnberg — News Hub (Action Filter)",
+    "scope": "CITY",
+    "geo": {
+      "country": "DE",
+      "land": "Bayern",
+      "city": "Nürnberg"
+    },
+    "mode": "DISCOVER_AND_FILTER",
+    "base_url": "https://www.google.com/search?q=N%C3%BCrnberg%20Ukraine",
+    "discovery": {
+      "provider": "WEB_SEARCH",
+      "max_results": 25,
+      "queries": [
+        "Nürnberg Stadt Ukraine Inform ationen",
+        "Nürnberg Ukraine Hilfe Aufenthalt §24",
+        "Nürnberg Migration Integration Gefluechtete",
+        "Nürnberg Auslaenderbehoerde Termin §24",
+        "Nürnberg Jobcenter Termin Unterlagen Frist",
+        "Nürnberg Aufenthaltstitel Verlaengerung Termin",
+        "Nürnberg Leistungszahlung eingestellt Jobcenter",
+        "Nürnberg Vorsprache erforderlich Unterlagen"
+      ],
+      "city_slug": "nuernberg"
+    },
+    "allowlist": {
+      "url_must_match_any": [
+        ".*\\bnuernberg\\b.*\\.de/.*",
+        ".*stadt\\..*\\.de/.*",
+        ".*rathaus.*",
+        ".*buergerservice.*",
+        ".*service-portal.*",
+        ".*termin.*",
+        ".*auslaender.*",
+        ".*jobcenter.*"
+      ],
+      "reject_if_match_any": [
+        ".*veranstalt.*",
+        ".*event.*",
+        ".*kultur.*",
+        ".*sport.*",
+        ".*tourismus.*",
+        ".*pressefoto.*"
+      ]
+    },
+    "filters": {
+      "keywords_any": {
+        "de_en": [
+          "ukraine",
+          "ukrain",
+          "gefluecht",
+          "flucht",
+          "geflücht",
+          "migration",
+          "integration",
+          "aufenthalt",
+          "aufenthaltstitel",
+          "§24",
+          "paragraf 24",
+          "auslaenderbehoerde",
+          "ausländerbehörde",
+          "jobcenter",
+          "buergergeld",
+          "bürgergeld",
+          "unterkunft",
+          "termin",
+          "frist",
+          "unterlagen",
+          "vorsprache",
+          "pflicht",
+          "zahlung",
+          "eingestellt"
+        ],
+        "ua": [
+          "україн",
+          "біжен",
+          "міграц",
+          "інтеграц",
+          "документ",
+          "термін",
+          "запис",
+          "прийом",
+          "довідк",
+          "виплат",
+          "припинен",
+          "обов"
+        ]
+      },
+      "action_triggers_any": [
+        "frist",
+        "spätestens",
+        "spaetestens",
+        "bis zum",
+        "deadline",
+        "unterlagen",
+        "nachweis",
+        "mitbringen",
+        "termin",
+        "online buchen",
+        "buchung",
+        "terminvereinbarung",
+        "vorsprache",
+        "persönlich",
+        "persoenlich",
+        "pflicht",
+        "zahlung",
+        "eingestellt",
+        "stopp",
+        "rückforderung",
+        "rueckforderung"
+      ],
+      "action_strength_rules": [
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "strong"
+          },
+          "then": {
+            "priority": "HIGH",
+            "push": "ALLOW"
+          }
+        },
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "weak_or_none"
+          },
+          "then": {
+            "priority": "MEDIUM",
+            "push": "BLOCK"
+          }
+        }
+      ]
+    },
+    "default_topics": [
+      "ukraine",
+      "migration",
+      "deadlines",
+      "documents"
+    ],
+    "default_priority": "HIGH",
+    "default_actions": [
+      "deadline",
+      "document_required",
+      "appointment",
+      "info"
+    ],
+    "dedupe_group": "city_nue_news_hub",
+    "parser_notes": "FALLBACK: Web search-based discovery for official city portal content. Filters by Ukraine/migration keywords + action triggers. Strong action→HIGH+push, weak→MEDIUM+no push. Prevents spam via dedupe + rate-limit.",
+    "enabled": true
+  },
+  "DRS": {
+    "source_id": "city_drs_news_hub",
+    "source_name": "Dresden — News Hub (Action Filter)",
+    "scope": "CITY",
+    "geo": {
+      "country": "DE",
+      "land": "Sachsen",
+      "city": "Dresden"
+    },
+    "mode": "DISCOVER_AND_FILTER",
+    "base_url": "https://www.google.com/search?q=Dresden%20Ukraine",
+    "discovery": {
+      "provider": "WEB_SEARCH",
+      "max_results": 25,
+      "queries": [
+        "Dresden Stadt Ukraine Inform ationen",
+        "Dresden Ukraine Hilfe Aufenthalt §24",
+        "Dresden Migration Integration Gefluechtete",
+        "Dresden Auslaenderbehoerde Termin §24",
+        "Dresden Jobcenter Termin Unterlagen Frist",
+        "Dresden Aufenthaltstitel Verlaengerung Termin",
+        "Dresden Leistungszahlung eingestellt Jobcenter",
+        "Dresden Vorsprache erforderlich Unterlagen"
+      ],
+      "city_slug": "dresden"
+    },
+    "allowlist": {
+      "url_must_match_any": [
+        ".*\\bdresden\\b.*\\.de/.*",
+        ".*stadt\\..*\\.de/.*",
+        ".*rathaus.*",
+        ".*buergerservice.*",
+        ".*service-portal.*",
+        ".*termin.*",
+        ".*auslaender.*",
+        ".*jobcenter.*"
+      ],
+      "reject_if_match_any": [
+        ".*veranstalt.*",
+        ".*event.*",
+        ".*kultur.*",
+        ".*sport.*",
+        ".*tourismus.*",
+        ".*pressefoto.*"
+      ]
+    },
+    "filters": {
+      "keywords_any": {
+        "de_en": [
+          "ukraine",
+          "ukrain",
+          "gefluecht",
+          "flucht",
+          "geflücht",
+          "migration",
+          "integration",
+          "aufenthalt",
+          "aufenthaltstitel",
+          "§24",
+          "paragraf 24",
+          "auslaenderbehoerde",
+          "ausländerbehörde",
+          "jobcenter",
+          "buergergeld",
+          "bürgergeld",
+          "unterkunft",
+          "termin",
+          "frist",
+          "unterlagen",
+          "vorsprache",
+          "pflicht",
+          "zahlung",
+          "eingestellt"
+        ],
+        "ua": [
+          "україн",
+          "біжен",
+          "міграц",
+          "інтеграц",
+          "документ",
+          "термін",
+          "запис",
+          "прийом",
+          "довідк",
+          "виплат",
+          "припинен",
+          "обов"
+        ]
+      },
+      "action_triggers_any": [
+        "frist",
+        "spätestens",
+        "spaetestens",
+        "bis zum",
+        "deadline",
+        "unterlagen",
+        "nachweis",
+        "mitbringen",
+        "termin",
+        "online buchen",
+        "buchung",
+        "terminvereinbarung",
+        "vorsprache",
+        "persönlich",
+        "persoenlich",
+        "pflicht",
+        "zahlung",
+        "eingestellt",
+        "stopp",
+        "rückforderung",
+        "rueckforderung"
+      ],
+      "action_strength_rules": [
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "strong"
+          },
+          "then": {
+            "priority": "HIGH",
+            "push": "ALLOW"
+          }
+        },
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "weak_or_none"
+          },
+          "then": {
+            "priority": "MEDIUM",
+            "push": "BLOCK"
+          }
+        }
+      ]
+    },
+    "default_topics": [
+      "ukraine",
+      "migration",
+      "deadlines",
+      "documents"
+    ],
+    "default_priority": "HIGH",
+    "default_actions": [
+      "deadline",
+      "document_required",
+      "appointment",
+      "info"
+    ],
+    "dedupe_group": "city_drs_news_hub",
+    "parser_notes": "FALLBACK: Web search-based discovery for official city portal content. Filters by Ukraine/migration keywords + action triggers. Strong action→HIGH+push, weak→MEDIUM+no push. Prevents spam via dedupe + rate-limit.",
+    "enabled": true
+  },
+  "DUI": {
+    "source_id": "city_dui_news_hub",
+    "source_name": "Duisburg — News Hub (Action Filter)",
+    "scope": "CITY",
+    "geo": {
+      "country": "DE",
+      "land": "Nordrhein-Westfalen",
+      "city": "Duisburg"
+    },
+    "mode": "DISCOVER_AND_FILTER",
+    "base_url": "https://www.google.com/search?q=Duisburg%20Ukraine",
+    "discovery": {
+      "provider": "WEB_SEARCH",
+      "max_results": 25,
+      "queries": [
+        "Duisburg Stadt Ukraine Inform ationen",
+        "Duisburg Ukraine Hilfe Aufenthalt §24",
+        "Duisburg Migration Integration Gefluechtete",
+        "Duisburg Auslaenderbehoerde Termin §24",
+        "Duisburg Jobcenter Termin Unterlagen Frist",
+        "Duisburg Aufenthaltstitel Verlaengerung Termin",
+        "Duisburg Leistungszahlung eingestellt Jobcenter",
+        "Duisburg Vorsprache erforderlich Unterlagen"
+      ],
+      "city_slug": "duisburg"
+    },
+    "allowlist": {
+      "url_must_match_any": [
+        ".*\\bduisburg\\b.*\\.de/.*",
+        ".*stadt\\..*\\.de/.*",
+        ".*rathaus.*",
+        ".*buergerservice.*",
+        ".*service-portal.*",
+        ".*termin.*",
+        ".*auslaender.*",
+        ".*jobcenter.*"
+      ],
+      "reject_if_match_any": [
+        ".*veranstalt.*",
+        ".*event.*",
+        ".*kultur.*",
+        ".*sport.*",
+        ".*tourismus.*",
+        ".*pressefoto.*"
+      ]
+    },
+    "filters": {
+      "keywords_any": {
+        "de_en": [
+          "ukraine",
+          "ukrain",
+          "gefluecht",
+          "flucht",
+          "geflücht",
+          "migration",
+          "integration",
+          "aufenthalt",
+          "aufenthaltstitel",
+          "§24",
+          "paragraf 24",
+          "auslaenderbehoerde",
+          "ausländerbehörde",
+          "jobcenter",
+          "buergergeld",
+          "bürgergeld",
+          "unterkunft",
+          "termin",
+          "frist",
+          "unterlagen",
+          "vorsprache",
+          "pflicht",
+          "zahlung",
+          "eingestellt"
+        ],
+        "ua": [
+          "україн",
+          "біжен",
+          "міграц",
+          "інтеграц",
+          "документ",
+          "термін",
+          "запис",
+          "прийом",
+          "довідк",
+          "виплат",
+          "припинен",
+          "обов"
+        ]
+      },
+      "action_triggers_any": [
+        "frist",
+        "spätestens",
+        "spaetestens",
+        "bis zum",
+        "deadline",
+        "unterlagen",
+        "nachweis",
+        "mitbringen",
+        "termin",
+        "online buchen",
+        "buchung",
+        "terminvereinbarung",
+        "vorsprache",
+        "persönlich",
+        "persoenlich",
+        "pflicht",
+        "zahlung",
+        "eingestellt",
+        "stopp",
+        "rückforderung",
+        "rueckforderung"
+      ],
+      "action_strength_rules": [
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "strong"
+          },
+          "then": {
+            "priority": "HIGH",
+            "push": "ALLOW"
+          }
+        },
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "weak_or_none"
+          },
+          "then": {
+            "priority": "MEDIUM",
+            "push": "BLOCK"
+          }
+        }
+      ]
+    },
+    "default_topics": [
+      "ukraine",
+      "migration",
+      "deadlines",
+      "documents"
+    ],
+    "default_priority": "HIGH",
+    "default_actions": [
+      "deadline",
+      "document_required",
+      "appointment",
+      "info"
+    ],
+    "dedupe_group": "city_dui_news_hub",
+    "parser_notes": "FALLBACK: Web search-based discovery for official city portal content. Filters by Ukraine/migration keywords + action triggers. Strong action→HIGH+push, weak→MEDIUM+no push. Prevents spam via dedupe + rate-limit.",
+    "enabled": true
+  },
+  "BOC": {
+    "source_id": "city_boc_news_hub",
+    "source_name": "Bochum — News Hub (Action Filter)",
+    "scope": "CITY",
+    "geo": {
+      "country": "DE",
+      "land": "Nordrhein-Westfalen",
+      "city": "Bochum"
+    },
+    "mode": "DISCOVER_AND_FILTER",
+    "base_url": "https://www.google.com/search?q=Bochum%20Ukraine",
+    "discovery": {
+      "provider": "WEB_SEARCH",
+      "max_results": 25,
+      "queries": [
+        "Bochum Stadt Ukraine Inform ationen",
+        "Bochum Ukraine Hilfe Aufenthalt §24",
+        "Bochum Migration Integration Gefluechtete",
+        "Bochum Auslaenderbehoerde Termin §24",
+        "Bochum Jobcenter Termin Unterlagen Frist",
+        "Bochum Aufenthaltstitel Verlaengerung Termin",
+        "Bochum Leistungszahlung eingestellt Jobcenter",
+        "Bochum Vorsprache erforderlich Unterlagen"
+      ],
+      "city_slug": "bochum"
+    },
+    "allowlist": {
+      "url_must_match_any": [
+        ".*\\bbochum\\b.*\\.de/.*",
+        ".*stadt\\..*\\.de/.*",
+        ".*rathaus.*",
+        ".*buergerservice.*",
+        ".*service-portal.*",
+        ".*termin.*",
+        ".*auslaender.*",
+        ".*jobcenter.*"
+      ],
+      "reject_if_match_any": [
+        ".*veranstalt.*",
+        ".*event.*",
+        ".*kultur.*",
+        ".*sport.*",
+        ".*tourismus.*",
+        ".*pressefoto.*"
+      ]
+    },
+    "filters": {
+      "keywords_any": {
+        "de_en": [
+          "ukraine",
+          "ukrain",
+          "gefluecht",
+          "flucht",
+          "geflücht",
+          "migration",
+          "integration",
+          "aufenthalt",
+          "aufenthaltstitel",
+          "§24",
+          "paragraf 24",
+          "auslaenderbehoerde",
+          "ausländerbehörde",
+          "jobcenter",
+          "buergergeld",
+          "bürgergeld",
+          "unterkunft",
+          "termin",
+          "frist",
+          "unterlagen",
+          "vorsprache",
+          "pflicht",
+          "zahlung",
+          "eingestellt"
+        ],
+        "ua": [
+          "україн",
+          "біжен",
+          "міграц",
+          "інтеграц",
+          "документ",
+          "термін",
+          "запис",
+          "прийом",
+          "довідк",
+          "виплат",
+          "припинен",
+          "обов"
+        ]
+      },
+      "action_triggers_any": [
+        "frist",
+        "spätestens",
+        "spaetestens",
+        "bis zum",
+        "deadline",
+        "unterlagen",
+        "nachweis",
+        "mitbringen",
+        "termin",
+        "online buchen",
+        "buchung",
+        "terminvereinbarung",
+        "vorsprache",
+        "persönlich",
+        "persoenlich",
+        "pflicht",
+        "zahlung",
+        "eingestellt",
+        "stopp",
+        "rückforderung",
+        "rueckforderung"
+      ],
+      "action_strength_rules": [
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "strong"
+          },
+          "then": {
+            "priority": "HIGH",
+            "push": "ALLOW"
+          }
+        },
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "weak_or_none"
+          },
+          "then": {
+            "priority": "MEDIUM",
+            "push": "BLOCK"
+          }
+        }
+      ]
+    },
+    "default_topics": [
+      "ukraine",
+      "migration",
+      "deadlines",
+      "documents"
+    ],
+    "default_priority": "HIGH",
+    "default_actions": [
+      "deadline",
+      "document_required",
+      "appointment",
+      "info"
+    ],
+    "dedupe_group": "city_boc_news_hub",
+    "parser_notes": "FALLBACK: Web search-based discovery for official city portal content. Filters by Ukraine/migration keywords + action triggers. Strong action→HIGH+push, weak→MEDIUM+no push. Prevents spam via dedupe + rate-limit.",
+    "enabled": true
+  },
+  "WUP": {
+    "source_id": "city_wup_news_hub",
+    "source_name": "Wuppertal — News Hub (Action Filter)",
+    "scope": "CITY",
+    "geo": {
+      "country": "DE",
+      "land": "Nordrhein-Westfalen",
+      "city": "Wuppertal"
+    },
+    "mode": "DISCOVER_AND_FILTER",
+    "base_url": "https://www.google.com/search?q=Wuppertal%20Ukraine",
+    "discovery": {
+      "provider": "WEB_SEARCH",
+      "max_results": 25,
+      "queries": [
+        "Wuppertal Stadt Ukraine Inform ationen",
+        "Wuppertal Ukraine Hilfe Aufenthalt §24",
+        "Wuppertal Migration Integration Gefluechtete",
+        "Wuppertal Auslaenderbehoerde Termin §24",
+        "Wuppertal Jobcenter Termin Unterlagen Frist",
+        "Wuppertal Aufenthaltstitel Verlaengerung Termin",
+        "Wuppertal Leistungszahlung eingestellt Jobcenter",
+        "Wuppertal Vorsprache erforderlich Unterlagen"
+      ],
+      "city_slug": "wuppertal"
+    },
+    "allowlist": {
+      "url_must_match_any": [
+        ".*\\bwuppertal\\b.*\\.de/.*",
+        ".*stadt\\..*\\.de/.*",
+        ".*rathaus.*",
+        ".*buergerservice.*",
+        ".*service-portal.*",
+        ".*termin.*",
+        ".*auslaender.*",
+        ".*jobcenter.*"
+      ],
+      "reject_if_match_any": [
+        ".*veranstalt.*",
+        ".*event.*",
+        ".*kultur.*",
+        ".*sport.*",
+        ".*tourismus.*",
+        ".*pressefoto.*"
+      ]
+    },
+    "filters": {
+      "keywords_any": {
+        "de_en": [
+          "ukraine",
+          "ukrain",
+          "gefluecht",
+          "flucht",
+          "geflücht",
+          "migration",
+          "integration",
+          "aufenthalt",
+          "aufenthaltstitel",
+          "§24",
+          "paragraf 24",
+          "auslaenderbehoerde",
+          "ausländerbehörde",
+          "jobcenter",
+          "buergergeld",
+          "bürgergeld",
+          "unterkunft",
+          "termin",
+          "frist",
+          "unterlagen",
+          "vorsprache",
+          "pflicht",
+          "zahlung",
+          "eingestellt"
+        ],
+        "ua": [
+          "україн",
+          "біжен",
+          "міграц",
+          "інтеграц",
+          "документ",
+          "термін",
+          "запис",
+          "прийом",
+          "довідк",
+          "виплат",
+          "припинен",
+          "обов"
+        ]
+      },
+      "action_triggers_any": [
+        "frist",
+        "spätestens",
+        "spaetestens",
+        "bis zum",
+        "deadline",
+        "unterlagen",
+        "nachweis",
+        "mitbringen",
+        "termin",
+        "online buchen",
+        "buchung",
+        "terminvereinbarung",
+        "vorsprache",
+        "persönlich",
+        "persoenlich",
+        "pflicht",
+        "zahlung",
+        "eingestellt",
+        "stopp",
+        "rückforderung",
+        "rueckforderung"
+      ],
+      "action_strength_rules": [
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "strong"
+          },
+          "then": {
+            "priority": "HIGH",
+            "push": "ALLOW"
+          }
+        },
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "weak_or_none"
+          },
+          "then": {
+            "priority": "MEDIUM",
+            "push": "BLOCK"
+          }
+        }
+      ]
+    },
+    "default_topics": [
+      "ukraine",
+      "migration",
+      "deadlines",
+      "documents"
+    ],
+    "default_priority": "HIGH",
+    "default_actions": [
+      "deadline",
+      "document_required",
+      "appointment",
+      "info"
+    ],
+    "dedupe_group": "city_wup_news_hub",
+    "parser_notes": "FALLBACK: Web search-based discovery for official city portal content. Filters by Ukraine/migration keywords + action triggers. Strong action→HIGH+push, weak→MEDIUM+no push. Prevents spam via dedupe + rate-limit.",
+    "enabled": true
+  },
+  "BIE": {
+    "source_id": "city_bie_news_hub",
+    "source_name": "Bielefeld — News Hub (Action Filter)",
+    "scope": "CITY",
+    "geo": {
+      "country": "DE",
+      "land": "Nordrhein-Westfalen",
+      "city": "Bielefeld"
+    },
+    "mode": "DISCOVER_AND_FILTER",
+    "base_url": "https://www.google.com/search?q=Bielefeld%20Ukraine",
+    "discovery": {
+      "provider": "WEB_SEARCH",
+      "max_results": 25,
+      "queries": [
+        "Bielefeld Stadt Ukraine Inform ationen",
+        "Bielefeld Ukraine Hilfe Aufenthalt §24",
+        "Bielefeld Migration Integration Gefluechtete",
+        "Bielefeld Auslaenderbehoerde Termin §24",
+        "Bielefeld Jobcenter Termin Unterlagen Frist",
+        "Bielefeld Aufenthaltstitel Verlaengerung Termin",
+        "Bielefeld Leistungszahlung eingestellt Jobcenter",
+        "Bielefeld Vorsprache erforderlich Unterlagen"
+      ],
+      "city_slug": "bielefeld"
+    },
+    "allowlist": {
+      "url_must_match_any": [
+        ".*\\bbielefeld\\b.*\\.de/.*",
+        ".*stadt\\..*\\.de/.*",
+        ".*rathaus.*",
+        ".*buergerservice.*",
+        ".*service-portal.*",
+        ".*termin.*",
+        ".*auslaender.*",
+        ".*jobcenter.*"
+      ],
+      "reject_if_match_any": [
+        ".*veranstalt.*",
+        ".*event.*",
+        ".*kultur.*",
+        ".*sport.*",
+        ".*tourismus.*",
+        ".*pressefoto.*"
+      ]
+    },
+    "filters": {
+      "keywords_any": {
+        "de_en": [
+          "ukraine",
+          "ukrain",
+          "gefluecht",
+          "flucht",
+          "geflücht",
+          "migration",
+          "integration",
+          "aufenthalt",
+          "aufenthaltstitel",
+          "§24",
+          "paragraf 24",
+          "auslaenderbehoerde",
+          "ausländerbehörde",
+          "jobcenter",
+          "buergergeld",
+          "bürgergeld",
+          "unterkunft",
+          "termin",
+          "frist",
+          "unterlagen",
+          "vorsprache",
+          "pflicht",
+          "zahlung",
+          "eingestellt"
+        ],
+        "ua": [
+          "україн",
+          "біжен",
+          "міграц",
+          "інтеграц",
+          "документ",
+          "термін",
+          "запис",
+          "прийом",
+          "довідк",
+          "виплат",
+          "припинен",
+          "обов"
+        ]
+      },
+      "action_triggers_any": [
+        "frist",
+        "spätestens",
+        "spaetestens",
+        "bis zum",
+        "deadline",
+        "unterlagen",
+        "nachweis",
+        "mitbringen",
+        "termin",
+        "online buchen",
+        "buchung",
+        "terminvereinbarung",
+        "vorsprache",
+        "persönlich",
+        "persoenlich",
+        "pflicht",
+        "zahlung",
+        "eingestellt",
+        "stopp",
+        "rückforderung",
+        "rueckforderung"
+      ],
+      "action_strength_rules": [
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "strong"
+          },
+          "then": {
+            "priority": "HIGH",
+            "push": "ALLOW"
+          }
+        },
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "weak_or_none"
+          },
+          "then": {
+            "priority": "MEDIUM",
+            "push": "BLOCK"
+          }
+        }
+      ]
+    },
+    "default_topics": [
+      "ukraine",
+      "migration",
+      "deadlines",
+      "documents"
+    ],
+    "default_priority": "HIGH",
+    "default_actions": [
+      "deadline",
+      "document_required",
+      "appointment",
+      "info"
+    ],
+    "dedupe_group": "city_bie_news_hub",
+    "parser_notes": "FALLBACK: Web search-based discovery for official city portal content. Filters by Ukraine/migration keywords + action triggers. Strong action→HIGH+push, weak→MEDIUM+no push. Prevents spam via dedupe + rate-limit.",
+    "enabled": true
+  },
+  "BON": {
+    "source_id": "city_bon_news_hub",
+    "source_name": "Bonn — News Hub (Action Filter)",
+    "scope": "CITY",
+    "geo": {
+      "country": "DE",
+      "land": "Nordrhein-Westfalen",
+      "city": "Bonn"
+    },
+    "mode": "DISCOVER_AND_FILTER",
+    "base_url": "https://www.google.com/search?q=Bonn%20Ukraine",
+    "discovery": {
+      "provider": "WEB_SEARCH",
+      "max_results": 25,
+      "queries": [
+        "Bonn Stadt Ukraine Inform ationen",
+        "Bonn Ukraine Hilfe Aufenthalt §24",
+        "Bonn Migration Integration Gefluechtete",
+        "Bonn Auslaenderbehoerde Termin §24",
+        "Bonn Jobcenter Termin Unterlagen Frist",
+        "Bonn Aufenthaltstitel Verlaengerung Termin",
+        "Bonn Leistungszahlung eingestellt Jobcenter",
+        "Bonn Vorsprache erforderlich Unterlagen"
+      ],
+      "city_slug": "bonn"
+    },
+    "allowlist": {
+      "url_must_match_any": [
+        ".*\\bbonn\\b.*\\.de/.*",
+        ".*stadt\\..*\\.de/.*",
+        ".*rathaus.*",
+        ".*buergerservice.*",
+        ".*service-portal.*",
+        ".*termin.*",
+        ".*auslaender.*",
+        ".*jobcenter.*"
+      ],
+      "reject_if_match_any": [
+        ".*veranstalt.*",
+        ".*event.*",
+        ".*kultur.*",
+        ".*sport.*",
+        ".*tourismus.*",
+        ".*pressefoto.*"
+      ]
+    },
+    "filters": {
+      "keywords_any": {
+        "de_en": [
+          "ukraine",
+          "ukrain",
+          "gefluecht",
+          "flucht",
+          "geflücht",
+          "migration",
+          "integration",
+          "aufenthalt",
+          "aufenthaltstitel",
+          "§24",
+          "paragraf 24",
+          "auslaenderbehoerde",
+          "ausländerbehörde",
+          "jobcenter",
+          "buergergeld",
+          "bürgergeld",
+          "unterkunft",
+          "termin",
+          "frist",
+          "unterlagen",
+          "vorsprache",
+          "pflicht",
+          "zahlung",
+          "eingestellt"
+        ],
+        "ua": [
+          "україн",
+          "біжен",
+          "міграц",
+          "інтеграц",
+          "документ",
+          "термін",
+          "запис",
+          "прийом",
+          "довідк",
+          "виплат",
+          "припинен",
+          "обов"
+        ]
+      },
+      "action_triggers_any": [
+        "frist",
+        "spätestens",
+        "spaetestens",
+        "bis zum",
+        "deadline",
+        "unterlagen",
+        "nachweis",
+        "mitbringen",
+        "termin",
+        "online buchen",
+        "buchung",
+        "terminvereinbarung",
+        "vorsprache",
+        "persönlich",
+        "persoenlich",
+        "pflicht",
+        "zahlung",
+        "eingestellt",
+        "stopp",
+        "rückforderung",
+        "rueckforderung"
+      ],
+      "action_strength_rules": [
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "strong"
+          },
+          "then": {
+            "priority": "HIGH",
+            "push": "ALLOW"
+          }
+        },
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "weak_or_none"
+          },
+          "then": {
+            "priority": "MEDIUM",
+            "push": "BLOCK"
+          }
+        }
+      ]
+    },
+    "default_topics": [
+      "ukraine",
+      "migration",
+      "deadlines",
+      "documents"
+    ],
+    "default_priority": "HIGH",
+    "default_actions": [
+      "deadline",
+      "document_required",
+      "appointment",
+      "info"
+    ],
+    "dedupe_group": "city_bon_news_hub",
+    "parser_notes": "FALLBACK: Web search-based discovery for official city portal content. Filters by Ukraine/migration keywords + action triggers. Strong action→HIGH+push, weak→MEDIUM+no push. Prevents spam via dedupe + rate-limit.",
+    "enabled": true
+  },
+  "MS": {
+    "source_id": "city_ms_news_hub",
+    "source_name": "Münster — News Hub (Action Filter)",
+    "scope": "CITY",
+    "geo": {
+      "country": "DE",
+      "land": "Nordrhein-Westfalen",
+      "city": "Münster"
+    },
+    "mode": "DISCOVER_AND_FILTER",
+    "base_url": "https://www.google.com/search?q=M%C3%BCnster%20Ukraine",
+    "discovery": {
+      "provider": "WEB_SEARCH",
+      "max_results": 25,
+      "queries": [
+        "Münster Stadt Ukraine Inform ationen",
+        "Münster Ukraine Hilfe Aufenthalt §24",
+        "Münster Migration Integration Gefluechtete",
+        "Münster Auslaenderbehoerde Termin §24",
+        "Münster Jobcenter Termin Unterlagen Frist",
+        "Münster Aufenthaltstitel Verlaengerung Termin",
+        "Münster Leistungszahlung eingestellt Jobcenter",
+        "Münster Vorsprache erforderlich Unterlagen"
+      ],
+      "city_slug": "muenster"
+    },
+    "allowlist": {
+      "url_must_match_any": [
+        ".*\\bmuenster\\b.*\\.de/.*",
+        ".*stadt\\..*\\.de/.*",
+        ".*rathaus.*",
+        ".*buergerservice.*",
+        ".*service-portal.*",
+        ".*termin.*",
+        ".*auslaender.*",
+        ".*jobcenter.*"
+      ],
+      "reject_if_match_any": [
+        ".*veranstalt.*",
+        ".*event.*",
+        ".*kultur.*",
+        ".*sport.*",
+        ".*tourismus.*",
+        ".*pressefoto.*"
+      ]
+    },
+    "filters": {
+      "keywords_any": {
+        "de_en": [
+          "ukraine",
+          "ukrain",
+          "gefluecht",
+          "flucht",
+          "geflücht",
+          "migration",
+          "integration",
+          "aufenthalt",
+          "aufenthaltstitel",
+          "§24",
+          "paragraf 24",
+          "auslaenderbehoerde",
+          "ausländerbehörde",
+          "jobcenter",
+          "buergergeld",
+          "bürgergeld",
+          "unterkunft",
+          "termin",
+          "frist",
+          "unterlagen",
+          "vorsprache",
+          "pflicht",
+          "zahlung",
+          "eingestellt"
+        ],
+        "ua": [
+          "україн",
+          "біжен",
+          "міграц",
+          "інтеграц",
+          "документ",
+          "термін",
+          "запис",
+          "прийом",
+          "довідк",
+          "виплат",
+          "припинен",
+          "обов"
+        ]
+      },
+      "action_triggers_any": [
+        "frist",
+        "spätestens",
+        "spaetestens",
+        "bis zum",
+        "deadline",
+        "unterlagen",
+        "nachweis",
+        "mitbringen",
+        "termin",
+        "online buchen",
+        "buchung",
+        "terminvereinbarung",
+        "vorsprache",
+        "persönlich",
+        "persoenlich",
+        "pflicht",
+        "zahlung",
+        "eingestellt",
+        "stopp",
+        "rückforderung",
+        "rueckforderung"
+      ],
+      "action_strength_rules": [
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "strong"
+          },
+          "then": {
+            "priority": "HIGH",
+            "push": "ALLOW"
+          }
+        },
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "weak_or_none"
+          },
+          "then": {
+            "priority": "MEDIUM",
+            "push": "BLOCK"
+          }
+        }
+      ]
+    },
+    "default_topics": [
+      "ukraine",
+      "migration",
+      "deadlines",
+      "documents"
+    ],
+    "default_priority": "HIGH",
+    "default_actions": [
+      "deadline",
+      "document_required",
+      "appointment",
+      "info"
+    ],
+    "dedupe_group": "city_ms_news_hub",
+    "parser_notes": "FALLBACK: Web search-based discovery for official city portal content. Filters by Ukraine/migration keywords + action triggers. Strong action→HIGH+push, weak→MEDIUM+no push. Prevents spam via dedupe + rate-limit.",
+    "enabled": true
+  },
+  "KAE": {
+    "source_id": "city_kae_news_hub",
+    "source_name": "Karlsruhe — News Hub (Action Filter)",
+    "scope": "CITY",
+    "geo": {
+      "country": "DE",
+      "land": "Baden-Württemberg",
+      "city": "Karlsruhe"
+    },
+    "mode": "DISCOVER_AND_FILTER",
+    "base_url": "https://www.google.com/search?q=Karlsruhe%20Ukraine",
+    "discovery": {
+      "provider": "WEB_SEARCH",
+      "max_results": 25,
+      "queries": [
+        "Karlsruhe Stadt Ukraine Inform ationen",
+        "Karlsruhe Ukraine Hilfe Aufenthalt §24",
+        "Karlsruhe Migration Integration Gefluechtete",
+        "Karlsruhe Auslaenderbehoerde Termin §24",
+        "Karlsruhe Jobcenter Termin Unterlagen Frist",
+        "Karlsruhe Aufenthaltstitel Verlaengerung Termin",
+        "Karlsruhe Leistungszahlung eingestellt Jobcenter",
+        "Karlsruhe Vorsprache erforderlich Unterlagen"
+      ],
+      "city_slug": "karlsruhe"
+    },
+    "allowlist": {
+      "url_must_match_any": [
+        ".*\\bkarlsruhe\\b.*\\.de/.*",
+        ".*stadt\\..*\\.de/.*",
+        ".*rathaus.*",
+        ".*buergerservice.*",
+        ".*service-portal.*",
+        ".*termin.*",
+        ".*auslaender.*",
+        ".*jobcenter.*"
+      ],
+      "reject_if_match_any": [
+        ".*veranstalt.*",
+        ".*event.*",
+        ".*kultur.*",
+        ".*sport.*",
+        ".*tourismus.*",
+        ".*pressefoto.*"
+      ]
+    },
+    "filters": {
+      "keywords_any": {
+        "de_en": [
+          "ukraine",
+          "ukrain",
+          "gefluecht",
+          "flucht",
+          "geflücht",
+          "migration",
+          "integration",
+          "aufenthalt",
+          "aufenthaltstitel",
+          "§24",
+          "paragraf 24",
+          "auslaenderbehoerde",
+          "ausländerbehörde",
+          "jobcenter",
+          "buergergeld",
+          "bürgergeld",
+          "unterkunft",
+          "termin",
+          "frist",
+          "unterlagen",
+          "vorsprache",
+          "pflicht",
+          "zahlung",
+          "eingestellt"
+        ],
+        "ua": [
+          "україн",
+          "біжен",
+          "міграц",
+          "інтеграц",
+          "документ",
+          "термін",
+          "запис",
+          "прийом",
+          "довідк",
+          "виплат",
+          "припинен",
+          "обов"
+        ]
+      },
+      "action_triggers_any": [
+        "frist",
+        "spätestens",
+        "spaetestens",
+        "bis zum",
+        "deadline",
+        "unterlagen",
+        "nachweis",
+        "mitbringen",
+        "termin",
+        "online buchen",
+        "buchung",
+        "terminvereinbarung",
+        "vorsprache",
+        "persönlich",
+        "persoenlich",
+        "pflicht",
+        "zahlung",
+        "eingestellt",
+        "stopp",
+        "rückforderung",
+        "rueckforderung"
+      ],
+      "action_strength_rules": [
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "strong"
+          },
+          "then": {
+            "priority": "HIGH",
+            "push": "ALLOW"
+          }
+        },
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "weak_or_none"
+          },
+          "then": {
+            "priority": "MEDIUM",
+            "push": "BLOCK"
+          }
+        }
+      ]
+    },
+    "default_topics": [
+      "ukraine",
+      "migration",
+      "deadlines",
+      "documents"
+    ],
+    "default_priority": "HIGH",
+    "default_actions": [
+      "deadline",
+      "document_required",
+      "appointment",
+      "info"
+    ],
+    "dedupe_group": "city_kae_news_hub",
+    "parser_notes": "FALLBACK: Web search-based discovery for official city portal content. Filters by Ukraine/migration keywords + action triggers. Strong action→HIGH+push, weak→MEDIUM+no push. Prevents spam via dedupe + rate-limit.",
+    "enabled": true
+  },
+  "MA": {
+    "source_id": "city_ma_news_hub",
+    "source_name": "Mannheim — News Hub (Action Filter)",
+    "scope": "CITY",
+    "geo": {
+      "country": "DE",
+      "land": "Baden-Württemberg",
+      "city": "Mannheim"
+    },
+    "mode": "DISCOVER_AND_FILTER",
+    "base_url": "https://www.google.com/search?q=Mannheim%20Ukraine",
+    "discovery": {
+      "provider": "WEB_SEARCH",
+      "max_results": 25,
+      "queries": [
+        "Mannheim Stadt Ukraine Inform ationen",
+        "Mannheim Ukraine Hilfe Aufenthalt §24",
+        "Mannheim Migration Integration Gefluechtete",
+        "Mannheim Auslaenderbehoerde Termin §24",
+        "Mannheim Jobcenter Termin Unterlagen Frist",
+        "Mannheim Aufenthaltstitel Verlaengerung Termin",
+        "Mannheim Leistungszahlung eingestellt Jobcenter",
+        "Mannheim Vorsprache erforderlich Unterlagen"
+      ],
+      "city_slug": "mannheim"
+    },
+    "allowlist": {
+      "url_must_match_any": [
+        ".*\\bmannheim\\b.*\\.de/.*",
+        ".*stadt\\..*\\.de/.*",
+        ".*rathaus.*",
+        ".*buergerservice.*",
+        ".*service-portal.*",
+        ".*termin.*",
+        ".*auslaender.*",
+        ".*jobcenter.*"
+      ],
+      "reject_if_match_any": [
+        ".*veranstalt.*",
+        ".*event.*",
+        ".*kultur.*",
+        ".*sport.*",
+        ".*tourismus.*",
+        ".*pressefoto.*"
+      ]
+    },
+    "filters": {
+      "keywords_any": {
+        "de_en": [
+          "ukraine",
+          "ukrain",
+          "gefluecht",
+          "flucht",
+          "geflücht",
+          "migration",
+          "integration",
+          "aufenthalt",
+          "aufenthaltstitel",
+          "§24",
+          "paragraf 24",
+          "auslaenderbehoerde",
+          "ausländerbehörde",
+          "jobcenter",
+          "buergergeld",
+          "bürgergeld",
+          "unterkunft",
+          "termin",
+          "frist",
+          "unterlagen",
+          "vorsprache",
+          "pflicht",
+          "zahlung",
+          "eingestellt"
+        ],
+        "ua": [
+          "україн",
+          "біжен",
+          "міграц",
+          "інтеграц",
+          "документ",
+          "термін",
+          "запис",
+          "прийом",
+          "довідк",
+          "виплат",
+          "припинен",
+          "обов"
+        ]
+      },
+      "action_triggers_any": [
+        "frist",
+        "spätestens",
+        "spaetestens",
+        "bis zum",
+        "deadline",
+        "unterlagen",
+        "nachweis",
+        "mitbringen",
+        "termin",
+        "online buchen",
+        "buchung",
+        "terminvereinbarung",
+        "vorsprache",
+        "persönlich",
+        "persoenlich",
+        "pflicht",
+        "zahlung",
+        "eingestellt",
+        "stopp",
+        "rückforderung",
+        "rueckforderung"
+      ],
+      "action_strength_rules": [
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "strong"
+          },
+          "then": {
+            "priority": "HIGH",
+            "push": "ALLOW"
+          }
+        },
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "weak_or_none"
+          },
+          "then": {
+            "priority": "MEDIUM",
+            "push": "BLOCK"
+          }
+        }
+      ]
+    },
+    "default_topics": [
+      "ukraine",
+      "migration",
+      "deadlines",
+      "documents"
+    ],
+    "default_priority": "HIGH",
+    "default_actions": [
+      "deadline",
+      "document_required",
+      "appointment",
+      "info"
+    ],
+    "dedupe_group": "city_ma_news_hub",
+    "parser_notes": "FALLBACK: Web search-based discovery for official city portal content. Filters by Ukraine/migration keywords + action triggers. Strong action→HIGH+push, weak→MEDIUM+no push. Prevents spam via dedupe + rate-limit.",
+    "enabled": true
+  },
+  "AGB": {
+    "source_id": "city_agb_news_hub",
+    "source_name": "Augsburg — News Hub (Action Filter)",
+    "scope": "CITY",
+    "geo": {
+      "country": "DE",
+      "land": "Bayern",
+      "city": "Augsburg"
+    },
+    "mode": "DISCOVER_AND_FILTER",
+    "base_url": "https://www.google.com/search?q=Augsburg%20Ukraine",
+    "discovery": {
+      "provider": "WEB_SEARCH",
+      "max_results": 25,
+      "queries": [
+        "Augsburg Stadt Ukraine Inform ationen",
+        "Augsburg Ukraine Hilfe Aufenthalt §24",
+        "Augsburg Migration Integration Gefluechtete",
+        "Augsburg Auslaenderbehoerde Termin §24",
+        "Augsburg Jobcenter Termin Unterlagen Frist",
+        "Augsburg Aufenthaltstitel Verlaengerung Termin",
+        "Augsburg Leistungszahlung eingestellt Jobcenter",
+        "Augsburg Vorsprache erforderlich Unterlagen"
+      ],
+      "city_slug": "augsburg"
+    },
+    "allowlist": {
+      "url_must_match_any": [
+        ".*\\baugsburg\\b.*\\.de/.*",
+        ".*stadt\\..*\\.de/.*",
+        ".*rathaus.*",
+        ".*buergerservice.*",
+        ".*service-portal.*",
+        ".*termin.*",
+        ".*auslaender.*",
+        ".*jobcenter.*"
+      ],
+      "reject_if_match_any": [
+        ".*veranstalt.*",
+        ".*event.*",
+        ".*kultur.*",
+        ".*sport.*",
+        ".*tourismus.*",
+        ".*pressefoto.*"
+      ]
+    },
+    "filters": {
+      "keywords_any": {
+        "de_en": [
+          "ukraine",
+          "ukrain",
+          "gefluecht",
+          "flucht",
+          "geflücht",
+          "migration",
+          "integration",
+          "aufenthalt",
+          "aufenthaltstitel",
+          "§24",
+          "paragraf 24",
+          "auslaenderbehoerde",
+          "ausländerbehörde",
+          "jobcenter",
+          "buergergeld",
+          "bürgergeld",
+          "unterkunft",
+          "termin",
+          "frist",
+          "unterlagen",
+          "vorsprache",
+          "pflicht",
+          "zahlung",
+          "eingestellt"
+        ],
+        "ua": [
+          "україн",
+          "біжен",
+          "міграц",
+          "інтеграц",
+          "документ",
+          "термін",
+          "запис",
+          "прийом",
+          "довідк",
+          "виплат",
+          "припинен",
+          "обов"
+        ]
+      },
+      "action_triggers_any": [
+        "frist",
+        "spätestens",
+        "spaetestens",
+        "bis zum",
+        "deadline",
+        "unterlagen",
+        "nachweis",
+        "mitbringen",
+        "termin",
+        "online buchen",
+        "buchung",
+        "terminvereinbarung",
+        "vorsprache",
+        "persönlich",
+        "persoenlich",
+        "pflicht",
+        "zahlung",
+        "eingestellt",
+        "stopp",
+        "rückforderung",
+        "rueckforderung"
+      ],
+      "action_strength_rules": [
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "strong"
+          },
+          "then": {
+            "priority": "HIGH",
+            "push": "ALLOW"
+          }
+        },
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "weak_or_none"
+          },
+          "then": {
+            "priority": "MEDIUM",
+            "push": "BLOCK"
+          }
+        }
+      ]
+    },
+    "default_topics": [
+      "ukraine",
+      "migration",
+      "deadlines",
+      "documents"
+    ],
+    "default_priority": "HIGH",
+    "default_actions": [
+      "deadline",
+      "document_required",
+      "appointment",
+      "info"
+    ],
+    "dedupe_group": "city_agb_news_hub",
+    "parser_notes": "FALLBACK: Web search-based discovery for official city portal content. Filters by Ukraine/migration keywords + action triggers. Strong action→HIGH+push, weak→MEDIUM+no push. Prevents spam via dedupe + rate-limit.",
+    "enabled": true
+  },
+  "POT": {
+    "source_id": "city_pot_news_hub",
+    "source_name": "Potsdam — News Hub (Action Filter)",
+    "scope": "CITY",
+    "geo": {
+      "country": "DE",
+      "land": "Brandenburg",
+      "city": "Potsdam"
+    },
+    "mode": "DISCOVER_AND_FILTER",
+    "base_url": "https://www.google.com/search?q=Potsdam%20Ukraine",
+    "discovery": {
+      "provider": "WEB_SEARCH",
+      "max_results": 25,
+      "queries": [
+        "Potsdam Stadt Ukraine Inform ationen",
+        "Potsdam Ukraine Hilfe Aufenthalt §24",
+        "Potsdam Migration Integration Gefluechtete",
+        "Potsdam Auslaenderbehoerde Termin §24",
+        "Potsdam Jobcenter Termin Unterlagen Frist",
+        "Potsdam Aufenthaltstitel Verlaengerung Termin",
+        "Potsdam Leistungszahlung eingestellt Jobcenter",
+        "Potsdam Vorsprache erforderlich Unterlagen"
+      ],
+      "city_slug": "potsdam"
+    },
+    "allowlist": {
+      "url_must_match_any": [
+        ".*\\bpotsdam\\b.*\\.de/.*",
+        ".*stadt\\..*\\.de/.*",
+        ".*rathaus.*",
+        ".*buergerservice.*",
+        ".*service-portal.*",
+        ".*termin.*",
+        ".*auslaender.*",
+        ".*jobcenter.*"
+      ],
+      "reject_if_match_any": [
+        ".*veranstalt.*",
+        ".*event.*",
+        ".*kultur.*",
+        ".*sport.*",
+        ".*tourismus.*",
+        ".*pressefoto.*"
+      ]
+    },
+    "filters": {
+      "keywords_any": {
+        "de_en": [
+          "ukraine",
+          "ukrain",
+          "gefluecht",
+          "flucht",
+          "geflücht",
+          "migration",
+          "integration",
+          "aufenthalt",
+          "aufenthaltstitel",
+          "§24",
+          "paragraf 24",
+          "auslaenderbehoerde",
+          "ausländerbehörde",
+          "jobcenter",
+          "buergergeld",
+          "bürgergeld",
+          "unterkunft",
+          "termin",
+          "frist",
+          "unterlagen",
+          "vorsprache",
+          "pflicht",
+          "zahlung",
+          "eingestellt"
+        ],
+        "ua": [
+          "україн",
+          "біжен",
+          "міграц",
+          "інтеграц",
+          "документ",
+          "термін",
+          "запис",
+          "прийом",
+          "довідк",
+          "виплат",
+          "припинен",
+          "обов"
+        ]
+      },
+      "action_triggers_any": [
+        "frist",
+        "spätestens",
+        "spaetestens",
+        "bis zum",
+        "deadline",
+        "unterlagen",
+        "nachweis",
+        "mitbringen",
+        "termin",
+        "online buchen",
+        "buchung",
+        "terminvereinbarung",
+        "vorsprache",
+        "persönlich",
+        "persoenlich",
+        "pflicht",
+        "zahlung",
+        "eingestellt",
+        "stopp",
+        "rückforderung",
+        "rueckforderung"
+      ],
+      "action_strength_rules": [
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "strong"
+          },
+          "then": {
+            "priority": "HIGH",
+            "push": "ALLOW"
+          }
+        },
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "weak_or_none"
+          },
+          "then": {
+            "priority": "MEDIUM",
+            "push": "BLOCK"
+          }
+        }
+      ]
+    },
+    "default_topics": [
+      "ukraine",
+      "migration",
+      "deadlines",
+      "documents"
+    ],
+    "default_priority": "HIGH",
+    "default_actions": [
+      "deadline",
+      "document_required",
+      "appointment",
+      "info"
+    ],
+    "dedupe_group": "city_pot_news_hub",
+    "parser_notes": "FALLBACK: Web search-based discovery for official city portal content. Filters by Ukraine/migration keywords + action triggers. Strong action→HIGH+push, weak→MEDIUM+no push. Prevents spam via dedupe + rate-limit.",
+    "enabled": true
+  },
+  "SZW": {
+    "source_id": "city_szw_news_hub",
+    "source_name": "Schwerin — News Hub (Action Filter)",
+    "scope": "CITY",
+    "geo": {
+      "country": "DE",
+      "land": "Mecklenburg-Vorpommern",
+      "city": "Schwerin"
+    },
+    "mode": "DISCOVER_AND_FILTER",
+    "base_url": "https://www.google.com/search?q=Schwerin%20Ukraine",
+    "discovery": {
+      "provider": "WEB_SEARCH",
+      "max_results": 25,
+      "queries": [
+        "Schwerin Stadt Ukraine Inform ationen",
+        "Schwerin Ukraine Hilfe Aufenthalt §24",
+        "Schwerin Migration Integration Gefluechtete",
+        "Schwerin Auslaenderbehoerde Termin §24",
+        "Schwerin Jobcenter Termin Unterlagen Frist",
+        "Schwerin Aufenthaltstitel Verlaengerung Termin",
+        "Schwerin Leistungszahlung eingestellt Jobcenter",
+        "Schwerin Vorsprache erforderlich Unterlagen"
+      ],
+      "city_slug": "schwerin"
+    },
+    "allowlist": {
+      "url_must_match_any": [
+        ".*\\bschwerin\\b.*\\.de/.*",
+        ".*stadt\\..*\\.de/.*",
+        ".*rathaus.*",
+        ".*buergerservice.*",
+        ".*service-portal.*",
+        ".*termin.*",
+        ".*auslaender.*",
+        ".*jobcenter.*"
+      ],
+      "reject_if_match_any": [
+        ".*veranstalt.*",
+        ".*event.*",
+        ".*kultur.*",
+        ".*sport.*",
+        ".*tourismus.*",
+        ".*pressefoto.*"
+      ]
+    },
+    "filters": {
+      "keywords_any": {
+        "de_en": [
+          "ukraine",
+          "ukrain",
+          "gefluecht",
+          "flucht",
+          "geflücht",
+          "migration",
+          "integration",
+          "aufenthalt",
+          "aufenthaltstitel",
+          "§24",
+          "paragraf 24",
+          "auslaenderbehoerde",
+          "ausländerbehörde",
+          "jobcenter",
+          "buergergeld",
+          "bürgergeld",
+          "unterkunft",
+          "termin",
+          "frist",
+          "unterlagen",
+          "vorsprache",
+          "pflicht",
+          "zahlung",
+          "eingestellt"
+        ],
+        "ua": [
+          "україн",
+          "біжен",
+          "міграц",
+          "інтеграц",
+          "документ",
+          "термін",
+          "запис",
+          "прийом",
+          "довідк",
+          "виплат",
+          "припинен",
+          "обов"
+        ]
+      },
+      "action_triggers_any": [
+        "frist",
+        "spätestens",
+        "spaetestens",
+        "bis zum",
+        "deadline",
+        "unterlagen",
+        "nachweis",
+        "mitbringen",
+        "termin",
+        "online buchen",
+        "buchung",
+        "terminvereinbarung",
+        "vorsprache",
+        "persönlich",
+        "persoenlich",
+        "pflicht",
+        "zahlung",
+        "eingestellt",
+        "stopp",
+        "rückforderung",
+        "rueckforderung"
+      ],
+      "action_strength_rules": [
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "strong"
+          },
+          "then": {
+            "priority": "HIGH",
+            "push": "ALLOW"
+          }
+        },
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "weak_or_none"
+          },
+          "then": {
+            "priority": "MEDIUM",
+            "push": "BLOCK"
+          }
+        }
+      ]
+    },
+    "default_topics": [
+      "ukraine",
+      "migration",
+      "deadlines",
+      "documents"
+    ],
+    "default_priority": "HIGH",
+    "default_actions": [
+      "deadline",
+      "document_required",
+      "appointment",
+      "info"
+    ],
+    "dedupe_group": "city_szw_news_hub",
+    "parser_notes": "FALLBACK: Web search-based discovery for official city portal content. Filters by Ukraine/migration keywords + action triggers. Strong action→HIGH+push, weak→MEDIUM+no push. Prevents spam via dedupe + rate-limit.",
+    "enabled": true
+  },
+  "MD": {
+    "source_id": "city_md_news_hub",
+    "source_name": "Magdeburg — News Hub (Action Filter)",
+    "scope": "CITY",
+    "geo": {
+      "country": "DE",
+      "land": "Sachsen-Anhalt",
+      "city": "Magdeburg"
+    },
+    "mode": "DISCOVER_AND_FILTER",
+    "base_url": "https://www.google.com/search?q=Magdeburg%20Ukraine",
+    "discovery": {
+      "provider": "WEB_SEARCH",
+      "max_results": 25,
+      "queries": [
+        "Magdeburg Stadt Ukraine Inform ationen",
+        "Magdeburg Ukraine Hilfe Aufenthalt §24",
+        "Magdeburg Migration Integration Gefluechtete",
+        "Magdeburg Auslaenderbehoerde Termin §24",
+        "Magdeburg Jobcenter Termin Unterlagen Frist",
+        "Magdeburg Aufenthaltstitel Verlaengerung Termin",
+        "Magdeburg Leistungszahlung eingestellt Jobcenter",
+        "Magdeburg Vorsprache erforderlich Unterlagen"
+      ],
+      "city_slug": "magdeburg"
+    },
+    "allowlist": {
+      "url_must_match_any": [
+        ".*\\bmagdeburg\\b.*\\.de/.*",
+        ".*stadt\\..*\\.de/.*",
+        ".*rathaus.*",
+        ".*buergerservice.*",
+        ".*service-portal.*",
+        ".*termin.*",
+        ".*auslaender.*",
+        ".*jobcenter.*"
+      ],
+      "reject_if_match_any": [
+        ".*veranstalt.*",
+        ".*event.*",
+        ".*kultur.*",
+        ".*sport.*",
+        ".*tourismus.*",
+        ".*pressefoto.*"
+      ]
+    },
+    "filters": {
+      "keywords_any": {
+        "de_en": [
+          "ukraine",
+          "ukrain",
+          "gefluecht",
+          "flucht",
+          "geflücht",
+          "migration",
+          "integration",
+          "aufenthalt",
+          "aufenthaltstitel",
+          "§24",
+          "paragraf 24",
+          "auslaenderbehoerde",
+          "ausländerbehörde",
+          "jobcenter",
+          "buergergeld",
+          "bürgergeld",
+          "unterkunft",
+          "termin",
+          "frist",
+          "unterlagen",
+          "vorsprache",
+          "pflicht",
+          "zahlung",
+          "eingestellt"
+        ],
+        "ua": [
+          "україн",
+          "біжен",
+          "міграц",
+          "інтеграц",
+          "документ",
+          "термін",
+          "запис",
+          "прийом",
+          "довідк",
+          "виплат",
+          "припинен",
+          "обов"
+        ]
+      },
+      "action_triggers_any": [
+        "frist",
+        "spätestens",
+        "spaetestens",
+        "bis zum",
+        "deadline",
+        "unterlagen",
+        "nachweis",
+        "mitbringen",
+        "termin",
+        "online buchen",
+        "buchung",
+        "terminvereinbarung",
+        "vorsprache",
+        "persönlich",
+        "persoenlich",
+        "pflicht",
+        "zahlung",
+        "eingestellt",
+        "stopp",
+        "rückforderung",
+        "rueckforderung"
+      ],
+      "action_strength_rules": [
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "strong"
+          },
+          "then": {
+            "priority": "HIGH",
+            "push": "ALLOW"
+          }
+        },
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "weak_or_none"
+          },
+          "then": {
+            "priority": "MEDIUM",
+            "push": "BLOCK"
+          }
+        }
+      ]
+    },
+    "default_topics": [
+      "ukraine",
+      "migration",
+      "deadlines",
+      "documents"
+    ],
+    "default_priority": "HIGH",
+    "default_actions": [
+      "deadline",
+      "document_required",
+      "appointment",
+      "info"
+    ],
+    "dedupe_group": "city_md_news_hub",
+    "parser_notes": "FALLBACK: Web search-based discovery for official city portal content. Filters by Ukraine/migration keywords + action triggers. Strong action→HIGH+push, weak→MEDIUM+no push. Prevents spam via dedupe + rate-limit.",
+    "enabled": true
+  },
+  "KEL": {
+    "source_id": "city_kel_news_hub",
+    "source_name": "Kiel — News Hub (Action Filter)",
+    "scope": "CITY",
+    "geo": {
+      "country": "DE",
+      "land": "Schleswig-Holstein",
+      "city": "Kiel"
+    },
+    "mode": "DISCOVER_AND_FILTER",
+    "base_url": "https://www.google.com/search?q=Kiel%20Ukraine",
+    "discovery": {
+      "provider": "WEB_SEARCH",
+      "max_results": 25,
+      "queries": [
+        "Kiel Stadt Ukraine Inform ationen",
+        "Kiel Ukraine Hilfe Aufenthalt §24",
+        "Kiel Migration Integration Gefluechtete",
+        "Kiel Auslaenderbehoerde Termin §24",
+        "Kiel Jobcenter Termin Unterlagen Frist",
+        "Kiel Aufenthaltstitel Verlaengerung Termin",
+        "Kiel Leistungszahlung eingestellt Jobcenter",
+        "Kiel Vorsprache erforderlich Unterlagen"
+      ],
+      "city_slug": "kiel"
+    },
+    "allowlist": {
+      "url_must_match_any": [
+        ".*\\bkiel\\b.*\\.de/.*",
+        ".*stadt\\..*\\.de/.*",
+        ".*rathaus.*",
+        ".*buergerservice.*",
+        ".*service-portal.*",
+        ".*termin.*",
+        ".*auslaender.*",
+        ".*jobcenter.*"
+      ],
+      "reject_if_match_any": [
+        ".*veranstalt.*",
+        ".*event.*",
+        ".*kultur.*",
+        ".*sport.*",
+        ".*tourismus.*",
+        ".*pressefoto.*"
+      ]
+    },
+    "filters": {
+      "keywords_any": {
+        "de_en": [
+          "ukraine",
+          "ukrain",
+          "gefluecht",
+          "flucht",
+          "geflücht",
+          "migration",
+          "integration",
+          "aufenthalt",
+          "aufenthaltstitel",
+          "§24",
+          "paragraf 24",
+          "auslaenderbehoerde",
+          "ausländerbehörde",
+          "jobcenter",
+          "buergergeld",
+          "bürgergeld",
+          "unterkunft",
+          "termin",
+          "frist",
+          "unterlagen",
+          "vorsprache",
+          "pflicht",
+          "zahlung",
+          "eingestellt"
+        ],
+        "ua": [
+          "україн",
+          "біжен",
+          "міграц",
+          "інтеграц",
+          "документ",
+          "термін",
+          "запис",
+          "прийом",
+          "довідк",
+          "виплат",
+          "припинен",
+          "обов"
+        ]
+      },
+      "action_triggers_any": [
+        "frist",
+        "spätestens",
+        "spaetestens",
+        "bis zum",
+        "deadline",
+        "unterlagen",
+        "nachweis",
+        "mitbringen",
+        "termin",
+        "online buchen",
+        "buchung",
+        "terminvereinbarung",
+        "vorsprache",
+        "persönlich",
+        "persoenlich",
+        "pflicht",
+        "zahlung",
+        "eingestellt",
+        "stopp",
+        "rückforderung",
+        "rueckforderung"
+      ],
+      "action_strength_rules": [
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "strong"
+          },
+          "then": {
+            "priority": "HIGH",
+            "push": "ALLOW"
+          }
+        },
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "weak_or_none"
+          },
+          "then": {
+            "priority": "MEDIUM",
+            "push": "BLOCK"
+          }
+        }
+      ]
+    },
+    "default_topics": [
+      "ukraine",
+      "migration",
+      "deadlines",
+      "documents"
+    ],
+    "default_priority": "HIGH",
+    "default_actions": [
+      "deadline",
+      "document_required",
+      "appointment",
+      "info"
+    ],
+    "dedupe_group": "city_kel_news_hub",
+    "parser_notes": "FALLBACK: Web search-based discovery for official city portal content. Filters by Ukraine/migration keywords + action triggers. Strong action→HIGH+push, weak→MEDIUM+no push. Prevents spam via dedupe + rate-limit.",
+    "enabled": true
+  },
+  "ERF": {
+    "source_id": "city_erf_news_hub",
+    "source_name": "Erfurt — News Hub (Action Filter)",
+    "scope": "CITY",
+    "geo": {
+      "country": "DE",
+      "land": "Thüringen",
+      "city": "Erfurt"
+    },
+    "mode": "DISCOVER_AND_FILTER",
+    "base_url": "https://www.google.com/search?q=Erfurt%20Ukraine",
+    "discovery": {
+      "provider": "WEB_SEARCH",
+      "max_results": 25,
+      "queries": [
+        "Erfurt Stadt Ukraine Inform ationen",
+        "Erfurt Ukraine Hilfe Aufenthalt §24",
+        "Erfurt Migration Integration Gefluechtete",
+        "Erfurt Auslaenderbehoerde Termin §24",
+        "Erfurt Jobcenter Termin Unterlagen Frist",
+        "Erfurt Aufenthaltstitel Verlaengerung Termin",
+        "Erfurt Leistungszahlung eingestellt Jobcenter",
+        "Erfurt Vorsprache erforderlich Unterlagen"
+      ],
+      "city_slug": "erfurt"
+    },
+    "allowlist": {
+      "url_must_match_any": [
+        ".*\\berfurt\\b.*\\.de/.*",
+        ".*stadt\\..*\\.de/.*",
+        ".*rathaus.*",
+        ".*buergerservice.*",
+        ".*service-portal.*",
+        ".*termin.*",
+        ".*auslaender.*",
+        ".*jobcenter.*"
+      ],
+      "reject_if_match_any": [
+        ".*veranstalt.*",
+        ".*event.*",
+        ".*kultur.*",
+        ".*sport.*",
+        ".*tourismus.*",
+        ".*pressefoto.*"
+      ]
+    },
+    "filters": {
+      "keywords_any": {
+        "de_en": [
+          "ukraine",
+          "ukrain",
+          "gefluecht",
+          "flucht",
+          "geflücht",
+          "migration",
+          "integration",
+          "aufenthalt",
+          "aufenthaltstitel",
+          "§24",
+          "paragraf 24",
+          "auslaenderbehoerde",
+          "ausländerbehörde",
+          "jobcenter",
+          "buergergeld",
+          "bürgergeld",
+          "unterkunft",
+          "termin",
+          "frist",
+          "unterlagen",
+          "vorsprache",
+          "pflicht",
+          "zahlung",
+          "eingestellt"
+        ],
+        "ua": [
+          "україн",
+          "біжен",
+          "міграц",
+          "інтеграц",
+          "документ",
+          "термін",
+          "запис",
+          "прийом",
+          "довідк",
+          "виплат",
+          "припинен",
+          "обов"
+        ]
+      },
+      "action_triggers_any": [
+        "frist",
+        "spätestens",
+        "spaetestens",
+        "bis zum",
+        "deadline",
+        "unterlagen",
+        "nachweis",
+        "mitbringen",
+        "termin",
+        "online buchen",
+        "buchung",
+        "terminvereinbarung",
+        "vorsprache",
+        "persönlich",
+        "persoenlich",
+        "pflicht",
+        "zahlung",
+        "eingestellt",
+        "stopp",
+        "rückforderung",
+        "rueckforderung"
+      ],
+      "action_strength_rules": [
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "strong"
+          },
+          "then": {
+            "priority": "HIGH",
+            "push": "ALLOW"
+          }
+        },
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "weak_or_none"
+          },
+          "then": {
+            "priority": "MEDIUM",
+            "push": "BLOCK"
+          }
+        }
+      ]
+    },
+    "default_topics": [
+      "ukraine",
+      "migration",
+      "deadlines",
+      "documents"
+    ],
+    "default_priority": "HIGH",
+    "default_actions": [
+      "deadline",
+      "document_required",
+      "appointment",
+      "info"
+    ],
+    "dedupe_group": "city_erf_news_hub",
+    "parser_notes": "FALLBACK: Web search-based discovery for official city portal content. Filters by Ukraine/migration keywords + action triggers. Strong action→HIGH+push, weak→MEDIUM+no push. Prevents spam via dedupe + rate-limit.",
+    "enabled": true
+  },
+  "WIE": {
+    "source_id": "city_wie_news_hub",
+    "source_name": "Wiesbaden — News Hub (Action Filter)",
+    "scope": "CITY",
+    "geo": {
+      "country": "DE",
+      "land": "Hessen",
+      "city": "Wiesbaden"
+    },
+    "mode": "DISCOVER_AND_FILTER",
+    "base_url": "https://www.google.com/search?q=Wiesbaden%20Ukraine",
+    "discovery": {
+      "provider": "WEB_SEARCH",
+      "max_results": 25,
+      "queries": [
+        "Wiesbaden Stadt Ukraine Inform ationen",
+        "Wiesbaden Ukraine Hilfe Aufenthalt §24",
+        "Wiesbaden Migration Integration Gefluechtete",
+        "Wiesbaden Auslaenderbehoerde Termin §24",
+        "Wiesbaden Jobcenter Termin Unterlagen Frist",
+        "Wiesbaden Aufenthaltstitel Verlaengerung Termin",
+        "Wiesbaden Leistungszahlung eingestellt Jobcenter",
+        "Wiesbaden Vorsprache erforderlich Unterlagen"
+      ],
+      "city_slug": "wiesbaden"
+    },
+    "allowlist": {
+      "url_must_match_any": [
+        ".*\\bwiesbaden\\b.*\\.de/.*",
+        ".*stadt\\..*\\.de/.*",
+        ".*rathaus.*",
+        ".*buergerservice.*",
+        ".*service-portal.*",
+        ".*termin.*",
+        ".*auslaender.*",
+        ".*jobcenter.*"
+      ],
+      "reject_if_match_any": [
+        ".*veranstalt.*",
+        ".*event.*",
+        ".*kultur.*",
+        ".*sport.*",
+        ".*tourismus.*",
+        ".*pressefoto.*"
+      ]
+    },
+    "filters": {
+      "keywords_any": {
+        "de_en": [
+          "ukraine",
+          "ukrain",
+          "gefluecht",
+          "flucht",
+          "geflücht",
+          "migration",
+          "integration",
+          "aufenthalt",
+          "aufenthaltstitel",
+          "§24",
+          "paragraf 24",
+          "auslaenderbehoerde",
+          "ausländerbehörde",
+          "jobcenter",
+          "buergergeld",
+          "bürgergeld",
+          "unterkunft",
+          "termin",
+          "frist",
+          "unterlagen",
+          "vorsprache",
+          "pflicht",
+          "zahlung",
+          "eingestellt"
+        ],
+        "ua": [
+          "україн",
+          "біжен",
+          "міграц",
+          "інтеграц",
+          "документ",
+          "термін",
+          "запис",
+          "прийом",
+          "довідк",
+          "виплат",
+          "припинен",
+          "обов"
+        ]
+      },
+      "action_triggers_any": [
+        "frist",
+        "spätestens",
+        "spaetestens",
+        "bis zum",
+        "deadline",
+        "unterlagen",
+        "nachweis",
+        "mitbringen",
+        "termin",
+        "online buchen",
+        "buchung",
+        "terminvereinbarung",
+        "vorsprache",
+        "persönlich",
+        "persoenlich",
+        "pflicht",
+        "zahlung",
+        "eingestellt",
+        "stopp",
+        "rückforderung",
+        "rueckforderung"
+      ],
+      "action_strength_rules": [
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "strong"
+          },
+          "then": {
+            "priority": "HIGH",
+            "push": "ALLOW"
+          }
+        },
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "weak_or_none"
+          },
+          "then": {
+            "priority": "MEDIUM",
+            "push": "BLOCK"
+          }
+        }
+      ]
+    },
+    "default_topics": [
+      "ukraine",
+      "migration",
+      "deadlines",
+      "documents"
+    ],
+    "default_priority": "HIGH",
+    "default_actions": [
+      "deadline",
+      "document_required",
+      "appointment",
+      "info"
+    ],
+    "dedupe_group": "city_wie_news_hub",
+    "parser_notes": "FALLBACK: Web search-based discovery for official city portal content. Filters by Ukraine/migration keywords + action triggers. Strong action→HIGH+push, weak→MEDIUM+no push. Prevents spam via dedupe + rate-limit.",
+    "enabled": true
+  },
+  "MNZ": {
+    "source_id": "city_mnz_news_hub",
+    "source_name": "Mainz — News Hub (Action Filter)",
+    "scope": "CITY",
+    "geo": {
+      "country": "DE",
+      "land": "Rheinland-Pfalz",
+      "city": "Mainz"
+    },
+    "mode": "DISCOVER_AND_FILTER",
+    "base_url": "https://www.google.com/search?q=Mainz%20Ukraine",
+    "discovery": {
+      "provider": "WEB_SEARCH",
+      "max_results": 25,
+      "queries": [
+        "Mainz Stadt Ukraine Inform ationen",
+        "Mainz Ukraine Hilfe Aufenthalt §24",
+        "Mainz Migration Integration Gefluechtete",
+        "Mainz Auslaenderbehoerde Termin §24",
+        "Mainz Jobcenter Termin Unterlagen Frist",
+        "Mainz Aufenthaltstitel Verlaengerung Termin",
+        "Mainz Leistungszahlung eingestellt Jobcenter",
+        "Mainz Vorsprache erforderlich Unterlagen"
+      ],
+      "city_slug": "mainz"
+    },
+    "allowlist": {
+      "url_must_match_any": [
+        ".*\\bmainz\\b.*\\.de/.*",
+        ".*stadt\\..*\\.de/.*",
+        ".*rathaus.*",
+        ".*buergerservice.*",
+        ".*service-portal.*",
+        ".*termin.*",
+        ".*auslaender.*",
+        ".*jobcenter.*"
+      ],
+      "reject_if_match_any": [
+        ".*veranstalt.*",
+        ".*event.*",
+        ".*kultur.*",
+        ".*sport.*",
+        ".*tourismus.*",
+        ".*pressefoto.*"
+      ]
+    },
+    "filters": {
+      "keywords_any": {
+        "de_en": [
+          "ukraine",
+          "ukrain",
+          "gefluecht",
+          "flucht",
+          "geflücht",
+          "migration",
+          "integration",
+          "aufenthalt",
+          "aufenthaltstitel",
+          "§24",
+          "paragraf 24",
+          "auslaenderbehoerde",
+          "ausländerbehörde",
+          "jobcenter",
+          "buergergeld",
+          "bürgergeld",
+          "unterkunft",
+          "termin",
+          "frist",
+          "unterlagen",
+          "vorsprache",
+          "pflicht",
+          "zahlung",
+          "eingestellt"
+        ],
+        "ua": [
+          "україн",
+          "біжен",
+          "міграц",
+          "інтеграц",
+          "документ",
+          "термін",
+          "запис",
+          "прийом",
+          "довідк",
+          "виплат",
+          "припинен",
+          "обов"
+        ]
+      },
+      "action_triggers_any": [
+        "frist",
+        "spätestens",
+        "spaetestens",
+        "bis zum",
+        "deadline",
+        "unterlagen",
+        "nachweis",
+        "mitbringen",
+        "termin",
+        "online buchen",
+        "buchung",
+        "terminvereinbarung",
+        "vorsprache",
+        "persönlich",
+        "persoenlich",
+        "pflicht",
+        "zahlung",
+        "eingestellt",
+        "stopp",
+        "rückforderung",
+        "rueckforderung"
+      ],
+      "action_strength_rules": [
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "strong"
+          },
+          "then": {
+            "priority": "HIGH",
+            "push": "ALLOW"
+          }
+        },
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "weak_or_none"
+          },
+          "then": {
+            "priority": "MEDIUM",
+            "push": "BLOCK"
+          }
+        }
+      ]
+    },
+    "default_topics": [
+      "ukraine",
+      "migration",
+      "deadlines",
+      "documents"
+    ],
+    "default_priority": "HIGH",
+    "default_actions": [
+      "deadline",
+      "document_required",
+      "appointment",
+      "info"
+    ],
+    "dedupe_group": "city_mnz_news_hub",
+    "parser_notes": "FALLBACK: Web search-based discovery for official city portal content. Filters by Ukraine/migration keywords + action triggers. Strong action→HIGH+push, weak→MEDIUM+no push. Prevents spam via dedupe + rate-limit.",
+    "enabled": true
+  },
+  "SB": {
+    "source_id": "city_sb_news_hub",
+    "source_name": "Saarbrücken — News Hub (Action Filter)",
+    "scope": "CITY",
+    "geo": {
+      "country": "DE",
+      "land": "Saarland",
+      "city": "Saarbrücken"
+    },
+    "mode": "DISCOVER_AND_FILTER",
+    "base_url": "https://www.google.com/search?q=Saarbr%C3%BCcken%20Ukraine",
+    "discovery": {
+      "provider": "WEB_SEARCH",
+      "max_results": 25,
+      "queries": [
+        "Saarbrücken Stadt Ukraine Inform ationen",
+        "Saarbrücken Ukraine Hilfe Aufenthalt §24",
+        "Saarbrücken Migration Integration Gefluechtete",
+        "Saarbrücken Auslaenderbehoerde Termin §24",
+        "Saarbrücken Jobcenter Termin Unterlagen Frist",
+        "Saarbrücken Aufenthaltstitel Verlaengerung Termin",
+        "Saarbrücken Leistungszahlung eingestellt Jobcenter",
+        "Saarbrücken Vorsprache erforderlich Unterlagen"
+      ],
+      "city_slug": "saarbruecken"
+    },
+    "allowlist": {
+      "url_must_match_any": [
+        ".*\\bsaarbruecken\\b.*\\.de/.*",
+        ".*stadt\\..*\\.de/.*",
+        ".*rathaus.*",
+        ".*buergerservice.*",
+        ".*service-portal.*",
+        ".*termin.*",
+        ".*auslaender.*",
+        ".*jobcenter.*"
+      ],
+      "reject_if_match_any": [
+        ".*veranstalt.*",
+        ".*event.*",
+        ".*kultur.*",
+        ".*sport.*",
+        ".*tourismus.*",
+        ".*pressefoto.*"
+      ]
+    },
+    "filters": {
+      "keywords_any": {
+        "de_en": [
+          "ukraine",
+          "ukrain",
+          "gefluecht",
+          "flucht",
+          "geflücht",
+          "migration",
+          "integration",
+          "aufenthalt",
+          "aufenthaltstitel",
+          "§24",
+          "paragraf 24",
+          "auslaenderbehoerde",
+          "ausländerbehörde",
+          "jobcenter",
+          "buergergeld",
+          "bürgergeld",
+          "unterkunft",
+          "termin",
+          "frist",
+          "unterlagen",
+          "vorsprache",
+          "pflicht",
+          "zahlung",
+          "eingestellt"
+        ],
+        "ua": [
+          "україн",
+          "біжен",
+          "міграц",
+          "інтеграц",
+          "документ",
+          "термін",
+          "запис",
+          "прийом",
+          "довідк",
+          "виплат",
+          "припинен",
+          "обов"
+        ]
+      },
+      "action_triggers_any": [
+        "frist",
+        "spätestens",
+        "spaetestens",
+        "bis zum",
+        "deadline",
+        "unterlagen",
+        "nachweis",
+        "mitbringen",
+        "termin",
+        "online buchen",
+        "buchung",
+        "terminvereinbarung",
+        "vorsprache",
+        "persönlich",
+        "persoenlich",
+        "pflicht",
+        "zahlung",
+        "eingestellt",
+        "stopp",
+        "rückforderung",
+        "rueckforderung"
+      ],
+      "action_strength_rules": [
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "strong"
+          },
+          "then": {
+            "priority": "HIGH",
+            "push": "ALLOW"
+          }
+        },
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "weak_or_none"
+          },
+          "then": {
+            "priority": "MEDIUM",
+            "push": "BLOCK"
+          }
+        }
+      ]
+    },
+    "default_topics": [
+      "ukraine",
+      "migration",
+      "deadlines",
+      "documents"
+    ],
+    "default_priority": "HIGH",
+    "default_actions": [
+      "deadline",
+      "document_required",
+      "appointment",
+      "info"
+    ],
+    "dedupe_group": "city_sb_news_hub",
+    "parser_notes": "FALLBACK: Web search-based discovery for official city portal content. Filters by Ukraine/migration keywords + action triggers. Strong action→HIGH+push, weak→MEDIUM+no push. Prevents spam via dedupe + rate-limit.",
+    "enabled": true
+  },
+  "GE": {
+    "source_id": "city_ge_news_hub",
+    "source_name": "Gelsenkirchen — News Hub (Action Filter)",
+    "scope": "CITY",
+    "geo": {
+      "country": "DE",
+      "land": "Nordrhein-Westfalen",
+      "city": "Gelsenkirchen"
+    },
+    "mode": "DISCOVER_AND_FILTER",
+    "base_url": "https://www.google.com/search?q=Gelsenkirchen%20Ukraine",
+    "discovery": {
+      "provider": "WEB_SEARCH",
+      "max_results": 25,
+      "queries": [
+        "Gelsenkirchen Stadt Ukraine Inform ationen",
+        "Gelsenkirchen Ukraine Hilfe Aufenthalt §24",
+        "Gelsenkirchen Migration Integration Gefluechtete",
+        "Gelsenkirchen Auslaenderbehoerde Termin §24",
+        "Gelsenkirchen Jobcenter Termin Unterlagen Frist",
+        "Gelsenkirchen Aufenthaltstitel Verlaengerung Termin",
+        "Gelsenkirchen Leistungszahlung eingestellt Jobcenter",
+        "Gelsenkirchen Vorsprache erforderlich Unterlagen"
+      ],
+      "city_slug": "gelsenkirchen"
+    },
+    "allowlist": {
+      "url_must_match_any": [
+        ".*\\bgelsenkirchen\\b.*\\.de/.*",
+        ".*stadt\\..*\\.de/.*",
+        ".*rathaus.*",
+        ".*buergerservice.*",
+        ".*service-portal.*",
+        ".*termin.*",
+        ".*auslaender.*",
+        ".*jobcenter.*"
+      ],
+      "reject_if_match_any": [
+        ".*veranstalt.*",
+        ".*event.*",
+        ".*kultur.*",
+        ".*sport.*",
+        ".*tourismus.*",
+        ".*pressefoto.*"
+      ]
+    },
+    "filters": {
+      "keywords_any": {
+        "de_en": [
+          "ukraine",
+          "ukrain",
+          "gefluecht",
+          "flucht",
+          "geflücht",
+          "migration",
+          "integration",
+          "aufenthalt",
+          "aufenthaltstitel",
+          "§24",
+          "paragraf 24",
+          "auslaenderbehoerde",
+          "ausländerbehörde",
+          "jobcenter",
+          "buergergeld",
+          "bürgergeld",
+          "unterkunft",
+          "termin",
+          "frist",
+          "unterlagen",
+          "vorsprache",
+          "pflicht",
+          "zahlung",
+          "eingestellt"
+        ],
+        "ua": [
+          "україн",
+          "біжен",
+          "міграц",
+          "інтеграц",
+          "документ",
+          "термін",
+          "запис",
+          "прийом",
+          "довідк",
+          "виплат",
+          "припинен",
+          "обов"
+        ]
+      },
+      "action_triggers_any": [
+        "frist",
+        "spätestens",
+        "spaetestens",
+        "bis zum",
+        "deadline",
+        "unterlagen",
+        "nachweis",
+        "mitbringen",
+        "termin",
+        "online buchen",
+        "buchung",
+        "terminvereinbarung",
+        "vorsprache",
+        "persönlich",
+        "persoenlich",
+        "pflicht",
+        "zahlung",
+        "eingestellt",
+        "stopp",
+        "rückforderung",
+        "rueckforderung"
+      ],
+      "action_strength_rules": [
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "strong"
+          },
+          "then": {
+            "priority": "HIGH",
+            "push": "ALLOW"
+          }
+        },
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "weak_or_none"
+          },
+          "then": {
+            "priority": "MEDIUM",
+            "push": "BLOCK"
+          }
+        }
+      ]
+    },
+    "default_topics": [
+      "ukraine",
+      "migration",
+      "deadlines",
+      "documents"
+    ],
+    "default_priority": "HIGH",
+    "default_actions": [
+      "deadline",
+      "document_required",
+      "appointment",
+      "info"
+    ],
+    "dedupe_group": "city_ge_news_hub",
+    "parser_notes": "FALLBACK: Web search-based discovery for official city portal content. Filters by Ukraine/migration keywords + action triggers. Strong action→HIGH+push, weak→MEDIUM+no push. Prevents spam via dedupe + rate-limit.",
+    "enabled": true
+  },
+  "CH": {
+    "source_id": "city_ch_news_hub",
+    "source_name": "Chemnitz — News Hub (Action Filter)",
+    "scope": "CITY",
+    "geo": {
+      "country": "DE",
+      "land": "Sachsen",
+      "city": "Chemnitz"
+    },
+    "mode": "DISCOVER_AND_FILTER",
+    "base_url": "https://www.google.com/search?q=Chemnitz%20Ukraine",
+    "discovery": {
+      "provider": "WEB_SEARCH",
+      "max_results": 25,
+      "queries": [
+        "Chemnitz Stadt Ukraine Inform ationen",
+        "Chemnitz Ukraine Hilfe Aufenthalt §24",
+        "Chemnitz Migration Integration Gefluechtete",
+        "Chemnitz Auslaenderbehoerde Termin §24",
+        "Chemnitz Jobcenter Termin Unterlagen Frist",
+        "Chemnitz Aufenthaltstitel Verlaengerung Termin",
+        "Chemnitz Leistungszahlung eingestellt Jobcenter",
+        "Chemnitz Vorsprache erforderlich Unterlagen"
+      ],
+      "city_slug": "chemnitz"
+    },
+    "allowlist": {
+      "url_must_match_any": [
+        ".*\\bchemnitz\\b.*\\.de/.*",
+        ".*stadt\\..*\\.de/.*",
+        ".*rathaus.*",
+        ".*buergerservice.*",
+        ".*service-portal.*",
+        ".*termin.*",
+        ".*auslaender.*",
+        ".*jobcenter.*"
+      ],
+      "reject_if_match_any": [
+        ".*veranstalt.*",
+        ".*event.*",
+        ".*kultur.*",
+        ".*sport.*",
+        ".*tourismus.*",
+        ".*pressefoto.*"
+      ]
+    },
+    "filters": {
+      "keywords_any": {
+        "de_en": [
+          "ukraine",
+          "ukrain",
+          "gefluecht",
+          "flucht",
+          "geflücht",
+          "migration",
+          "integration",
+          "aufenthalt",
+          "aufenthaltstitel",
+          "§24",
+          "paragraf 24",
+          "auslaenderbehoerde",
+          "ausländerbehörde",
+          "jobcenter",
+          "buergergeld",
+          "bürgergeld",
+          "unterkunft",
+          "termin",
+          "frist",
+          "unterlagen",
+          "vorsprache",
+          "pflicht",
+          "zahlung",
+          "eingestellt"
+        ],
+        "ua": [
+          "україн",
+          "біжен",
+          "міграц",
+          "інтеграц",
+          "документ",
+          "термін",
+          "запис",
+          "прийом",
+          "довідк",
+          "виплат",
+          "припинен",
+          "обов"
+        ]
+      },
+      "action_triggers_any": [
+        "frist",
+        "spätestens",
+        "spaetestens",
+        "bis zum",
+        "deadline",
+        "unterlagen",
+        "nachweis",
+        "mitbringen",
+        "termin",
+        "online buchen",
+        "buchung",
+        "terminvereinbarung",
+        "vorsprache",
+        "persönlich",
+        "persoenlich",
+        "pflicht",
+        "zahlung",
+        "eingestellt",
+        "stopp",
+        "rückforderung",
+        "rueckforderung"
+      ],
+      "action_strength_rules": [
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "strong"
+          },
+          "then": {
+            "priority": "HIGH",
+            "push": "ALLOW"
+          }
+        },
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "weak_or_none"
+          },
+          "then": {
+            "priority": "MEDIUM",
+            "push": "BLOCK"
+          }
+        }
+      ]
+    },
+    "default_topics": [
+      "ukraine",
+      "migration",
+      "deadlines",
+      "documents"
+    ],
+    "default_priority": "HIGH",
+    "default_actions": [
+      "deadline",
+      "document_required",
+      "appointment",
+      "info"
+    ],
+    "dedupe_group": "city_ch_news_hub",
+    "parser_notes": "FALLBACK: Web search-based discovery for official city portal content. Filters by Ukraine/migration keywords + action triggers. Strong action→HIGH+push, weak→MEDIUM+no push. Prevents spam via dedupe + rate-limit.",
+    "enabled": true
+  },
+  "BS": {
+    "source_id": "city_bs_news_hub",
+    "source_name": "Braunschweig — News Hub (Action Filter)",
+    "scope": "CITY",
+    "geo": {
+      "country": "DE",
+      "land": "Niedersachsen",
+      "city": "Braunschweig"
+    },
+    "mode": "DISCOVER_AND_FILTER",
+    "base_url": "https://www.google.com/search?q=Braunschweig%20Ukraine",
+    "discovery": {
+      "provider": "WEB_SEARCH",
+      "max_results": 25,
+      "queries": [
+        "Braunschweig Stadt Ukraine Inform ationen",
+        "Braunschweig Ukraine Hilfe Aufenthalt §24",
+        "Braunschweig Migration Integration Gefluechtete",
+        "Braunschweig Auslaenderbehoerde Termin §24",
+        "Braunschweig Jobcenter Termin Unterlagen Frist",
+        "Braunschweig Aufenthaltstitel Verlaengerung Termin",
+        "Braunschweig Leistungszahlung eingestellt Jobcenter",
+        "Braunschweig Vorsprache erforderlich Unterlagen"
+      ],
+      "city_slug": "braunschweig"
+    },
+    "allowlist": {
+      "url_must_match_any": [
+        ".*\\bbraunschweig\\b.*\\.de/.*",
+        ".*stadt\\..*\\.de/.*",
+        ".*rathaus.*",
+        ".*buergerservice.*",
+        ".*service-portal.*",
+        ".*termin.*",
+        ".*auslaender.*",
+        ".*jobcenter.*"
+      ],
+      "reject_if_match_any": [
+        ".*veranstalt.*",
+        ".*event.*",
+        ".*kultur.*",
+        ".*sport.*",
+        ".*tourismus.*",
+        ".*pressefoto.*"
+      ]
+    },
+    "filters": {
+      "keywords_any": {
+        "de_en": [
+          "ukraine",
+          "ukrain",
+          "gefluecht",
+          "flucht",
+          "geflücht",
+          "migration",
+          "integration",
+          "aufenthalt",
+          "aufenthaltstitel",
+          "§24",
+          "paragraf 24",
+          "auslaenderbehoerde",
+          "ausländerbehörde",
+          "jobcenter",
+          "buergergeld",
+          "bürgergeld",
+          "unterkunft",
+          "termin",
+          "frist",
+          "unterlagen",
+          "vorsprache",
+          "pflicht",
+          "zahlung",
+          "eingestellt"
+        ],
+        "ua": [
+          "україн",
+          "біжен",
+          "міграц",
+          "інтеграц",
+          "документ",
+          "термін",
+          "запис",
+          "прийом",
+          "довідк",
+          "виплат",
+          "припинен",
+          "обов"
+        ]
+      },
+      "action_triggers_any": [
+        "frist",
+        "spätestens",
+        "spaetestens",
+        "bis zum",
+        "deadline",
+        "unterlagen",
+        "nachweis",
+        "mitbringen",
+        "termin",
+        "online buchen",
+        "buchung",
+        "terminvereinbarung",
+        "vorsprache",
+        "persönlich",
+        "persoenlich",
+        "pflicht",
+        "zahlung",
+        "eingestellt",
+        "stopp",
+        "rückforderung",
+        "rueckforderung"
+      ],
+      "action_strength_rules": [
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "strong"
+          },
+          "then": {
+            "priority": "HIGH",
+            "push": "ALLOW"
+          }
+        },
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "weak_or_none"
+          },
+          "then": {
+            "priority": "MEDIUM",
+            "push": "BLOCK"
+          }
+        }
+      ]
+    },
+    "default_topics": [
+      "ukraine",
+      "migration",
+      "deadlines",
+      "documents"
+    ],
+    "default_priority": "HIGH",
+    "default_actions": [
+      "deadline",
+      "document_required",
+      "appointment",
+      "info"
+    ],
+    "dedupe_group": "city_bs_news_hub",
+    "parser_notes": "FALLBACK: Web search-based discovery for official city portal content. Filters by Ukraine/migration keywords + action triggers. Strong action→HIGH+push, weak→MEDIUM+no push. Prevents spam via dedupe + rate-limit.",
+    "enabled": true
+  },
+  "RBG": {
+    "source_id": "city_rbg_news_hub",
+    "source_name": "Regensburg — News Hub (Action Filter)",
+    "scope": "CITY",
+    "geo": {
+      "country": "DE",
+      "land": "Bayern",
+      "city": "Regensburg"
+    },
+    "mode": "DISCOVER_AND_FILTER",
+    "base_url": "https://www.google.com/search?q=Regensburg%20Ukraine",
+    "discovery": {
+      "provider": "WEB_SEARCH",
+      "max_results": 25,
+      "queries": [
+        "Regensburg Stadt Ukraine Inform ationen",
+        "Regensburg Ukraine Hilfe Aufenthalt §24",
+        "Regensburg Migration Integration Gefluechtete",
+        "Regensburg Auslaenderbehoerde Termin §24",
+        "Regensburg Jobcenter Termin Unterlagen Frist",
+        "Regensburg Aufenthaltstitel Verlaengerung Termin",
+        "Regensburg Leistungszahlung eingestellt Jobcenter",
+        "Regensburg Vorsprache erforderlich Unterlagen"
+      ],
+      "city_slug": "regensburg"
+    },
+    "allowlist": {
+      "url_must_match_any": [
+        ".*\\bregensburg\\b.*\\.de/.*",
+        ".*stadt\\..*\\.de/.*",
+        ".*rathaus.*",
+        ".*buergerservice.*",
+        ".*service-portal.*",
+        ".*termin.*",
+        ".*auslaender.*",
+        ".*jobcenter.*"
+      ],
+      "reject_if_match_any": [
+        ".*veranstalt.*",
+        ".*event.*",
+        ".*kultur.*",
+        ".*sport.*",
+        ".*tourismus.*",
+        ".*pressefoto.*"
+      ]
+    },
+    "filters": {
+      "keywords_any": {
+        "de_en": [
+          "ukraine",
+          "ukrain",
+          "gefluecht",
+          "flucht",
+          "geflücht",
+          "migration",
+          "integration",
+          "aufenthalt",
+          "aufenthaltstitel",
+          "§24",
+          "paragraf 24",
+          "auslaenderbehoerde",
+          "ausländerbehörde",
+          "jobcenter",
+          "buergergeld",
+          "bürgergeld",
+          "unterkunft",
+          "termin",
+          "frist",
+          "unterlagen",
+          "vorsprache",
+          "pflicht",
+          "zahlung",
+          "eingestellt"
+        ],
+        "ua": [
+          "україн",
+          "біжен",
+          "міграц",
+          "інтеграц",
+          "документ",
+          "термін",
+          "запис",
+          "прийом",
+          "довідк",
+          "виплат",
+          "припинен",
+          "обов"
+        ]
+      },
+      "action_triggers_any": [
+        "frist",
+        "spätestens",
+        "spaetestens",
+        "bis zum",
+        "deadline",
+        "unterlagen",
+        "nachweis",
+        "mitbringen",
+        "termin",
+        "online buchen",
+        "buchung",
+        "terminvereinbarung",
+        "vorsprache",
+        "persönlich",
+        "persoenlich",
+        "pflicht",
+        "zahlung",
+        "eingestellt",
+        "stopp",
+        "rückforderung",
+        "rueckforderung"
+      ],
+      "action_strength_rules": [
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "strong"
+          },
+          "then": {
+            "priority": "HIGH",
+            "push": "ALLOW"
+          }
+        },
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "weak_or_none"
+          },
+          "then": {
+            "priority": "MEDIUM",
+            "push": "BLOCK"
+          }
+        }
+      ]
+    },
+    "default_topics": [
+      "ukraine",
+      "migration",
+      "deadlines",
+      "documents"
+    ],
+    "default_priority": "HIGH",
+    "default_actions": [
+      "deadline",
+      "document_required",
+      "appointment",
+      "info"
+    ],
+    "dedupe_group": "city_rbg_news_hub",
+    "parser_notes": "FALLBACK: Web search-based discovery for official city portal content. Filters by Ukraine/migration keywords + action triggers. Strong action→HIGH+push, weak→MEDIUM+no push. Prevents spam via dedupe + rate-limit.",
+    "enabled": true
+  },
+  "FRB": {
+    "source_id": "city_frb_news_hub",
+    "source_name": "Freiburg im Breisgau — News Hub (Action Filter)",
+    "scope": "CITY",
+    "geo": {
+      "country": "DE",
+      "land": "Baden-Württemberg",
+      "city": "Freiburg im Breisgau"
+    },
+    "mode": "DISCOVER_AND_FILTER",
+    "base_url": "https://www.google.com/search?q=Freiburg%20im%20Breisgau%20Ukraine",
+    "discovery": {
+      "provider": "WEB_SEARCH",
+      "max_results": 25,
+      "queries": [
+        "Freiburg im Breisgau Stadt Ukraine Inform ationen",
+        "Freiburg im Breisgau Ukraine Hilfe Aufenthalt §24",
+        "Freiburg im Breisgau Migration Integration Gefluechtete",
+        "Freiburg im Breisgau Auslaenderbehoerde Termin §24",
+        "Freiburg im Breisgau Jobcenter Termin Unterlagen Frist",
+        "Freiburg im Breisgau Aufenthaltstitel Verlaengerung Termin",
+        "Freiburg im Breisgau Leistungszahlung eingestellt Jobcenter",
+        "Freiburg im Breisgau Vorsprache erforderlich Unterlagen"
+      ],
+      "city_slug": "freiburg-im-breisgau"
+    },
+    "allowlist": {
+      "url_must_match_any": [
+        ".*\\bfreiburg-im-breisgau\\b.*\\.de/.*",
+        ".*stadt\\..*\\.de/.*",
+        ".*rathaus.*",
+        ".*buergerservice.*",
+        ".*service-portal.*",
+        ".*termin.*",
+        ".*auslaender.*",
+        ".*jobcenter.*"
+      ],
+      "reject_if_match_any": [
+        ".*veranstalt.*",
+        ".*event.*",
+        ".*kultur.*",
+        ".*sport.*",
+        ".*tourismus.*",
+        ".*pressefoto.*"
+      ]
+    },
+    "filters": {
+      "keywords_any": {
+        "de_en": [
+          "ukraine",
+          "ukrain",
+          "gefluecht",
+          "flucht",
+          "geflücht",
+          "migration",
+          "integration",
+          "aufenthalt",
+          "aufenthaltstitel",
+          "§24",
+          "paragraf 24",
+          "auslaenderbehoerde",
+          "ausländerbehörde",
+          "jobcenter",
+          "buergergeld",
+          "bürgergeld",
+          "unterkunft",
+          "termin",
+          "frist",
+          "unterlagen",
+          "vorsprache",
+          "pflicht",
+          "zahlung",
+          "eingestellt"
+        ],
+        "ua": [
+          "україн",
+          "біжен",
+          "міграц",
+          "інтеграц",
+          "документ",
+          "термін",
+          "запис",
+          "прийом",
+          "довідк",
+          "виплат",
+          "припинен",
+          "обов"
+        ]
+      },
+      "action_triggers_any": [
+        "frist",
+        "spätestens",
+        "spaetestens",
+        "bis zum",
+        "deadline",
+        "unterlagen",
+        "nachweis",
+        "mitbringen",
+        "termin",
+        "online buchen",
+        "buchung",
+        "terminvereinbarung",
+        "vorsprache",
+        "persönlich",
+        "persoenlich",
+        "pflicht",
+        "zahlung",
+        "eingestellt",
+        "stopp",
+        "rückforderung",
+        "rueckforderung"
+      ],
+      "action_strength_rules": [
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "strong"
+          },
+          "then": {
+            "priority": "HIGH",
+            "push": "ALLOW"
+          }
+        },
+        {
+          "if": {
+            "keywords": true,
+            "action_triggers": "weak_or_none"
+          },
+          "then": {
+            "priority": "MEDIUM",
+            "push": "BLOCK"
+          }
+        }
+      ]
+    },
+    "default_topics": [
+      "ukraine",
+      "migration",
+      "deadlines",
+      "documents"
+    ],
+    "default_priority": "HIGH",
+    "default_actions": [
+      "deadline",
+      "document_required",
+      "appointment",
+      "info"
+    ],
+    "dedupe_group": "city_frb_news_hub",
+    "parser_notes": "FALLBACK: Web search-based discovery for official city portal content. Filters by Ukraine/migration keywords + action triggers. Strong action→HIGH+push, weak→MEDIUM+no push. Prevents spam via dedupe + rate-limit.",
+    "enabled": true
+  }
+}

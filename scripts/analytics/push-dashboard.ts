@@ -19,7 +19,7 @@ import { getMetricsByFilter } from './push-aggregation';
 /**
  * Generates a summary of push metrics for the dashboard
  */
-export function getMetricsSummary(filter: MetricsFilter = {}): MetricsSummary {
+export async function getMetricsSummary(filter: MetricsFilter = {}): Promise<MetricsSummary> {
     // Default to last 30 days if no date range specified
     const endDate = filter.endDate || new Date().toISOString().split('T')[0];
     const startDate = filter.startDate || (() => {
@@ -28,7 +28,7 @@ export function getMetricsSummary(filter: MetricsFilter = {}): MetricsSummary {
         return d.toISOString().split('T')[0];
     })();
 
-    const metrics = getMetricsByFilter({
+    const metrics = await getMetricsByFilter({
         ...filter,
         startDate,
         endDate
@@ -134,8 +134,11 @@ export function getMetricsSummary(filter: MetricsFilter = {}): MetricsSummary {
 /**
  * Exports metrics as CSV string
  */
-export function exportMetricsCSV(filter: MetricsFilter = {}): string {
-    const metrics = getMetricsByFilter(filter);
+/**
+ * Exports metrics as CSV string
+ */
+export async function exportMetricsCSV(filter: MetricsFilter = {}): Promise<string> {
+    const metrics = await getMetricsByFilter(filter);
 
     const headers = [
         'date',
@@ -183,13 +186,13 @@ export function exportMetricsCSV(filter: MetricsFilter = {}): string {
 /**
  * Returns metrics as JSON for API consumption
  */
-export function getMetricsJSON(filter: MetricsFilter = {}): {
+export async function getMetricsJSON(filter: MetricsFilter = {}): Promise<{
     summary: MetricsSummary;
     raw_metrics: PushMetricsDaily[];
-} {
+}> {
     return {
-        summary: getMetricsSummary(filter),
-        raw_metrics: getMetricsByFilter(filter)
+        summary: await getMetricsSummary(filter),
+        raw_metrics: await getMetricsByFilter(filter)
     };
 }
 
@@ -200,12 +203,12 @@ export function getMetricsJSON(filter: MetricsFilter = {}): {
 /**
  * Gets top sources by a specific metric
  */
-export function getTopSourcesByMetric(
+export async function getTopSourcesByMetric(
     metric: 'delivered' | 'open_rate' | 'action_rate',
     limit: number = 10,
     filter: MetricsFilter = {}
-): Array<{ source_id: string; value: number }> {
-    const summary = getMetricsSummary(filter);
+): Promise<Array<{ source_id: string; value: number }>> {
+    const summary = await getMetricsSummary(filter);
 
     let sortedSources: Array<{ source_id: string; value: number }>;
 
@@ -231,8 +234,11 @@ export function getTopSourcesByMetric(
 /**
  * Prints a formatted dashboard to console
  */
-export function printDashboard(filter: MetricsFilter = {}): void {
-    const summary = getMetricsSummary(filter);
+/**
+ * Prints a formatted dashboard to console
+ */
+export async function printDashboard(filter: MetricsFilter = {}): Promise<void> {
+    const summary = await getMetricsSummary(filter);
 
     console.log('\n' + '='.repeat(60));
     console.log('📊 PUSH ANALYTICS DASHBOARD');

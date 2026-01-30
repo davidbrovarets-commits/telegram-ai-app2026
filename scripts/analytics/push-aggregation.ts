@@ -12,12 +12,23 @@ import {
 } from './push-event-schema';
 import { getEventsByDateRange } from './push-event-logger';
 import { Scope, Priority } from '../config';
+import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+import path from 'path';
 
-// =============================================
-// IN-MEMORY METRICS STORE (replace with DB)
-// =============================================
+// Load env
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
-const metricsStore: PushMetricsDaily[] = [];
+const supabaseUrl = process.env.VITE_SUPABASE_URL!;
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY!;
+
+if (!supabaseUrl || !supabaseKey) {
+    console.error('Missing Supabase credentials');
+    // We don't exit process here strictly to allow imports in tests/other files without crashing if env missing
+    // But runtime will fail.
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 // =============================================
 // AGGREGATION LOGIC
@@ -135,7 +146,7 @@ export function aggregateEvents(startDate: Date, endDate: Date): PushMetricsDail
 /**
  * Runs the daily aggregation job for a specific date
  */
-export function runDailyAggregation(date: Date): PushMetricsDaily[] {
+export async function runDailyAggregation(date: Date): Promise<PushMetricsDaily[]> {
     const startOfDay = new Date(date);
     startOfDay.setHours(0, 0, 0, 0);
 
@@ -144,27 +155,36 @@ export function runDailyAggregation(date: Date): PushMetricsDaily[] {
 
     const metrics = aggregateEvents(startOfDay, endOfDay);
 
-    // Store metrics
-    for (const metric of metrics) {
-        // Remove existing metrics for the same key
-        const existingIndex = metricsStore.findIndex(m =>
-            m.date === metric.date &&
-            m.scope === metric.scope &&
-            m.priority === metric.priority &&
-            m.land === metric.land &&
-            m.city === metric.city &&
-            m.source_id === metric.source_id &&
-            m.template_id === metric.template_id
-        );
-
-        if (existingIndex >= 0) {
-            metricsStore[existingIndex] = metric;
-        } else {
-            metricsStore.push(metric);
-        }
+    if (metrics.length === 0) {
+        console.log(`[Aggregation] No metrics generated for ${date.toISOString().split('T')[0]}`);
+        return [];
     }
 
-    console.log(`[Aggregation] Processed ${metrics.length} metric groups for ${date.toISOString().split('T')[0]}`);
+    // Prepare rows for DB insertion (remove derived fields if table logic differs, but here schema matches)
+    const dbRows = metrics.map(m => ({
+        date: m.date,
+        scope: m.scope,
+        priority: m.priority,
+        land: m.land,
+        city: m.city,
+        source_id: m.source_id,
+        template_id: m.template_id,
+        delivered_count: m.delivered_count,
+        opened_count: m.opened_count,
+        clicked_count: m.clicked_count,
+        action_completed_count: m.action_completed_count
+    }));
+
+    // Upsert to DB
+    const { error } = await supabase
+        .from('push_metrics_daily')
+        .upsert(dbRows);
+
+    if (error) {
+        console.error(`[Aggregation] Error upserting metrics: ${error.message}`);
+    } else {
+        console.log(`[Aggregation] Upserted ${metrics.length} metric groups for ${date.toISOString().split('T')[0]}`);
+    }
 
     return metrics;
 }
@@ -172,12 +192,12 @@ export function runDailyAggregation(date: Date): PushMetricsDaily[] {
 /**
  * Runs aggregation for all days in a range
  */
-export function runAggregationForRange(startDate: Date, endDate: Date): PushMetricsDaily[] {
+export async function runAggregationForRange(startDate: Date, endDate: Date): Promise<PushMetricsDaily[]> {
     const allMetrics: PushMetricsDaily[] = [];
     const currentDate = new Date(startDate);
 
     while (currentDate <= endDate) {
-        const dayMetrics = runDailyAggregation(new Date(currentDate));
+        const dayMetrics = await runDailyAggregation(new Date(currentDate));
         allMetrics.push(...dayMetrics);
         currentDate.setDate(currentDate.getDate() + 1);
     }
@@ -189,11 +209,16 @@ export function runAggregationForRange(startDate: Date, endDate: Date): PushMetr
 // METRICS ACCESS
 // =============================================
 
-export function getMetrics(): PushMetricsDaily[] {
-    return [...metricsStore];
+// Deprecated: No in-memory store anymore. 
+// Queries should use Supabase directly or standard helper.
+export async function getMetrics(): Promise<PushMetricsDaily[]> {
+    const { data } = await supabase.from('push_metrics_daily').select('*');
+    return (data || []) as PushMetricsDaily[];
 }
 
-export function getMetricsByFilter(filter: {
+// Keeping this for backward compatibility if engine tests mocked it, 
+// OR simpler DB query access.
+export async function getMetricsByFilter(filter: {
     startDate?: string;
     endDate?: string;
     scope?: Scope;
@@ -202,20 +227,30 @@ export function getMetricsByFilter(filter: {
     priority?: Priority;
     source_id?: string;
     template_id?: TemplateId;
-}): PushMetricsDaily[] {
-    return metricsStore.filter(m => {
-        if (filter.startDate && m.date < filter.startDate) return false;
-        if (filter.endDate && m.date > filter.endDate) return false;
-        if (filter.scope && m.scope !== filter.scope) return false;
-        if (filter.land && m.land !== filter.land) return false;
-        if (filter.city && m.city !== filter.city) return false;
-        if (filter.priority && m.priority !== filter.priority) return false;
-        if (filter.source_id && m.source_id !== filter.source_id) return false;
-        if (filter.template_id && m.template_id !== filter.template_id) return false;
-        return true;
-    });
+}): Promise<PushMetricsDaily[]> {
+    let query = supabase.from('push_metrics_daily').select('*');
+
+    if (filter.startDate) query = query.gte('date', filter.startDate);
+    if (filter.endDate) query = query.lte('date', filter.endDate);
+    if (filter.scope) query = query.eq('scope', filter.scope);
+    if (filter.land) query = query.eq('land', filter.land);
+    if (filter.city) query = query.eq('city', filter.city);
+    if (filter.priority) query = query.eq('priority', filter.priority);
+    if (filter.source_id) query = query.eq('source_id', filter.source_id);
+    if (filter.template_id) query = query.eq('template_id', filter.template_id);
+
+    const { data, error } = await query;
+
+    if (error) {
+        console.error('Error fetching metrics:', error);
+        return [];
+    }
+
+    return data as PushMetricsDaily[];
 }
 
 export function clearMetrics(): void {
-    metricsStore.length = 0;
+    // No-op for DB backed
+    console.warn('clearMetrics() called but using DB backing - no op');
 }
+

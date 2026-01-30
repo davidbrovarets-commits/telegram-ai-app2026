@@ -32,7 +32,9 @@ resource "google_project_service" "apis" {
     "cloudbuild.googleapis.com",      # CI/CD
     "firebase.googleapis.com",        # Firebase Core
     "serviceusage.googleapis.com",    # Service Usage
-    "firebasehosting.googleapis.com"  # Firebase Hosting
+    "firebasehosting.googleapis.com", # Firebase Hosting
+    "cloudresourcemanager.googleapis.com",
+    "cloudbilling.googleapis.com"
   ])
 
   service = each.key

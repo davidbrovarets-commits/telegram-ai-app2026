@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "scrape-news": "tsx scripts/scrape-news.ts",
-    "test:city": "tsx scripts/tests/city-feed.test.ts"
+    "test:city": "tsx scripts/tests/city-feed.test.ts",
+    "test:analytics": "tsx scripts/tests/push-analytics.test.ts"
   },
   "dependencies": {
     "@huggingface/inference": "^4.13.11",

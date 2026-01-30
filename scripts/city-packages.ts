@@ -437,3 +437,16 @@ export const SAARBRUECKEN_PACKAGE = createCityPackage(
         appointments: 'https://termin.saarbruecken.de/'
     }
 );
+
+// GELSENKIRCHEN (Nordrhein-Westfalen)
+export const GELSENKIRCHEN_PACKAGE = createCityPackage(
+    'Gelsenkirchen',
+    'GE',
+    'Nordrhein-Westfalen',
+    {
+        jobcenter: 'https://www.jobcenter-gelsenkirchen.de/',
+        immigration: 'https://www.gelsenkirchen.de/auslaenderbehoerde',
+        ukraineHelp: 'https://www.gelsenkirchen.de/ukraine',
+        appointments: 'https://termine.gelsenkirchen.de/'
+    }
+);

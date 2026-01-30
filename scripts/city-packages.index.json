@@ -1,9 +1,9 @@
 {
-    "index_version": "v1.7",
+    "index_version": "v1.8",
     "country": "DE",
     "scope": "CITY",
     "content_language": "ua",
-    "total_cities": 27,
+    "total_cities": 28,
     "packages": [
         {
             "city": "Leipzig",
@@ -192,6 +192,13 @@
             "land": "Saarland",
             "city_code": "SB",
             "package_id": "city_SB",
+            "status": "active"
+        },
+        {
+            "city": "Gelsenkirchen",
+            "land": "Nordrhein-Westfalen",
+            "city_code": "GE",
+            "package_id": "city_GE",
             "status": "active"
         }
     ]

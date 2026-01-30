@@ -450,3 +450,16 @@ export const GELSENKIRCHEN_PACKAGE = createCityPackage(
         appointments: 'https://termine.gelsenkirchen.de/'
     }
 );
+
+// CHEMNITZ (Sachsen)
+export const CHEMNITZ_PACKAGE = createCityPackage(
+    'Chemnitz',
+    'CH',
+    'Sachsen',
+    {
+        jobcenter: 'https://www.jobcenter-chemnitz.de/',
+        immigration: 'https://www.chemnitz.de/auslaenderbehoerde',
+        ukraineHelp: 'https://www.chemnitz.de/ukraine',
+        appointments: 'https://termin.chemnitz.de/'
+    }
+);

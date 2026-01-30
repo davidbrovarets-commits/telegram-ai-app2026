@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 import { supabase } from "./supabaseClient";
+import { initAnalytics, logEvent, AnalyticsEvents } from './services/analytics/GoogleAnalyticsService';
 import { useAuth, useTheme, useAppData } from "./hooks";
 import type { View, TabType, Task, News, UserFile } from "./types";
 import {
@@ -66,11 +67,23 @@ function App() {
   const [selectedFile, setSelectedFile] = useState<UserFile | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const todayDate = new Date().toLocaleDateString("uk-UA", {
-    day: "numeric",
-    month: "long",
+  const todayDate = new Date().toLocaleDateString("de-DE", {
+    day: "2-digit",
+    month: "2-digit",
     year: "numeric",
   });
+
+  // Init TeleApp and Analytics
+  useEffect(() => {
+    const tele = (window as any).Telegram?.WebApp;
+    if (tele) {
+      tele.ready();
+      tele.expand();
+    }
+
+    initAnalytics();
+    logEvent(AnalyticsEvents.APP_OPEN);
+  }, []);
 
   // Load app data when user is authenticated
   useEffect(() => {

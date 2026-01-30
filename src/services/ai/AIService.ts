@@ -17,12 +17,12 @@ export class AIService {
         try {
             // Initialize Vertex AI service with new API (Firebase v12.8+)
             const ai = getAI(app, {
-                backend: new VertexAIBackend('europe-west1')
+                backend: new VertexAIBackend('us-central1')
             });
 
             // Initialize the generative model
             this.genModel = getGenerativeModel(ai, {
-                model: this.modelIdentifier,
+                model: this.modelIdentifier === 'gemini-3-pro-preview' ? 'gemini-1.5-flash' : this.modelIdentifier,
                 safetySettings: [
                     {
                         category: "HARM_CATEGORY_HARASSMENT",

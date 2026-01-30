@@ -9,6 +9,7 @@ export interface AIServiceConfig {
 export class AIService {
     private genModel: GenerativeModel | null = null;
     private modelIdentifier: string;
+    private initError: string | null = null;
 
     constructor(config: AIServiceConfig = {}) {
         this.modelIdentifier = config.model || 'gemini-3-pro-preview';
@@ -29,8 +30,9 @@ export class AIService {
                     }
                 ]
             });
-        } catch (e) {
+        } catch (e: any) {
             console.error("Failed to initialize Vertex AI:", e);
+            this.initError = e.message || String(e);
         }
     }
 
@@ -63,7 +65,7 @@ Goal: Be helpful, concise, and friendly. Answer in the same language as the user
         console.log("🤖 AI Service (Vertex): Sending message...", { context, lastUserMessage: history[history.length - 1] });
 
         if (!this.genModel) {
-            return "Viga: Google Vertex AI ei ole initsialiseeritud. Kontrolli Firebase seadistust.";
+            return `Viga: Google Vertex AI ei ole initsialiseeritud. \nDetailid: ${this.initError || 'Tundmatu viga'}`;
         }
 
         try {
@@ -77,12 +79,28 @@ Goal: Be helpful, concise, and friendly. Answer in the same language as the user
             const lastMsg = history[history.length - 1];
             const prompt = lastMsg.content;
 
-            const chat = this.genModel.startChat({
-                history: [
-                    { role: 'user', parts: [{ text: `SYSTEM INSTRUCTION:\n${systemPrompt}` }] },
-                    { role: 'model', parts: [{ text: "Arusaadav. Olen valmis aitama." }] },
+            // Construct history carefully to avoid "model follows model" error
+            let chatHistory;
+
+            if (vertexHistory.length > 0 && vertexHistory[0].role === 'model') {
+                // If history starts with model (e.g. welcome message),
+                // we precede it with the system prompt (User).
+                chatHistory = [
+                    { role: 'user' as const, parts: [{ text: `SYSTEM INSTRUCTION:\n${systemPrompt}` }] },
                     ...vertexHistory
-                ]
+                ];
+            } else {
+                // If history starts with user or is empty,
+                // we add our own pair of [User, Model(Ack)].
+                chatHistory = [
+                    { role: 'user' as const, parts: [{ text: `SYSTEM INSTRUCTION:\n${systemPrompt}` }] },
+                    { role: 'model' as const, parts: [{ text: "Arusaadav. Olen valmis aitama." }] },
+                    ...vertexHistory
+                ];
+            }
+
+            const chat = this.genModel.startChat({
+                history: chatHistory
             });
 
             const result = await chat.sendMessage(prompt);

@@ -1,9 +1,9 @@
 {
-    "index_version": "v1.12",
+    "index_version": "v1.1",
     "country": "DE",
     "scope": "CITY",
     "content_language": "ua",
-    "total_cities": 32,
+    "total_cities": 33,
     "packages": [
         {
             "city": "Leipzig",
@@ -171,6 +171,13 @@
             "land": "Schleswig-Holstein",
             "city_code": "KEL",
             "package_id": "city_KEL",
+            "status": "active"
+        },
+        {
+            "city": "Erfurt",
+            "land": "Thüringen",
+            "city_code": "ERF",
+            "package_id": "city_ERF",
             "status": "active"
         },
         {

@@ -502,3 +502,16 @@ export const FREIBURG_PACKAGE = createCityPackage(
         appointments: 'https://termine.freiburg.de/'
     }
 );
+
+// ERFURT (Thüringen)
+export const ERFURT_PACKAGE = createCityPackage(
+    'Erfurt',
+    'ERF',
+    'Thüringen',
+    {
+        jobcenter: 'https://www.jobcenter-erfurt.de/',
+        immigration: 'https://www.erfurt.de/ef/de/rathaus/aemter/aemter/33/',
+        ukraineHelp: 'https://www.erfurt.de/ef/de/service/aktuelles/topthemen/ukraine/',
+        appointments: 'https://termin.erfurt.de/'
+    }
+);

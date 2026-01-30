@@ -1,9 +1,9 @@
 {
-    "index_version": "v1.6",
+    "index_version": "v1.7",
     "country": "DE",
     "scope": "CITY",
     "content_language": "ua",
-    "total_cities": 26,
+    "total_cities": 27,
     "packages": [
         {
             "city": "Leipzig",
@@ -185,6 +185,13 @@
             "land": "Rheinland-Pfalz",
             "city_code": "MNZ",
             "package_id": "city_MNZ",
+            "status": "active"
+        },
+        {
+            "city": "Saarbrücken",
+            "land": "Saarland",
+            "city_code": "SB",
+            "package_id": "city_SB",
             "status": "active"
         }
     ]

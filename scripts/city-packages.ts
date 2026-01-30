@@ -424,3 +424,16 @@ export const MAINZ_PACKAGE = createCityPackage(
         appointments: 'https://termin.mainz.de/'
     }
 );
+
+// SAARBRÜCKEN (Saarland)
+export const SAARBRUECKEN_PACKAGE = createCityPackage(
+    'Saarbrücken',
+    'SB',
+    'Saarland',
+    {
+        jobcenter: 'https://www.jobcenter-saarbruecken.de/',
+        immigration: 'https://www.saarbruecken.de/auslaenderbehoerde',
+        ukraineHelp: 'https://www.saarbruecken.de/ukraine',
+        appointments: 'https://termin.saarbruecken.de/'
+    }
+);

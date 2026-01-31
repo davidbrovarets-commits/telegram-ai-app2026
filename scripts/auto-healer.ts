@@ -111,7 +111,7 @@ async function checkSourceHealth() {
     if (!cities) return;
 
     // Group by City and find latest date
-    const uniqueCities = [...new Set(cities.map(c => c.city))];
+    const uniqueCities = [...new Set(cities.map((c: { city: string }) => c.city))];
     const NOW = Date.now();
     let issuesFound = 0;
 

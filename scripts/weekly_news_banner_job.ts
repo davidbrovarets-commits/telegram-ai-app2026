@@ -93,19 +93,53 @@ async function fetchSources(sources: Source[]): Promise<string[]> {
 // 3. Brief & Prompt Builder
 // 3. Brief & Prompt Builder
 function buildPrompt(brief: WeeklyBrief): string {
-    // User Guide Implementation:
-    // Subject + Context + Style + Text + Modifiers
-    // "Keep it short: Limit text to 25 characters or less."
-
-    const textToRender = "Leipzig"; // Keeping it simple and reliable
+    // UI-safe, short text (≤25 chars)
+    const textToRender = "Leipzig";
 
     return `
-Subject: A high-quality, modern header image for a news application.
-Context: Abstract background representing digital information and connections, with a focus on the region of ${brief.regionLabel}.
-Style: Photorealistic, 4K, HDR, premium UI design, glassmorphism elements, soft studio lighting.
-Text: The text "${textToRender}" written in a bold, modern, clean sans-serif font in the center.
-Positive Modifiers: detailed, sharp focus, professional, aesthetic, calm, official.
-Negative prompt: blurry, distorted text, spelling errors, low quality, pixelated, messy, cluttered, people, faces.
+You are generating an image prompt for a mini app homepage header.
+
+Design purpose:
+This image is used as a background layer in a UI (news mini app),
+not as a poster, illustration, or advertisement.
+
+Primary priorities (in order):
+1. Text readability and clarity
+2. Calm, trustworthy, official visual tone
+3. Clean, minimal composition suitable for UI background
+4. No dominant focal points unless explicitly requested
+
+Subject:
+A high-quality, modern header image for a news application.
+
+Context:
+Abstract digital environment representing information flow and connections,
+with a subtle reference to the region of ${brief.regionLabel}.
+
+Style:
+Photorealistic, 4K, HDR, premium UI design,
+glassmorphism elements, soft studio lighting,
+balanced contrast, clean depth.
+
+Text:
+The word "${textToRender}" placed centrally,
+written in a bold, modern, clean sans-serif font.
+
+Human elements policy:
+- Identifiable real people are not required.
+- Abstract human presence, silhouettes, or distant figures are allowed
+  only if they do not compete with the text.
+- Do NOT generate close-up faces, portraits, or recognizable individuals.
+
+Positive modifiers:
+detailed, sharp focus, professional, aesthetic, calm, official.
+
+Negative prompt:
+blurry, distorted text, spelling errors, low quality, pixelated,
+messy, cluttered, close-up faces, portraits, celebrities.
+
+Negative prompts should block only quality and usability risks,
+not stylistic possibilities.
 `.trim();
 }
 

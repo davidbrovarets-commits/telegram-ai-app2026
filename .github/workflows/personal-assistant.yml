@@ -4,8 +4,6 @@ on:
   schedule:
     - cron: '0 * * * *' # Hourly
   workflow_dispatch:
-  push:
-    branches: [ main ] # Keep for testing interactions
 
 permissions:
   contents: write

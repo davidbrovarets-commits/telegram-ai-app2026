@@ -1,4 +1,6 @@
 
+import { SOURCE_REGISTRY } from './registries/source-registry';
+
 export type Scope = 'DE' | 'LAND' | 'CITY';
 export type Priority = 'HIGH' | 'MEDIUM' | 'LOW';
 
@@ -20,162 +22,72 @@ export interface SourceConfig {
     enabled: boolean;
 }
 
-// Import Bundesland packages
-import { NRW_PACKAGE, BAYERN_PACKAGE, BERLIN_PACKAGE, HAMBURG_PACKAGE, HESSEN_PACKAGE, BW_PACKAGE, BRANDENBURG_PACKAGE, BREMEN_PACKAGE, MV_PACKAGE, NI_PACKAGE, RP_PACKAGE, SL_PACKAGE, ST_PACKAGE, SH_PACKAGE, TH_PACKAGE } from './bundesland-packages';
-import { LEIPZIG_PACKAGE, MUENCHEN_PACKAGE, KOELN_PACKAGE, FRANKFURT_PACKAGE, STUTTGART_PACKAGE, DUESSELDORF_PACKAGE, DORTMUND_PACKAGE, ESSEN_PACKAGE, HANNOVER_PACKAGE, NUERNBERG_PACKAGE, DRESDEN_PACKAGE, DUISBURG_PACKAGE, BOCHUM_PACKAGE, WUPPERTAL_PACKAGE, BIELEFELD_PACKAGE, BONN_PACKAGE, MUENSTER_PACKAGE, KARLSRUHE_PACKAGE, MANNHEIM_PACKAGE, AUGSBURG_PACKAGE } from './city-packages';
+// Map of prefixes to Bundesland names
+const STATE_MAP: Record<string, string> = {
+    'bw': 'Baden-Württemberg',
+    'by': 'Bayern',
+    'be': 'Berlin',
+    'bb': 'Brandenburg',
+    'hb': 'Bremen',
+    'hh': 'Hamburg',
+    'he': 'Hessen',
+    'mv': 'Mecklenburg-Vorpommern',
+    'ni': 'Niedersachsen',
+    'nrw': 'Nordrhein-Westfalen',
+    'rp': 'Rheinland-Pfalz',
+    'sl': 'Saarland',
+    'sn': 'Sachsen',
+    'st': 'Sachsen-Anhalt',
+    'sh': 'Schleswig-Holstein',
+    'th': 'Thüringen'
+};
 
-// =============================================
-// DE — FEDERAL LEVEL SOURCES
-// =============================================
+// Helper: infer scope/geo from source_id
+function inferGeo(sourceId: string): { scope: Scope, geo: { country: 'DE', land?: string, city?: string } } {
+    const prefix = sourceId.split('_')[0];
 
-const DE_SOURCES: SourceConfig[] = [
-    {
-        source_id: 'de_ba_news',
-        source_name: 'Bundesagentur für Arbeit',
-        scope: 'DE',
-        geo: { country: 'DE' },
-        base_url: 'https://www.arbeitsagentur.de/news',
-        default_topics: ['work', 'benefits', 'security'],
-        default_priority: 'MEDIUM',
-        default_actions: ['info'],
-        dedupe_group: 'de_ba',
-        parser_notes: 'Only official news and warnings.',
-        enabled: true
-    },
-    {
-        source_id: 'de_bamf_ukraine',
-        source_name: 'BAMF / Germany4Ukraine',
-        scope: 'DE',
-        geo: { country: 'DE' },
-        base_url: 'https://www.bamf.de/DE/Themen/AsylFluechtlingsschutz/ResettlementRelocation/InformationenEinreiseUkraine/informationen-einreise-ukraine-node.html',
-        default_topics: ['status', 'documents', 'housing', 'health', 'work', 'children'],
-        default_priority: 'HIGH',
-        default_actions: ['procedure_change', 'info'],
-        dedupe_group: 'de_status',
-        parser_notes: 'Primary source for §24 and refugee rules.',
-        enabled: true
-    },
-    {
-        source_id: 'de_g4u',
-        source_name: 'Germany4Ukraine Portal',
-        scope: 'DE',
-        geo: { country: 'DE' },
-        base_url: 'https://www.germany4ukraine.de/DE/startseite_node.html',
-        default_topics: ['status', 'documents', 'life_in_de', 'help'],
-        default_priority: 'MEDIUM',
-        default_actions: ['info'],
-        dedupe_group: 'de_status',
-        parser_notes: 'Government aggregator.',
-        enabled: true
-    },
-    {
-        source_id: 'de_bmas_buergergeld',
-        source_name: 'BMAS — Bürgergeld',
-        scope: 'DE',
-        geo: { country: 'DE' },
-        base_url: 'https://www.bmas.de/DE/Arbeit/Grundsicherung-Buergergeld/grundsicherung-buergergeld.html',
-        default_topics: ['benefits', 'jobcenter_rules'],
-        default_priority: 'MEDIUM',
-        default_actions: ['payment_change', 'info'],
-        dedupe_group: 'de_bmas',
-        parser_notes: 'Only rule changes.',
-        enabled: true
+    // Check if prefix is a known Bundesland code
+    if (STATE_MAP[prefix]) {
+        return {
+            scope: 'LAND',
+            geo: { country: 'DE', land: STATE_MAP[prefix] }
+        };
     }
-];
 
-// =============================================
-// LAND — SACHSEN
-// =============================================
+    // Default to Country (L1)
+    return {
+        scope: 'DE',
+        geo: { country: 'DE' }
+    };
+}
 
-const SACHSEN_SOURCES: SourceConfig[] = [
-    {
-        source_id: 'land_sachsen_ukrainehilfe',
-        source_name: 'Sachsen — Ukrainehilfe Portal',
-        scope: 'LAND',
-        geo: { country: 'DE', land: 'Sachsen' },
-        base_url: 'https://www.ukrainehilfe.sachsen.de/',
-        default_topics: ['status', 'documents', 'housing', 'benefits', 'work', 'children', 'health'],
-        default_priority: 'HIGH',
-        default_actions: ['procedure_change', 'info'],
-        dedupe_group: 'land_sachsen_main',
-        parser_notes: 'Main official portal for Saxony.',
-        enabled: true
-    },
-    {
-        source_id: 'land_sachsen_lds',
-        source_name: 'Landesdirektion Sachsen',
-        scope: 'LAND',
-        geo: { country: 'DE', land: 'Sachsen' },
-        base_url: 'https://www.lds.sachsen.de/asyl/?ID=23075&art_param=917',
-        default_topics: ['status', 'procedures', 'accommodation', 'distribution'],
-        default_priority: 'HIGH',
-        default_actions: ['procedure_change', 'document_required', 'info'],
-        dedupe_group: 'land_sachsen_lds',
-        parser_notes: 'Administrative instructions.',
-        enabled: true
-    },
-    {
-        source_id: 'land_sachsen_smk_daz',
-        source_name: 'SMK Sachsen — DaZ',
-        scope: 'LAND',
-        geo: { country: 'DE', land: 'Sachsen' },
-        base_url: 'https://www.bildung.sachsen.de/blog/index.php/tag/daz/',
-        default_topics: ['children', 'school', 'language_integration'],
-        default_priority: 'MEDIUM',
-        default_actions: ['info'],
-        dedupe_group: 'land_sachsen_edu',
-        parser_notes: 'Only practical education changes.',
-        enabled: true
+// Transform Registry to SourceConfig
+export const SOURCES: SourceConfig[] = SOURCE_REGISTRY.map(reg => {
+    const { scope, geo } = inferGeo(reg.source_id);
+
+    // Infer dedup group: simplified to source_id or prefix-based
+    // For media outlets, we might want to group by outlet, but here we'll use source_id as base
+    const dedupeGroup = reg.source_id;
+
+    // Default topics/actions based on trust level or general rules
+    // L6 doc says: "Match keywords: Ukraine, Ukrainer, Flüchtlinge..." (Agent 1 handles strict filtering)
+    // Here we provide metadata hints.
+    const defaultTopics = ['news', 'germany'];
+    if (reg.trust_level.includes('official')) {
+        defaultTopics.push('policy', 'official');
     }
-];
 
-// =============================================
-// CITY — LEIPZIG
-// =============================================
-
-// LEIPZIG_SOURCES removed (Use LEIPZIG_PACKAGE from city-packages)
-
-// =============================================
-// COMBINED SOURCES EXPORT
-// =============================================
-
-export const SOURCES: SourceConfig[] = [
-    ...DE_SOURCES,
-    ...SACHSEN_SOURCES,
-    ...LEIPZIG_PACKAGE,
-    ...MUENCHEN_PACKAGE,
-    ...KOELN_PACKAGE,
-    ...FRANKFURT_PACKAGE,
-    ...STUTTGART_PACKAGE,
-    ...DUESSELDORF_PACKAGE,
-    ...DORTMUND_PACKAGE,
-    ...ESSEN_PACKAGE,
-    ...HANNOVER_PACKAGE,
-    ...NUERNBERG_PACKAGE,
-    ...DRESDEN_PACKAGE,
-    ...DUISBURG_PACKAGE,
-    ...BOCHUM_PACKAGE,
-    ...WUPPERTAL_PACKAGE,
-    ...BIELEFELD_PACKAGE,
-    ...BONN_PACKAGE,
-    ...MUENSTER_PACKAGE,
-    ...KARLSRUHE_PACKAGE,
-    ...MANNHEIM_PACKAGE,
-    ...AUGSBURG_PACKAGE,
-    // Add more Bundesland packages below:
-    ...NRW_PACKAGE,
-    ...BAYERN_PACKAGE,
-    ...HESSEN_PACKAGE,
-    ...BW_PACKAGE,
-    ...BERLIN_PACKAGE,
-    ...BRANDENBURG_PACKAGE,
-    ...BREMEN_PACKAGE,
-    ...HAMBURG_PACKAGE,
-    ...MV_PACKAGE,
-    ...NI_PACKAGE,
-    ...RP_PACKAGE,
-    ...SL_PACKAGE,
-    ...ST_PACKAGE,
-    ...SH_PACKAGE,
-    ...TH_PACKAGE,
-];
+    return {
+        source_id: reg.source_id,
+        source_name: reg.name, // Map 'name' to 'source_name'
+        base_url: reg.base_url,
+        scope: scope,
+        geo: geo,
+        default_topics: defaultTopics,
+        default_priority: reg.default_priority as Priority,
+        default_actions: ['info'], // Default action hint
+        dedupe_group: dedupeGroup,
+        parser_notes: `Trust: ${reg.trust_level}, Method: ${reg.ingestion_method}`,
+        enabled: true
+    };
+});

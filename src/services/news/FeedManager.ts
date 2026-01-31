@@ -202,51 +202,55 @@ export class FeedManager {
     }
 
     static async forceRefillFeed() {
-        console.log('[FeedManager] Force refilling feed with geo:', userGeo);
+        console.log('[FeedManager] Force refilling feed with geo via Edge Function:', userGeo);
 
-        const { data: newsItems } = await supabase
-            .from('news')
-            .select('*')
-            .in('status', ['POOL', 'ACTIVE'])
-            .in('status', ['POOL', 'ACTIVE'])
-            .not('type', 'is', null)
-            .order('priority', { ascending: false })
-            .limit(100); // Fetch more to filter
+        // Call Server-Side Feed Function
+        // This replaces the complex local filtering/sorting logic
+        const { data, error } = await supabase.functions.invoke('serve-feed', {
+            body: {
+                city: userGeo.city,
+                land: userGeo.land,
+                limit: 100
+            }
+        });
 
-        if (!newsItems) return;
-
-        // Apply geo filter (First Strict, then Fallback if needed)
-        let geoFiltered = this.filterByGeo(newsItems as News[], false);
-
-        // If strict filter yields too few results (< 6 slots), expand scope
-        if (geoFiltered.length < 6) {
-            console.log('[FeedManager] Strict geo filter found few items. Expanding to neighbors...');
-            geoFiltered = this.filterByGeo(newsItems as News[], true);
+        if (error) {
+            console.error('Edge Function failed:', error);
+            // Fallback to local logic if needed, or just return
+            return;
         }
 
-        // Apply Sort: Local > Fallback
-        geoFiltered = this.sortCandidatesByGeo(geoFiltered);
+        const newsItems = data?.feed || [];
+        console.log(`[FeedManager] Received ${newsItems.length} items from server`);
 
-        console.log(`[FeedManager] After geo filter & sort: ${geoFiltered.length} of ${newsItems.length} items`);
+        // Filter out history (Client-side is fine for this)
+        const state = newsStore.getState();
+        const usedIds = new Set<number>([
+            ...state.history.deleted,
+            ...state.history.archived,
+            ...state.visibleFeed.filter(id => id > 0)
+        ]);
+
+        const validCandidates = newsItems.filter((n: News) => !usedIds.has(n.id));
 
         const filledSlots: number[] = [];
-        const usedIds = new Set<number>();
+        const newlyUsedIds = new Set<number>();
 
         SLOTS.forEach(targetType => {
-            const candidate = geoFiltered.find(n =>
+            const candidate = validCandidates.find((n: News) =>
                 n.type === targetType &&
-                !usedIds.has(n.id)
+                !newlyUsedIds.has(n.id)
             );
 
             if (candidate) {
                 filledSlots.push(candidate.id);
-                usedIds.add(candidate.id);
+                newlyUsedIds.add(candidate.id);
             } else {
                 // FALLBACK: Find any available news not used
-                const fallback = geoFiltered.find(n => !usedIds.has(n.id));
+                const fallback = validCandidates.find((n: News) => !newlyUsedIds.has(n.id));
                 if (fallback) {
                     filledSlots.push(fallback.id);
-                    usedIds.add(fallback.id);
+                    newlyUsedIds.add(fallback.id);
                 } else {
                     filledSlots.push(0); // 0 = Empty/Error
                 }
@@ -254,9 +258,9 @@ export class FeedManager {
         });
 
         // Remaining go to Pool
-        const poolIds = geoFiltered
-            .filter(n => !usedIds.has(n.id))
-            .map(n => n.id);
+        const poolIds = validCandidates
+            .filter((n: News) => !newlyUsedIds.has(n.id))
+            .map((n: News) => n.id);
 
         newsStore.setState(prev => ({
             ...prev,

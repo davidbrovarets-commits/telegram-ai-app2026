@@ -44,6 +44,6 @@ jobs:
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.GCP_SA_KEY }}
+          firebaseServiceAccount: ${{ secrets.GOOGLE_CREDENTIALS }}
           channelId: live
-          projectId: claude-vertex-prod
+          projectId: ${{ secrets.GOOGLE_PROJECT_ID }}

@@ -113,8 +113,7 @@ async function runSecretary() {
         mute_until: null,
         last_run_at: null,
         last_sent_hashes: {},
-        last_reminder_id: null,
-        last_sent_hashes: {} // Fix typo in default
+        last_reminder_id: null
     } as any);
 
     const now = new Date();

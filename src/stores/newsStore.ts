@@ -17,6 +17,7 @@ const DEFAULT_STATE: UserNewsState = {
         INFO: { openRate: 0, timeSpent: 0 },
         FUN: { openRate: 0, timeSpent: 0 }
     },
+    location: {}, // Default empty
     lastActionDate: new Date().toISOString().split('T')[0],
     userState: 'BASELINE' // S0
 };

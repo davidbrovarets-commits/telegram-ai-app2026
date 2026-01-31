@@ -74,6 +74,10 @@ export interface UserNewsState {
     openRate: number;
     timeSpent: number;
   }>;
+  location?: {  // Tracks explicit user location preference for Push/Feed
+    city?: string;
+    land?: string;
+  };
   lastActionDate: string; // YYYY-MM-DD
   userState: 'BASELINE' | 'ACTIVE_READER' | 'SELECTIVE_READER' | 'PASSIVE_READER' | 'RETURNING_USER';
 }

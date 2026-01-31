@@ -59,7 +59,9 @@ export async function runAutoHealer() {
     // 3. RUN SUB-TASKS
     await runDatabaseCleaner();
     await checkSourceHealth();
-    await runAIReviver(); // Level 3: AI Reviver
+    await runAIReviver(); // Level 3
+    await runQualityMonitor(); // Level 4: Quality Check
+
 
     // 4. Fetch OPEN Client Errors
     const { data: errors, error } = await supabase
@@ -147,6 +149,48 @@ async function checkSourceHealth() {
     else console.log(`   ⚠️ Found ${issuesFound} stale cities.`);
 }
 
+
+
+import { checkAndFixQuality } from './agents/quality-monitor';
+
+// --- LEVEL 4: QUALITY MONITOR 🧐 ---
+async function runQualityMonitor() {
+    console.log('🧐 [Level 4] Running Quality Monitor (Tone & Format)...');
+
+    // Fetch batch of active news to check
+    // We can't check everything every time. Random sample? Or sorted by created_at?
+    // Let's check last 20 items.
+    const { data: recentNews } = await supabase
+        .from('news')
+        .select('*')
+        .eq('status', 'ACTIVE')
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+    if (!recentNews) return;
+
+    let issuesFixed = 0;
+    for (const item of recentNews) {
+        const fix = await checkAndFixQuality({
+            id: item.id,
+            title: item.title_en || item.title, // Check translated title if possible 
+            content: item.summary_en || item.content || ''
+        });
+
+        if (fix) {
+            // Update DB with fixed content
+            await supabase
+                .from('news')
+                .update({ summary_en: fix.new_summary })
+                .eq('id', fix.original_id);
+
+            console.log(`      ✅ Fixed quality for item ${fix.original_id}`);
+            issuesFixed++;
+        }
+    }
+    if (issuesFixed > 0) console.log(`   ✨ Improved quality of ${issuesFixed} items.`);
+    else console.log(`   ✅ Content quality looks good.`);
+}
 
 async function tryFixError(err: any) {
     console.log(`🔧 Fixing Issue ${err.error_code} for User ${err.user_id}...`);

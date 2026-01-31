@@ -24,18 +24,17 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
+
       - name: Generate Banner
         env:
-          # Use the Service Account Key from Secrets
-          GOOGLE_APPLICATION_CREDENTIALS: 'service-account.json'
-          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }} # Note: Try to use GOOGLE_CREDENTIALS if possible, but keeping this if legacy secret exists
           GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_PROJECT_ID }}
         run: |
-          # Write the secret to a file
-          echo "$GCP_SA_KEY" > service-account.json
-          
-          # Run the generation script
-          # IMPORTANT: The Service Account used here MUST have 'Vertex AI User' role
+          # Get Access Token for the script
+          export GOOGLE_ACCESS_TOKEN=$(gcloud auth print-access-token)
           npx tsx scripts/weekly_news_banner_job.ts
 
       - name: Build App

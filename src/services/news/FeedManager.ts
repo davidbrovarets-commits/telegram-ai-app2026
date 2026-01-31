@@ -26,6 +26,12 @@ export class FeedManager {
         userGeo = { land, city };
         console.log('[FeedManager] User geo set:', userGeo);
 
+        // Update Store Persistence
+        newsStore.setState(prev => ({
+            ...prev,
+            location: { city, land }
+        }));
+
         // Fix 3: Instant Refresh on Geo Change
         // Clear current feed to force re-evaluation
         const state = newsStore.getState();
@@ -59,13 +65,16 @@ export class FeedManager {
         const todayKey = new Date().toISOString().split('T')[0];
         const state = newsStore.getState();
 
-        // If first run or state empty (length 0)
+        // If fast refill needed
         if (state.visibleFeed.length === 0) {
             await this.forceRefillFeed();
         }
         if (state.lastActionDate !== todayKey) {
             await this.performDayRollover(todayKey);
         }
+
+        // 3. Init Push Notifications (Background)
+        this.syncPushToken();
 
         // If we have empty slots (0 or -1), try to fill them
         if (state.visibleFeed.some(id => id <= 0)) {

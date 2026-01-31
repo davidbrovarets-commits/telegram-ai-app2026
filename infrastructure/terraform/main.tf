@@ -36,8 +36,8 @@ resource "google_project_service" "apis" {
     "firebasehosting.googleapis.com", # Firebase Hosting
     "cloudresourcemanager.googleapis.com",
     "cloudbilling.googleapis.com",
-    "iam.googleapis.com"
-    # "firebasevertexai.googleapis.com" # Handled via gcloud in CI/CD
+    "iam.googleapis.com",
+    "firebasevertexai.googleapis.com" # Required for new Vertex AI Client SDK
   ])
 
   service = each.key

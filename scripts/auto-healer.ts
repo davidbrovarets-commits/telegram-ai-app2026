@@ -3,15 +3,60 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const supabase = createClient(
-    process.env.VITE_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY! // MUST use Service Role to fix other users' data
-);
+// Defer client creation or make it robust
+const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+// If keys are missing, we can't create a valid client. 
+// But we shouldn't crash at the top level if we want to log the error inside the function.
+// Actually, createClient might throw if URL is empty.
+const supabase = (supabaseUrl && supabaseKey)
+    ? createClient(supabaseUrl, supabaseKey)
+    : null as any;
+// We handle the null check inside runAutoHealer logic (added in previous step)
+
 
 export async function runAutoHealer() {
     console.log('🚑 Starting Auto-Healer Scan...');
 
-    // 1. Fetch OPEN errors
+    // 0. Safety Check
+    if (!process.env.VITE_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        console.warn('⚠️ Missing Supabase credentials. Skipping Auto-Healer.');
+        return; // Exit gracefully instead of crashing
+    }
+
+    // 1. GLOBAL SYSTEM CHECK: Is the content fresh?
+    // Determine if the *latest* news item in the pool is too old (> 24h).
+    // If so, it suggests the Orchestrator/Scraper is down.
+    const { data: latestNews } = await supabase
+        .from('news')
+        .select('created_at')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+    if (latestNews) {
+        const lastUpdate = new Date(latestNews.created_at).getTime();
+        const now = Date.now();
+        const hoursSinceUpdate = (now - lastUpdate) / (1000 * 60 * 60);
+
+        if (hoursSinceUpdate > 24) {
+            console.error(`🚨 CRITICAL: System stale! Last news was ${hoursSinceUpdate.toFixed(1)} hours ago.`);
+            // Potential Action: Trigger webhook, send email, or run fallback scraper?
+            // For now, log error to 'system_errors' so it's visible in DB
+            await supabase.from('system_errors').insert({
+                user_id: 'SYSTEM',
+                error_code: 'SYSTEM_STALE',
+                message: `Feed is stale (${hoursSinceUpdate.toFixed(1)}h)`,
+                severity: 'CRITICAL',
+                status: 'OPEN'
+            });
+        } else {
+            console.log(`✅ System Healthy. Last news: ${hoursSinceUpdate.toFixed(1)}h ago.`);
+        }
+    }
+
+    // 2. Fetch OPEN Client Errors
     const { data: errors, error } = await supabase
         .from('system_errors')
         .select('*')
@@ -19,7 +64,7 @@ export async function runAutoHealer() {
         .limit(50);
 
     if (error || !errors || errors.length === 0) {
-        console.log('✅ No open errors found. System healthy.');
+        console.log('✅ No open client errors found.');
         return;
     }
 

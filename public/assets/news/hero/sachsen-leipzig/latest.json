@@ -1,12 +1,12 @@
 {
-  "updatedAt": "2026-01-31T03:22:07.836Z",
+  "updatedAt": "2026-01-31T21:37:43.762Z",
   "week": "2026-5",
   "topics": [
-    "Merz sieht EU-Reformideen von EVP-Chef Weber skeptisch",
-    "Sachsen: Zehntausende Puten wegen Vogelgrippe in Mastanlage bei Geithain getötet - tagesschau.de",
-    "Journalist Lemon in Zusammenhang mit Anti-ICE-Protest festgenommen",
-    "Das SachsenUpdate am 30. Januar - MDR",
-    "Kommentar zur neuen Intendanz fürs Schauspiel Leipzig - Nachtkritik.de"
+    "MDR SACHSEN-ANHALT HEUTE vom 31. Januar - MDR",
+    "Essengehen in Wittenberg: Curry-Huhn statt Schnitzel - MDR",
+    "Breitbandausbau - Stadt Leipzig",
+    "15 Jahre Ministerpräsident: Was Reiner Haseloff in Sachsen-Anhalt hinterlässt - MDR",
+    "Iran-Krise bewegt Menschen in Sachsen-Anhalt - MDR"
   ],
-  "prompt": "Subject: A high-quality, modern header image for a news application.\nContext: Abstract background representing digital information and connections, with a focus on the region of Sachsen / Leipzig.\nStyle: Photorealistic, 4K, HDR, premium UI design, glassmorphism elements, soft studio lighting.\nText: The text \"Leipzig\" written in a bold, modern, clean sans-serif font in the center.\nPositive Modifiers: detailed, sharp focus, professional, aesthetic, calm, official.\nNegative prompt: blurry, distorted text, spelling errors, low quality, pixelated, messy, cluttered, people, faces."
+  "prompt": "You are generating an image prompt for a mini app homepage header.\n\nDesign purpose:\nThis image is used as a background layer in a UI (news mini app),\nnot as a poster, illustration, or advertisement.\n\nPrimary priorities (in order):\n1. Text readability and clarity\n2. Calm, trustworthy, official visual tone\n3. Clean, minimal composition suitable for UI background\n4. No dominant focal points unless explicitly requested\n\nSubject:\nA high-quality, modern header image for a news application.\n\nContext:\nAbstract digital environment representing information flow and connections,\nwith a subtle reference to the region of Sachsen / Leipzig.\n\nStyle:\nPhotorealistic, 4K, HDR, premium UI design,\nglassmorphism elements, soft studio lighting,\nbalanced contrast, clean depth.\n\nText:\nThe word \"Leipzig\" placed centrally,\nwritten in a bold, modern, clean sans-serif font.\n\nHuman elements policy:\n- Identifiable real people are not required.\n- Abstract human presence, silhouettes, or distant figures are allowed\n  only if they do not compete with the text.\n- Do NOT generate close-up faces, portraits, or recognizable individuals.\n\nPositive modifiers:\ndetailed, sharp focus, professional, aesthetic, calm, official.\n\nNegative prompt:\nblurry, distorted text, spelling errors, low quality, pixelated,\nmessy, cluttered, close-up faces, portraits, celebrities.\n\nNegative prompts should block only quality and usability risks,\nnot stylistic possibilities."
 }

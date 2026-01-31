@@ -6,7 +6,10 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-
+global_log.txt
+service-account.json
+firebase-key.json
+claude-vertex-prod-firebase-adminsdk-fbsvc-1cbb42469e.json
 node_modules
 dist
 dist-ssr

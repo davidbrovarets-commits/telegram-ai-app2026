@@ -1,6 +1,7 @@
 const { VertexAI } = require('@google-cloud/vertexai');
 const admin = require('firebase-admin');
 const Parser = require('rss-parser');
+const { GoogleAuth } = require('google-auth-library');
 
 admin.initializeApp();
 
@@ -71,66 +72,37 @@ async function fetchSources(sources) {
     return sorted.map(t => t.title);
 }
 
+
 function buildPrompt(brief) {
-    return `[ROLE] You generate a clean modern hero banner for a news section in a mobile app.
-[FORMAT] Wide banner, safe margins, high contrast for white text overlay, minimal details.
-[REGION] Theme: ${brief.regionLabel}. Week: ${brief.weekRange}.
-[VISUAL] Abstract, modern, calm, official. Subtle abstract shapes suggesting city/region (non-realistic).
-[TOPICS] Visual hints for topics: ${brief.topTopics.join(', ')} (symbolic icons/shapes only, no words).
-[STYLE] modern UI / glassmorphism / abstract gradient / minimal. Soft gradient background, glassmorphism feel, premium UI.
-[TEXT] Leave space for title text in the lower-left area, do not render any text in the image.
-[SAFETY] No faces, no real people, no logos, no flags, no political symbols, no photorealism, no trademarks.`;
+    const textToRender = "Leipzig";
+    return `
+Subject: A high-quality, modern header image for a news application.
+Context: Abstract background representing digital information and connections, with a focus on the region of ${brief.regionLabel}.
+Style: Photorealistic, 4K, HDR, premium UI design, glassmorphism elements, soft studio lighting.
+Text: The text "${textToRender}" written in a bold, modern, clean sans-serif font in the center.
+Positive Modifiers: detailed, sharp focus, professional, aesthetic, calm, official.
+Negative prompt: blurry, distorted text, spelling errors, low quality, pixelated, messy, cluttered, people, faces.
+`.trim();
 }
 
 async function generateImageNanoBananaPro(prompt) {
     console.log(`Generating image... Prompt len: ${prompt.length}`);
+
+    // Explicitly use process.env provided by Cloud Function config
+    const project = process.env.GOOGLE_CLOUD_PROJECT || 'claude-vertex-prod';
+    const location = process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
+    const modelId = 'imagen-4.0-generate-001';
+
+    console.log(`Using Project: ${project}, Location: ${location}`);
+
     try {
-        const project = process.env.GOOGLE_CLOUD_PROJECT;
-        const location = process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
-
-        const vertex_ai = new VertexAI({ project: project, location: location });
-
-        // Using standard Imagen model ID as proxy for "Nano Banana" in this context
-        // or the specific fine-tuned ID if we had it.
-        const modelId = 'imagegeneration@006';
-
-        const generativeModel = vertex_ai.preview.getGenerativeModel({
-            model: modelId,
-            generationConfig: { numberOfImages: 1, aspectRatio: '3:1' }
-        });
-
-        // SDK generate images
-        const resp = await generativeModel.generateContent({
-            contents: [{ role: 'user', parts: [{ text: prompt }] }]
-        });
-
-        // This is simplified. Real SDK return shape might vary for Images.
-        // Assuming base64 in response.
-        // If SDK doesn't support images well yet, we'd use REST here.
-        // For simplicity in this function, allowing the standard generation path.
-
-        // Fallback to fetch if SDK seems text-only
-        if (!resp || !resp.response) throw new Error("No response from Vertex AI");
-
-        // For now, let's assume we get base64 from a helper or this call
-        // If this part is tricky, we might need the REST implementation again.
-        // I will copy the robust REST implementation from the previous script to ensure it works.
-        throw new Error("SDK Direct Image Generation not fully guaranteed here, switching to REST block below if needed.");
-
-    } catch (e) {
-        console.log("SDK approach skipped/failed, trying robust REST...", e.message);
-        // Robust REST fallback (Nano Banana Pro)
-        const project = process.env.GOOGLE_CLOUD_PROJECT;
-        const location = process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
-        const modelId = 'imagegeneration@006';
-
-        const auth = new admin.google.auth.GoogleAuth({
+        const auth = new GoogleAuth({
             scopes: ['https://www.googleapis.com/auth/cloud-platform']
         });
         const client = await auth.getClient();
         const accessToken = (await client.getAccessToken()).token;
 
-        const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/publishers/google/models/${modelId}:predict`;
+        const endpoint = `https://${location}-aiplatform.googleapis.com/v1beta1/projects/${project}/locations/${location}/publishers/google/models/${modelId}:predict`;
 
         const response = await fetch(endpoint, {
             method: 'POST',
@@ -140,14 +112,33 @@ async function generateImageNanoBananaPro(prompt) {
             },
             body: JSON.stringify({
                 instances: [{ prompt: prompt }],
-                parameters: { sampleCount: 1, aspectRatio: "3:1" }
+                parameters: {
+                    sampleCount: 1,
+                    aspectRatio: "16:9", // Changed from 3:1 to 16:9 per user guide
+                    outputOptions: { mimeType: "image/png" }
+                }
             })
         });
 
-        if (!response.ok) throw new Error(`Vertex AI Error: ${response.statusText}`);
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Vertex AI REST Error: ${response.status} ${response.statusText} - ${errorText}`);
+        }
+
         const result = await response.json();
+        // Check for predictions
         const base64Image = result.predictions?.[0]?.bytesBase64Encoded;
-        return base64Image ? Buffer.from(base64Image, 'base64') : null;
+
+        if (!base64Image) {
+            console.log("No image in response:", JSON.stringify(result));
+            return null;
+        }
+
+        return Buffer.from(base64Image, 'base64');
+
+    } catch (e) {
+        console.log("Image generation failed:", e.message);
+        throw e;
     }
 }
 

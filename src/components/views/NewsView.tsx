@@ -27,9 +27,59 @@ const PRIORITY_LABELS: Record<string, { label: string; bg: string }> = {
     MEDIUM: { label: 'ВАЖЛИВО', bg: '#FF9500' }
 };
 
+import { useState, useEffect } from 'react';
+
+// ... existing imports ...
+
 export const NewsView = ({ news, onNewsClick }: NewsViewProps) => {
+    const [bannerUrl, setBannerUrl] = useState<string>('');
+    const [heading, setHeading] = useState<string>('News · Sachsen');
+
+    useEffect(() => {
+        // MVP: Fetch metadata for Sachsen/Leipzig
+        const regionKey = 'sachsen-leipzig';
+        const metaUrl = `/assets/news/hero/${regionKey}/latest.json`;
+
+        // Default to just the image if metadata fetch fails
+        setBannerUrl(`/assets/news/hero/${regionKey}/latest.png`);
+
+        fetch(metaUrl)
+            .then(res => res.json())
+            .then(data => {
+                if (data.updatedAt) {
+                    setBannerUrl(`/assets/news/hero/${regionKey}/latest.png?v=${data.updatedAt}`);
+                }
+                if (data.week) {
+                    setHeading(`News · Week ${data.week}`);
+                }
+            })
+            .catch(() => {
+                // Fallback to default if region specific fails
+                // setBannerUrl('/assets/news/hero/default/latest.png'); 
+                // For MVP we keep the region one even if json missing
+            });
+    }, []);
+
+    const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+        e.currentTarget.src = 'https://placehold.co/1500x500/007AFF/FFFFFF/png?text=News+Update'; // Fallback
+    };
+
     return (
         <div className="news-view">
+            {/* Hero Banner */}
+            <div className="news-carousel-container" style={{ marginBottom: '24px', height: '200px' }}>
+                <img
+                    src={bannerUrl}
+                    alt="Weekly News"
+                    onError={handleImageError}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+                <div className="carousel-overlay" style={{ padding: '16px' }}>
+                    <div className="carousel-source" style={{ marginBottom: '0' }}>Weekly Update</div>
+                    <div className="carousel-title" style={{ fontSize: '24px' }}>{heading}</div>
+                </div>
+            </div>
+
             <div className="task-card" style={{ justifyContent: 'center', marginBottom: '20px', background: 'linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%)', color: 'white' }}>
                 <h4 style={{ fontSize: '18px', fontWeight: '700', color: 'white', margin: 0 }}>📰 ВСІ НОВИНИ</h4>
             </div>

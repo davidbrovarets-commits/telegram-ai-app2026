@@ -1,0 +1,48 @@
+[
+    {
+        "name": "Tagesschau",
+        "type": "rss",
+        "url": "https://www.tagesschau.de/xml/rss2",
+        "language": "de",
+        "layer": "national",
+        "regionKey": "de",
+        "keywords": [
+            "Deutschland",
+            "Politik",
+            "Wirtschaft"
+        ],
+        "weight": 0.2
+    },
+    {
+        "name": "MDR Sachsen (via Google News)",
+        "type": "rss",
+        "url": "https://news.google.com/rss/search?q=MDR+Sachsen&hl=de&gl=DE&ceid=DE:de",
+        "language": "de",
+        "layer": "bundesland",
+        "regionKey": "sachsen",
+        "keywords": [
+            "Sachsen",
+            "Dresden",
+            "Chemnitz",
+            "Leipzig",
+            "Regierung"
+        ],
+        "weight": 0.3
+    },
+    {
+        "name": "Stadt Leipzig (via Google News)",
+        "type": "rss",
+        "url": "https://news.google.com/rss/search?q=Stadt+Leipzig&hl=de&gl=DE&ceid=DE:de",
+        "language": "de",
+        "layer": "city",
+        "regionKey": "leipzig",
+        "cityKey": "leipzig",
+        "keywords": [
+            "Leipzig",
+            "Rathaus",
+            "Verkehr",
+            "Kultur"
+        ],
+        "weight": 0.5
+    }
+]

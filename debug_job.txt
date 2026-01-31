@@ -1,0 +1,4 @@
+[2026-01-31T02:55:25.362Z] Starting generation...
+[2026-01-31T02:55:25.437Z] Project: claude-vertex-prod, Location: us-central1
+[2026-01-31T02:55:25.437Z] Endpoint: https://us-central1-aiplatform.googleapis.com/v1beta1/projects/claude-vertex-prod/locations/us-central1/publishers/google/models/imagen-4.0-generate-001:predict
+[2026-01-31T02:55:34.613Z] Success! Image received (len: 1742800)

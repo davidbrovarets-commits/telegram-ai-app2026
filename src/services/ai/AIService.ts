@@ -8,11 +8,10 @@ export interface AIServiceConfig {
 
 export class AIService {
     private genModel: GenerativeModel | null = null;
-    private modelIdentifier: string;
     private initError: string | null = null;
 
-    constructor(config: AIServiceConfig = {}) {
-        this.modelIdentifier = config.model || 'gemini-3-pro-preview';
+    constructor(/* config: AIServiceConfig = {} */) {
+        // modelIdentifier removed as it was unused and causing build error
 
         try {
             // Initialize Vertex AI service with new API (Firebase v12.8+)
@@ -23,7 +22,7 @@ export class AIService {
             // Initialize the generative model
             // 1.5-flash retired in '25. Using 2.0-flash-exp for '26 context.
             this.genModel = getGenerativeModel(ai, {
-                model: this.modelIdentifier === 'gemini-3-pro-preview' ? 'gemini-2.0-flash-exp' : this.modelIdentifier,
+                model: 'gemini-2.0-flash-exp',
                 safetySettings: [
                     {
                         category: "HARM_CATEGORY_HARASSMENT",

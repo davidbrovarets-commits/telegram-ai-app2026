@@ -91,16 +91,22 @@ async function fetchSources(sources: Source[]): Promise<string[]> {
 }
 
 // 3. Brief & Prompt Builder
+// 3. Brief & Prompt Builder
 function buildPrompt(brief: WeeklyBrief): string {
-    const template = `[ROLE] You generate a clean modern hero banner for a news section in a mobile app.
-[FORMAT] Wide banner, safe margins, high contrast for white text overlay, minimal details.
-[REGION] Theme: ${brief.regionLabel}. Week: ${brief.weekRange}.
-[VISUAL] Abstract, modern, calm, official. Subtle abstract shapes suggesting city/region (non-realistic).
-[TOPICS] Visual hints for topics: ${brief.topTopics.join(', ')} (symbolic icons/shapes only, no words).
-[STYLE] modern UI / glassmorphism / abstract gradient / minimal. Soft gradient background, glassmorphism feel, premium UI.
-[TEXT] Leave space for title text in the lower-left area, do not render any text in the image.
-[SAFETY] No faces, no real people, no logos, no flags, no political symbols, no photorealism, no trademarks.`;
-    return template;
+    // User Guide Implementation:
+    // Subject + Context + Style + Text + Modifiers
+    // "Keep it short: Limit text to 25 characters or less."
+
+    const textToRender = "Leipzig"; // Keeping it simple and reliable
+
+    return `
+Subject: A high-quality, modern header image for a news application.
+Context: Abstract background representing digital information and connections, with a focus on the region of ${brief.regionLabel}.
+Style: Photorealistic, 4K, HDR, premium UI design, glassmorphism elements, soft studio lighting.
+Text: The text "${textToRender}" written in a bold, modern, clean sans-serif font in the center.
+Positive Modifiers: detailed, sharp focus, professional, aesthetic, calm, official.
+Negative prompt: blurry, distorted text, spelling errors, low quality, pixelated, messy, cluttered, people, faces.
+`.trim();
 }
 
 // 4. Image Generator (Nano Banana Pro via Vertex AI)
@@ -116,22 +122,63 @@ async function generateImageNanoBananaPro(prompt: string, outputPath: string): P
         return true;
     }
 
+    fs.appendFileSync('debug_job.txt', `[${new Date().toISOString()}] Starting generation...\n`);
+
     try {
         const { VertexAI } = await import('@google-cloud/vertexai');
 
-        const project = process.env.GOOGLE_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT || 'telegram-ai-app-2026';
+        const project = process.env.GOOGLE_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT || 'claude-vertex-prod';
         const location = process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
 
-        const vertex_ai = new VertexAI({ project: project, location: location });
+        // MODEL ID: Imagen 4 (GA)
+        const modelId = 'imagen-4.0-generate-001';
 
-        // MODEL ID: "nano-banana-pro"
-        const modelId = 'nano-banana-pro';
+        fs.appendFileSync('debug_job.txt', `[${new Date().toISOString()}] Project: ${project}, Location: ${location}\n`);
 
-        console.log(`[NanoBanana] Connecting to model: ${modelId}...`);
+        // PRIORITY 1: Token from env
+        let accessToken = process.env.GOOGLE_ACCESS_TOKEN;
 
-        // FALLBACK TO DIRECT REST API (most reliable for custom endpoints)
-        const accessToken = process.env.GOOGLE_ACCESS_TOKEN;
+        // PRIORITY 2: Fetch from gcloud CLI directly (Best for local dev with 'gcloud auth login')
+        if (!accessToken) {
+            fs.appendFileSync('debug_job.txt', `[${new Date().toISOString()}] No env token, trying gcloud CLI...\n`);
+            try {
+                const { execSync } = await import('child_process');
+                console.log("[NanoBanana] Attempting to fetch token via gcloud CLI...");
+                // Adjust path for Windows if needed, but 'gcloud' is usually in PATH
+                // Or use the known path: "C:\Users\David\AppData\Local\Google\Cloud SDK\google-cloud-sdk\bin\gcloud.cmd"
+                const gcloudCmd = process.platform === 'win32'
+                    ? 'call "C:\\Users\\David\\AppData\\Local\\Google\\Cloud SDK\\google-cloud-sdk\\bin\\gcloud.cmd" auth print-access-token'
+                    : 'gcloud auth print-access-token';
 
+                accessToken = execSync(gcloudCmd).toString().trim();
+                console.log("[NanoBanana] Token fetched via gcloud CLI.");
+                fs.appendFileSync('debug_job.txt', `[${new Date().toISOString()}] Token fetched via CLI (len: ${accessToken.length})\n`);
+            } catch (err) {
+                console.warn("[NanoBanana] Failed to fetch token via gcloud CLI:", (err as Error).message);
+                fs.appendFileSync('debug_job.txt', `[${new Date().toISOString()}] CLI fetch failed: ${(err as Error).message}\n`);
+            }
+        }
+
+        if (!accessToken) {
+            fs.appendFileSync('debug_job.txt', `[${new Date().toISOString()}] No token found after CLI. Trying GoogleAuth...\n`);
+            // PRIORITY 3: GoogleAuth (Service Account / ADC)
+            try {
+                const { GoogleAuth } = await import('google-auth-library');
+                const auth = new GoogleAuth({
+                    scopes: ['https://www.googleapis.com/auth/cloud-platform']
+                });
+                const client = await auth.getClient();
+                accessToken = (await client.getAccessToken()).token || undefined;
+                fs.appendFileSync('debug_job.txt', `[${new Date().toISOString()}] Token fetched via GoogleAuth (len: ${accessToken?.length})\n`);
+            } catch (e) {
+                console.warn("GoogleAuth failed:", e);
+                fs.appendFileSync('debug_job.txt', `[${new Date().toISOString()}] GoogleAuth failed: ${e}\n`);
+            }
+        }
+
+        if (!accessToken) fs.appendFileSync('debug_job.txt', `[${new Date().toISOString()}] FATAL: No access token.\n`);
+
+        /*
         // If we don't have token locally, we simulate success for dev flow unless strict.
         if (!accessToken && !process.env.GOOGLE_APPLICATION_CREDENTIALS) {
             console.warn("[NanoBanana] No auth token found locally. Simulating success for development.");
@@ -140,8 +187,10 @@ async function generateImageNanoBananaPro(prompt: string, outputPath: string): P
             fs.writeFileSync(outputPath, Buffer.from(buf));
             return true;
         }
+        */
 
-        const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/publishers/google/models/${modelId}:predict`;
+        const endpoint = `https://${location}-aiplatform.googleapis.com/v1beta1/projects/${project}/locations/${location}/publishers/google/models/${modelId}:predict`;
+        fs.appendFileSync('debug_job.txt', `[${new Date().toISOString()}] Endpoint: ${endpoint}\n`);
 
         const response = await fetch(endpoint, {
             method: 'POST',
@@ -151,14 +200,26 @@ async function generateImageNanoBananaPro(prompt: string, outputPath: string): P
             },
             body: JSON.stringify({
                 instances: [{ prompt: prompt }],
-                parameters: { sampleCount: 1, aspectRatio: "3:1" }
+                parameters: {
+                    sampleCount: 1,
+                    aspectRatio: "16:9",
+                    outputOptions: { mimeType: "image/png" }
+                }
             })
         });
 
-        if (!response.ok) throw new Error(`Vertex AI Error: ${response.statusText}`);
+        if (!response.ok) {
+            const errText = await response.text();
+            fs.appendFileSync('debug_job.txt', `[${new Date().toISOString()}] ERROR: ${response.status} - ${errText}\n`);
+            console.error(`[NanoBanana] Vertex AI Error Details: ${errText}`);
+            fs.writeFileSync('error_log.txt', `Status: ${response.status}\nBody: ${errText}`);
+            throw new Error(`Vertex AI Error: ${response.status} ${response.statusText}`);
+        }
 
         const result: any = await response.json();
         const base64Image = result.predictions?.[0]?.bytesBase64Encoded;
+
+        fs.appendFileSync('debug_job.txt', `[${new Date().toISOString()}] Success! Image received (len: ${base64Image?.length})\n`);
 
         if (base64Image) {
             fs.writeFileSync(outputPath, Buffer.from(base64Image, 'base64'));
@@ -166,6 +227,7 @@ async function generateImageNanoBananaPro(prompt: string, outputPath: string): P
         }
 
     } catch (e: any) {
+        fs.appendFileSync('debug_job.txt', `[${new Date().toISOString()}] EXCEPTION: ${e.message}\n`);
         console.error('[NanoBanana] Generation failed:', e.message);
     }
     return false;

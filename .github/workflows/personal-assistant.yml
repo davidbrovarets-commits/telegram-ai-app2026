@@ -1,0 +1,39 @@
+name: Personal Assistant (Secretary & Architect)
+
+on:
+  schedule:
+    - cron: '0 7 * * *' # Runs at 07:00 UTC (Approx 08:00-09:00 Local)
+  workflow_dispatch:
+
+jobs:
+  assistant_routine:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup and Auth
+        uses: ./.github/actions/setup-and-auth
+        with:
+          node-version: '20'
+          google-credentials: ${{ secrets.GOOGLE_CREDENTIALS }}
+
+      - name: 🧠 AI Architect Review
+        env:
+          GOOGLE_PROJECT_ID: ${{ secrets.GOOGLE_PROJECT_ID }}
+          GOOGLE_CLOUD_LOCATION: us-central1
+        run: |
+          mkdir -p docs
+          # 1. Run Analysis
+          npx tsx scripts/daily_architect.ts
+
+      - name: 🎩 Secretary Notification
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          # 2. Send Report to User
+          npx tsx scripts/secretary.ts
+
+      - name: Commit Reports
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "docs: daily assistant update [skip ci]"
+          file_pattern: 'docs/architectural_suggestions.md'

@@ -32,7 +32,7 @@ jobs:
       - name: Run Banner Generation Job
         env:
           GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_PROJECT_ID }}
-          GOOGLE_CLOUD_LOCATION: 'europe-west3' # or us-central1
+          GOOGLE_CLOUD_LOCATION: 'europe-west1'
           # GOOGLE_APPLICATION_CREDENTIALS is set automatically by the auth action
         run: |
            # Get Access Token for direct API calls if needed (Node SDK might need it explicitly if not using ADC widely)

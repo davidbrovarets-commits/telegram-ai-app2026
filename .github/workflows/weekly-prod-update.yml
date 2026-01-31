@@ -28,8 +28,8 @@ jobs:
         env:
           # Use the Service Account Key from Secrets
           GOOGLE_APPLICATION_CREDENTIALS: 'service-account.json'
-          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
-          GOOGLE_CLOUD_PROJECT: 'claude-vertex-prod'
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }} # Note: Try to use GOOGLE_CREDENTIALS if possible, but keeping this if legacy secret exists
+          GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_PROJECT_ID }}
         run: |
           # Write the secret to a file
           echo "$GCP_SA_KEY" > service-account.json

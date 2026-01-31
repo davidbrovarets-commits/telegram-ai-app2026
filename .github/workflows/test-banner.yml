@@ -26,6 +26,6 @@ jobs:
     - name: 'Invoke Cloud Function'
       run: |
         gcloud functions call generate-banner-weekly \
-          --region europe-west3 \
-          --project claude-vertex-prod \
+          --region europe-west1 \
+          --project ${{ secrets.GOOGLE_PROJECT_ID }} \
           --gen2

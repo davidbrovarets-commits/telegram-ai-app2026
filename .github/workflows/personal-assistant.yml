@@ -7,6 +7,9 @@ on:
   push:
     branches: [ main ] # Keep for testing interactions
 
+permissions:
+  contents: write
+
 jobs:
   assistant_routine:
     runs-on: ubuntu-latest
@@ -14,7 +17,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }} # Important for auto-commit
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup and Auth
         uses: ./.github/actions/setup-and-auth
@@ -28,7 +31,6 @@ jobs:
           GOOGLE_CLOUD_LOCATION: us-central1
         run: |
           mkdir -p docs
-          # 1. Run Analysis
           npx tsx scripts/daily_architect.ts
 
       - name: 🎩 Secretary Notification
@@ -36,11 +38,10 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          # 2. Send Report to User
           npx tsx scripts/secretary.ts
 
-      - name: Commit Reports
+      - name: Commit Reports & State
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "docs: daily assistant update [skip ci]"
-          file_pattern: 'docs/architectural_suggestions.md'
+          commit_message: "chore(secretary): update state, inbox, and reports [skip ci]"
+          file_pattern: 'docs/architectural_suggestions.md scripts/data/*.json'

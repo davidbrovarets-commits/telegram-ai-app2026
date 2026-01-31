@@ -11,6 +11,11 @@ jobs:
   assistant_routine:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }} # Important for auto-commit
+
       - name: Setup and Auth
         uses: ./.github/actions/setup-and-auth
         with:

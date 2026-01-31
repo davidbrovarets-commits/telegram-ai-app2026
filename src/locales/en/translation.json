@@ -1,0 +1,33 @@
+{
+    "app": {
+        "title": "Telegram AI App",
+        "loading": "Loading..."
+    },
+    "nav": {
+        "home": "Home",
+        "news": "News",
+        "tasks": "Tasks",
+        "portfolio": "Portfolio",
+        "assistant": "Assistant",
+        "menu": "Menu"
+    },
+    "news": {
+        "title": "Latest News",
+        "empty": "No news available.",
+        "refresh": "Refresh",
+        "categories": {
+            "IMPORTANT": "Important",
+            "INFO": "Information",
+            "FUN": "Fun"
+        }
+    },
+    "tasks": {
+        "title": "Your Tasks",
+        "completed": "Completed"
+    },
+    "auth": {
+        "login": "Login",
+        "register": "Register",
+        "logout": "Logout"
+    }
+}

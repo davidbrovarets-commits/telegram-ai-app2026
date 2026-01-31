@@ -56,7 +56,12 @@ export async function runAutoHealer() {
         }
     }
 
-    // 2. Fetch OPEN Client Errors
+    // 3. RUN SUB-TASKS
+    await runDatabaseCleaner();
+    await checkSourceHealth();
+    // await runAIReviver(); // Advanced: Enable if needed
+
+    // 4. Fetch OPEN Client Errors
     const { data: errors, error } = await supabase
         .from('system_errors')
         .select('*')
@@ -74,6 +79,74 @@ export async function runAutoHealer() {
         await tryFixError(err);
     }
 }
+
+// --- LEVEL 1: DATABASE CLEANER 🧹 ---
+async function runDatabaseCleaner() {
+    console.log('🧹 [Level 1] Running Database Cleaner...');
+    const THIRTY_DAYS_AGO = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    // Delete old news that are NOT archived
+    const { count, error } = await supabase
+        .from('news')
+        .delete({ count: 'exact' })
+        .lt('created_at', THIRTY_DAYS_AGO)
+        .neq('status', 'ARCHIVED'); // Keep archives!
+
+    if (error) console.error('   ❌ Failed to clean DB:', error.message);
+    else console.log(`   ✅ Cleaned ${count || 0} old news items.`);
+}
+
+// --- LEVEL 2: DETECTIVE (SOURCE HEALTH) 🕵️‍♂️ ---
+async function checkSourceHealth() {
+    console.log('🕵️‍♂️ [Level 2] Inspecting Source Health...');
+
+    // Get unique cities present in the database (active only)
+    const { data: cities } = await supabase
+        .from('news')
+        .select('city')
+        .not('city', 'is', null)
+        .eq('status', 'ACTIVE')
+        .order('created_at', { ascending: false }); // Heuristic
+
+    if (!cities) return;
+
+    // Group by City and find latest date
+    const uniqueCities = [...new Set(cities.map(c => c.city))];
+    const NOW = Date.now();
+    let issuesFound = 0;
+
+    for (const city of uniqueCities) {
+        if (!city) continue;
+
+        const { data: latest } = await supabase
+            .from('news')
+            .select('created_at')
+            .eq('city', city)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+        if (latest) {
+            const hours = (NOW - new Date(latest.created_at).getTime()) / (1000 * 60 * 60);
+            if (hours > 48) {
+                console.warn(`   ⚠️ City '${city}' is STALE! (${hours.toFixed(1)}h old)`);
+                // Log to system_errors so we see it in dashboard
+                await supabase.from('system_errors').insert({
+                    user_id: 'SYSTEM',
+                    error_code: 'SOURCE_STALE',
+                    message: `City ${city} has no news for ${hours.toFixed(1)}h`,
+                    severity: 'WARNING',
+                    status: 'OPEN'
+                });
+                issuesFound++;
+            }
+        }
+    }
+
+    if (issuesFound === 0) console.log(`   ✅ All ${uniqueCities.length} active cities are fresh (<48h).`);
+    else console.log(`   ⚠️ Found ${issuesFound} stale cities.`);
+}
+
 
 async function tryFixError(err: any) {
     console.log(`🔧 Fixing Issue ${err.error_code} for User ${err.user_id}...`);

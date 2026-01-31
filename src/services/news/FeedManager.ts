@@ -412,4 +412,35 @@ export class FeedManager {
             visibleFeed: newFeed
         }));
     }
+    static async syncPushToken() {
+        try {
+            if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+
+            const { messaging } = await import('../../firebaseConfig');
+            if (!messaging) return;
+
+            const { getToken } = await import('firebase/messaging');
+            const token = await getToken(messaging, {
+                vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY
+            });
+
+            if (token) {
+                const state = newsStore.getState();
+                console.log('[FeedManager] Syncing Push Token:', token.substring(0, 10));
+                const { error } = await supabase
+                    .from('user_push_tokens')
+                    .upsert({
+                        token,
+                        user_id: state.userId,
+                        city: userGeo.city || null,
+                        land: userGeo.land || null,
+                        last_updated: new Date().toISOString()
+                    });
+
+                if (error) console.error('[FeedManager] Token sync failed:', error);
+            }
+        } catch (e) {
+            console.warn('[FeedManager] Push init failed:', e);
+        }
+    }
 }

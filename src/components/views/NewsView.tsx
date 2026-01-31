@@ -1,176 +1,193 @@
+import { useState, useEffect } from 'react';
+import { useNews } from '../../hooks/useNews';
 import type { News } from '../../types';
+import { supabase } from '../../supabaseClient'; // Direct fetch for item content
+import { SwipeableNewsCard } from './SwipeableNewsCard';
+import { ArchiveView } from './ArchiveView';
 
 interface NewsViewProps {
-    news: News[];
+    news?: News[];
     onNewsClick: (news: News & { type: 'news' }) => void;
+    land?: string;
+    city?: string;
 }
 
-// Ukrainian translations for action tags
-const ACTION_LABELS: Record<string, { icon: string; label: string; color: string; bg: string }> = {
-    'deadline': { icon: '⏰', label: 'Термін', color: '#C62828', bg: '#FFEBEE' },
-    'document_required': { icon: '📄', label: 'Документи', color: '#1565C0', bg: '#E3F2FD' },
-    'appointment': { icon: '📅', label: 'Запис', color: '#6A1B9A', bg: '#F3E5F5' },
-    'payment_change': { icon: '💰', label: 'Виплати', color: '#2E7D32', bg: '#E8F5E9' },
-    'status_risk': { icon: '⚠️', label: 'Ризик', color: '#E65100', bg: '#FFF3E0' },
-    'procedure_change': { icon: '🔄', label: 'Зміна процедури', color: '#00695C', bg: '#E0F2F1' },
-    'info': { icon: 'ℹ️', label: 'Інформація', color: '#1976D2', bg: '#E3F2FD' }
-};
+export const NewsView = ({ onNewsClick, land, city }: NewsViewProps) => {
+    const { visibleFeed, handleSwipe } = useNews({ land, city });
+    const [newsItems, setNewsItems] = useState<Record<number, News>>({});
+    const [showArchive, setShowArchive] = useState(false);
 
-const SCOPE_LABELS: Record<string, string> = {
-    DE: '🇩🇪 Німеччина',
-    LAND: '🏛️ Федер. земля',
-    CITY: '🏙️ Місто'
-};
-
-const PRIORITY_LABELS: Record<string, { label: string; bg: string }> = {
-    HIGH: { label: 'ТЕРМІНОВО', bg: '#FF3B30' },
-    MEDIUM: { label: 'ВАЖЛИВО', bg: '#FF9500' }
-};
-
-import { useState, useEffect } from 'react';
-
-// ... existing imports ...
-
-export const NewsView = ({ news, onNewsClick }: NewsViewProps) => {
-    const [bannerUrl, setBannerUrl] = useState<string>('');
-    const [heading, setHeading] = useState<string>('News · Sachsen');
-
+    // Fetch actual news objects for the visible IDs
     useEffect(() => {
-        // MVP: Fetch metadata for Sachsen/Leipzig
-        const regionKey = 'sachsen-leipzig';
-        const metaUrl = `/assets/news/hero/${regionKey}/latest.json`;
+        const fetchItems = async () => {
+            const idsToFetch = visibleFeed.filter(id => id > 0 && !newsItems[id]);
+            if (idsToFetch.length === 0) return;
 
-        // Default to just the image if metadata fetch fails
-        setBannerUrl(`/assets/news/hero/${regionKey}/latest.png`);
+            const { data } = await supabase
+                .from('news')
+                .select('*')
+                .in('id', idsToFetch);
 
-        fetch(metaUrl)
-            .then(res => res.json())
-            .then(data => {
-                if (data.updatedAt) {
-                    setBannerUrl(`/assets/news/hero/${regionKey}/latest.png?v=${data.updatedAt}`);
-                }
-                if (data.week) {
-                    setHeading(`News · Week ${data.week}`);
-                }
-            })
-            .catch(() => {
-                // Fallback to default if region specific fails
-                // setBannerUrl('/assets/news/hero/default/latest.png'); 
-                // For MVP we keep the region one even if json missing
-            });
-    }, []);
+            if (data) {
+                setNewsItems(prev => {
+                    const next = { ...prev };
+                    data.forEach((item: News) => next[item.id] = item);
+                    return next;
+                });
+            }
+        };
+        fetchItems();
+    }, [visibleFeed]);
 
-    const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-        e.currentTarget.src = 'https://placehold.co/1500x500/007AFF/FFFFFF/png?text=News+Update'; // Fallback
+    // Helper to get item or loading placeholder
+    const getItem = (id: number, _idx: number) => {
+        if (id <= 0) return null; // Loading or Empty
+        return newsItems[id];
     };
 
-    return (
-        <div className="news-view">
-            {/* Hero Banner */}
-            <div className="news-carousel-container" style={{ marginBottom: '24px', height: '200px' }}>
-                <img
-                    src={bannerUrl}
-                    alt="Weekly News"
-                    onError={handleImageError}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
-                <div className="carousel-overlay" style={{ padding: '16px' }}>
-                    <div className="carousel-source" style={{ marginBottom: '0' }}>Weekly Update</div>
-                    <div className="carousel-title" style={{ fontSize: '24px' }}>{heading}</div>
-                </div>
+    // Type Badges (L6)
+
+
+    const handleCardClick = (item: News) => {
+        // Signal Tracking
+        import('../../services/news/SignalProcessor').then(({ SignalProcessor }) => {
+            SignalProcessor.trackOpen(item);
+        });
+        onNewsClick({ ...item, type: 'news' } as any);
+    }
+
+    return showArchive ? (
+        <ArchiveView onBack={() => setShowArchive(false)} />
+    ) : (
+        <div className="news-view" style={{ maxWidth: '600px', margin: '0 auto', paddingBottom: '40px' }}>
+            {/* Header */}
+            <div className="task-card" style={{
+                justifyContent: 'center',
+                marginBottom: '20px',
+                background: 'linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%)',
+                color: 'white',
+                boxShadow: '0 4px 12px rgba(0,122,255,0.3)'
+            }}>
+                <h4 style={{ fontSize: '18px', fontWeight: '700', margin: 0 }}>📰 СТРІЧКА НОВИН</h4>
             </div>
 
-            <div className="task-card" style={{ justifyContent: 'center', marginBottom: '20px', background: 'linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%)', color: 'white' }}>
-                <h4 style={{ fontSize: '18px', fontWeight: '700', color: 'white', margin: 0 }}>📰 ВСІ НОВИНИ</h4>
-            </div>
-
-            {news.map(item => {
-                const priority = PRIORITY_LABELS[item.priority || ''];
-                const expiryDate = item.expires_at ? new Date(item.expires_at) : null;
-
-                return (
-                    <div
-                        key={item.id}
-                        className="news-card"
-                        onClick={() => onNewsClick({ ...item, type: 'news' })}
-                        style={{
-                            display: 'grid',
-                            gridTemplateColumns: '120px 1fr 100px 140px 100px',
-                            alignItems: 'center',
-                            gap: '12px',
-                            padding: '12px 16px',
-                            borderLeft: item.priority === 'HIGH' ? '4px solid #FF3B30' :
-                                item.priority === 'MEDIUM' ? '4px solid #FF9500' : '4px solid #E5E5EA'
-                        }}
-                    >
-                        {/* Column 1: Scope + Date + Badge */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <span style={{ fontSize: '11px', color: '#8E8E93' }}>
-                                {SCOPE_LABELS[item.scope || ''] || ''}
-                            </span>
-                            <span style={{ fontSize: '12px', color: '#3C3C43' }}>
-                                {item.created_at ? new Date(item.created_at).toLocaleDateString('uk-UA') : ''}
-                            </span>
-                            {priority && (
-                                <span style={{
-                                    backgroundColor: priority.bg,
-                                    color: 'white',
-                                    padding: '2px 6px',
-                                    borderRadius: '4px',
-                                    fontSize: '9px',
-                                    fontWeight: 700,
-                                    textAlign: 'center',
-                                    width: 'fit-content'
-                                }}>
-                                    {priority.label}
-                                </span>
-                            )}
+            {/* 6-Slot Feed */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {visibleFeed.map((id, index) => {
+                    const item = getItem(id, index);
+                    if (!item) return (
+                        <div key={`param-${index}`} className="news-card" style={{ height: '80px', opacity: 0.5, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <span style={{ fontSize: '12px', color: '#8E8E93' }}>Завантаження...</span>
                         </div>
+                    );
 
-                        {/* Column 2: Title (bold, wraps) */}
-                        <div style={{ fontWeight: 600, fontSize: '14px', color: '#1C1C1E', lineHeight: 1.3 }}>
-                            {item.title}
-                        </div>
+                    // const badge = TYPE_BADGES[item.type || 'INFO'] || TYPE_BADGES['INFO'];
 
-                        {/* Column 3: Source */}
-                        <div style={{ fontSize: '11px', color: '#8E8E93', textAlign: 'center' }}>
-                            {item.source}
-                        </div>
-
-                        {/* Column 4: Action Tags */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                            {item.actions?.slice(0, 2).map((action, i) => {
-                                const tag = ACTION_LABELS[action] || { icon: '', label: action, color: '#666', bg: '#F5F5F5' };
-                                return (
-                                    <span key={i} style={{
-                                        backgroundColor: tag.bg,
-                                        color: tag.color,
-                                        padding: '3px 6px',
-                                        borderRadius: '4px',
-                                        fontSize: '10px',
-                                        fontWeight: 500,
-                                        whiteSpace: 'nowrap'
+                    return (
+                        <SwipeableNewsCard
+                            key={item.id}
+                            onDelete={() => handleSwipe(item.id, 'LEFT')} // Left action in hook is Delete
+                            onArchive={() => handleSwipe(item.id, 'RIGHT')} // Right action in hook is Archive
+                            deleteLabel="Видалити"
+                            archiveLabel="В архів"
+                        >
+                            <div
+                                className="news-card"
+                                onClick={() => handleCardClick(item)}
+                                style={{
+                                    position: 'relative',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '12px',
+                                    padding: '0',
+                                    overflow: 'hidden',
+                                    borderLeft: 'none',
+                                    transition: 'transform 0.2s ease',
+                                    background: 'var(--card-bg)',
+                                    borderRadius: '18px',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+                                }}
+                            >
+                                {/* CONTENT BLOCK - Minimalist (Title + Summary only) */}
+                                {/* Added bottom padding to prevent text from overlapping the badge */}
+                                <div style={{ padding: '16px 16px 48px 16px' }}>
+                                    {/* Title (Headline) */}
+                                    <div style={{
+                                        fontSize: '17px',
+                                        fontWeight: 700,
+                                        lineHeight: '1.3',
+                                        color: 'var(--text-main)',
+                                        marginBottom: '8px',
+                                        fontFamily: 'var(--font-main)'
                                     }}>
-                                        {tag.icon} {tag.label}
-                                    </span>
-                                );
-                            })}
-                        </div>
-
-                        {/* Column 5: Expiry */}
-                        <div style={{ fontSize: '11px', color: '#8E8E93', textAlign: 'right' }}>
-                            {expiryDate && (
-                                <>
-                                    <div>⏳ Актуально до:</div>
-                                    <div style={{ fontWeight: 600, color: '#3C3C43' }}>
-                                        {expiryDate.toLocaleDateString('uk-UA')}
+                                        {item.title}
                                     </div>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                );
-            })}
+
+                                    {/* Summary (Body) */}
+                                    <div style={{
+                                        fontSize: '15px',
+                                        fontWeight: 400,
+                                        lineHeight: '1.5',
+                                        color: 'var(--text-sub)',
+                                        display: '-webkit-box',
+                                        WebkitLineClamp: 3,
+                                        WebkitBoxOrient: 'vertical',
+                                        overflow: 'hidden'
+                                    }}>
+                                        {item.uk_summary || (item.content ? item.content.split('\n\n')[0] : '')}
+                                    </div>
+                                </div>
+
+                                {/* LOCATION BADGE (Bottom Right) */}
+                                <div style={{
+                                    position: 'absolute',
+                                    right: '12px',
+                                    bottom: '12px',
+                                    fontSize: '11px',
+                                    fontWeight: 700,
+                                    color: '#1C1C1E', // Darker text
+                                    background: 'rgba(0, 0, 0, 0.08)', // Visible background
+                                    padding: '4px 10px',
+                                    borderRadius: '12px', // Rounded corners
+                                    // textTransform: 'uppercase', // Optional, maybe keep it normal for nicer look? User asked for "viisaka" (polite). Uppercase is fine.
+                                    backdropFilter: 'blur(4px)',
+                                    zIndex: 5
+                                }}>
+                                    {item.city || item.land || 'Німеччина'}
+                                </div>
+                            </div>
+                        </SwipeableNewsCard>
+                    );
+                })}
+            </div>
+
+            {/* Archive Section */}
+            <div style={{ marginTop: '20px' }}>
+                <button
+                    onClick={() => setShowArchive(true)}
+                    style={{
+                        width: '100%',
+                        background: 'var(--card-bg)', // Same as news card
+                        border: 'none',
+                        borderRadius: '18px', // Same as news card
+                        padding: '16px',
+                        color: 'var(--text-main)', // Text color from vars
+                        fontSize: '17px',
+                        fontWeight: 700,
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.05)', // Same shadow
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '10px',
+                        cursor: 'pointer'
+                    }}>
+                    📂 Відкрити архів
+                </button>
+            </div>
+
+            <div style={{ marginTop: '10px', textAlign: 'center', fontSize: '10px', color: '#D1D1D6' }}>
+                Свайп: Вправо = Kustuta (Удалить), Влево = Arhiveeri (Архив)
+            </div>
         </div>
     );
 };

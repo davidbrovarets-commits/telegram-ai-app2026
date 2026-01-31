@@ -95,19 +95,21 @@ export const BACKUP_NEWS: News[] = [
         id: 1,
         source: 'Tagesschau',
         title: 'Зміни в Jobcenter з 2026 року',
-        date: '15.01.2026',
+        published_at: '2026-01-15T12:00:00Z',
         region: 'all',
         image_url: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f',
-        content: 'Уряд Німеччини оголосив про нові ставки виплат.'
+        content: 'Уряд Німеччини оголосив про нові ставки виплат.',
+        status: 'ACTIVE'
     },
     {
         id: 2,
         source: 'BVG Berlin',
         title: 'Berlin Pass - нові правила',
-        date: '14.01.2026',
+        published_at: '2026-01-14T12:00:00Z',
         region: 'Berlin',
         image_url: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e',
-        content: 'Сенат Берліна обговорює цифрові квитки.'
+        content: 'Сенат Берліна обговорює цифрові квитки.',
+        status: 'ACTIVE'
     }
 ];
 

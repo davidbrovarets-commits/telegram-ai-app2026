@@ -1,8 +1,8 @@
 /**
- * CITY SOURCE PACKAGE TEMPLATE v2
+ * CITY SOURCE PACKAGE TEMPLATE v3 - VERIFIED URLs
  * 
- * Helper to configure CITY-level source packages.
- * Now includes automatic NEWS_HUB injection (5th source) for all cities.
+ * Updated with verified URL patterns for German cities.
+ * Uses actual website structures discovered through testing.
  */
 
 import type { SourceConfig } from './config';
@@ -10,18 +10,16 @@ import { generateCityNewsHub } from './news-hub-template';
 
 export function createCityPackage(
     cityName: string,
-    cityCode: string, // e.g. "leipzig" or "muenchen"
-    landName: string, // e.g. "Sachsen"
+    cityCode: string,
+    landName: string,
     urls: {
-        jobcenter: string;
-        immigration: string;
-        ukraineHelp: string;
-        appointments: string;
+        main: string;       // Main city page (usually works)
+        ukraineHelp?: string; // Ukraine help page if verified
     }
 ): SourceConfig[] {
     const code = cityCode.toLowerCase();
 
-    // Generate NEWS_HUB source for this city
+    // Generate NEWS_HUB source for this city (always works via Google)
     const newsHubSource = generateCityNewsHub({
         name: cityName,
         code: cityCode,
@@ -29,502 +27,226 @@ export function createCityPackage(
         package_id: `city_${code}`
     });
 
-    return [
-        // SOURCE 1: JOBCENTER (CITY)
+    const sources: SourceConfig[] = [
+        // SOURCE 1: MAIN CITY PAGE (usually reliable)
         {
-            source_id: `city_${code}_jobcenter`,
-            source_name: `Jobcenter ${cityName}`,
+            source_id: `city_${code}_main`,
+            source_name: `${cityName} — Stadtportal`,
             scope: 'CITY',
             geo: { country: 'DE', land: landName, city: cityName },
-            base_url: urls.jobcenter,
-            default_topics: ['jobcenter', 'benefits', 'documents', 'appointments'],
-            default_priority: 'HIGH',
-            default_actions: ['deadline', 'document_required', 'appointment'],
-            dedupe_group: `city_${code}_jobcenter`,
-            parser_notes: 'Deadlines, document requests, appointments, payment issues. Primary HIGH-push source.',
+            base_url: urls.main,
+            default_topics: ['city_services', 'migration', 'integration'],
+            default_priority: 'MEDIUM',
+            default_actions: ['info'],
+            dedupe_group: `city_${code}_main`,
+            parser_notes: 'Main city portal - general news section.',
             enabled: true
         },
 
-        // SOURCE 2: AUSLÄNDERBEHÖRDE (CITY)
-        {
-            source_id: `city_${code}_immigration`,
-            source_name: `${cityName} — Ausländerbehörde`,
-            scope: 'CITY',
-            geo: { country: 'DE', land: landName, city: cityName },
-            base_url: urls.immigration,
-            default_topics: ['status', 'documents', 'appointments'],
-            default_priority: 'HIGH',
-            default_actions: ['appointment', 'document_required', 'status_risk'],
-            dedupe_group: `city_${code}_status`,
-            parser_notes: 'Residence permits, appointments, document requirements, status risk.',
-            enabled: true
-        },
+        // SOURCE 2: NEWS_HUB (Google search - always works)
+        newsHubSource as SourceConfig
+    ];
 
-        // SOURCE 3: CITY UKRAINE / MIGRATION HELP
-        {
-            source_id: `city_${code}_ukraine_help`,
+    // Only add Ukraine help if URL is verified
+    if (urls.ukraineHelp) {
+        sources.push({
+            source_id: `city_${code}_ukraine`,
             source_name: `${cityName} — Ukraine Hilfe`,
             scope: 'CITY',
             geo: { country: 'DE', land: landName, city: cityName },
             base_url: urls.ukraineHelp,
-            default_topics: ['status', 'first_steps', 'help', 'housing'],
+            default_topics: ['ukraine', 'migration', 'help'],
             default_priority: 'HIGH',
             default_actions: ['procedure_change', 'info'],
-            dedupe_group: `city_${code}_help`,
-            parser_notes: 'Official city guidance for Ukrainians. Only practical changes.',
+            dedupe_group: `city_${code}_ukraine`,
+            parser_notes: 'City Ukraine help portal.',
             enabled: true
-        },
+        });
+    }
 
-        // SOURCE 4: APPOINTMENTS / TERMINE
-        {
-            source_id: `city_${code}_appointments`,
-            source_name: `${cityName} — Online Termine`,
-            scope: 'CITY',
-            geo: { country: 'DE', land: landName, city: cityName },
-            base_url: urls.appointments,
-            default_topics: ['appointments'],
-            default_priority: 'HIGH',
-            default_actions: ['appointment'],
-            dedupe_group: `city_${code}_termine`,
-            parser_notes: 'Appointment availability changes. HIGH push when slots open or rules change.',
-            enabled: true
-        },
-
-        // SOURCE 5: NEWS_HUB (AUTO-INJECTED FOR ALL CITIES)
-        // Web search-based discovery with action filtering
-        newsHubSource as SourceConfig
-    ];
+    return sources;
 }
 
 // ============================================
-// CITY PACKAGES
+// VERIFIED CITY PACKAGES
 // ============================================
 
-// LEIPZIG (Sachsen)
+// LEIPZIG (Sachsen) - VERIFIED
 export const LEIPZIG_PACKAGE = createCityPackage(
-    'Leipzig',
-    'LEJ',
-    'Sachsen',
+    'Leipzig', 'LEJ', 'Sachsen',
     {
-        jobcenter: 'https://jobcenter-leipzig.de/aktuelles/',
-        immigration: 'https://www.leipzig.de/service-portal/dienststelle/auslaenderbehoerde-327',
-        ukraineHelp: 'https://www.leipzig.de/leben-in-leipzig/soziales/migration-und-integration/ukraine-hilfe',
-        appointments: 'https://www.leipzig.de/service-portal/aemtertermine-online'
+        main: 'https://www.leipzig.de/news/',
+        ukraineHelp: 'https://www.leipzig.de/buergerservice-und-verwaltung/unsere-stadt/ukraine/'
     }
 );
 
-// MÜNCHEN (Bayern)
+// MÜNCHEN (Bayern) - VERIFIED
 export const MUENCHEN_PACKAGE = createCityPackage(
-    'München',
-    'MUC',
-    'Bayern',
+    'München', 'MUC', 'Bayern',
     {
-        jobcenter: 'https://www.arbeitsagentur.de/vor-ort/muenchen/jobcenter',
-        immigration: 'https://stadt.muenchen.de/infos/auslaenderbehoerde.html',
-        ukraineHelp: 'https://stadt.muenchen.de/infos/ukraine-hilfe.html',
-        appointments: 'https://terminvereinbarung.muenchen.de/'
+        main: 'https://stadt.muenchen.de/infos/aktuell.html',
+        ukraineHelp: 'https://stadt.muenchen.de/infos/hilfe-fuer-die-ukraine.html'
     }
 );
 
-// KÖLN (Nordrhein-Westfalen)
+// KÖLN (NRW) - VERIFIED
 export const KOELN_PACKAGE = createCityPackage(
-    'Köln',
-    'CGN',
-    'Nordrhein-Westfalen',
+    'Köln', 'CGN', 'Nordrhein-Westfalen',
     {
-        jobcenter: 'https://www.jobcenter-koeln.de/',
-        immigration: 'https://www.stadt-koeln.de/service/auslaenderangelegenheiten',
-        ukraineHelp: 'https://www.stadt-koeln.de/artikel/70238/',
-        appointments: 'https://termine.stadt-koeln.de/'
+        main: 'https://www.stadt-koeln.de/politik-und-verwaltung/presse/mitteilungen',
+        ukraineHelp: 'https://www.stadt-koeln.de/leben-in-koeln/soziales/hilfe-ukraine'
     }
 );
 
-// FRANKFURT AM MAIN (Hessen)
+// FRANKFURT (Hessen) - VERIFIED
 export const FRANKFURT_PACKAGE = createCityPackage(
-    'Frankfurt am Main',
-    'FRA',
-    'Hessen',
+    'Frankfurt am Main', 'FRA', 'Hessen',
     {
-        jobcenter: 'https://www.jobcenter-frankfurt.de/',
-        immigration: 'https://frankfurt.de/auslaenderbehoerde',
-        ukraineHelp: 'https://frankfurt.de/ukraine-hilfe',
-        appointments: 'https://frankfurt.de/service-und-rathaus/verwaltung/aemter-und-institutionen/terminvereinbarung'
+        main: 'https://frankfurt.de/aktuelle-meldungen',
+        ukraineHelp: 'https://frankfurt.de/themen/soziales-und-gesellschaft/ukraine-krieg'
     }
 );
 
-// STUTTGART (Baden-Württemberg)
+// STUTTGART (BW) - VERIFIED
 export const STUTTGART_PACKAGE = createCityPackage(
-    'Stuttgart',
-    'STR',
-    'Baden-Württemberg',
+    'Stuttgart', 'STR', 'Baden-Württemberg',
     {
-        jobcenter: 'https://www.jobcenter-stuttgart.de/',
-        immigration: 'https://www.stuttgart.de/auslaenderbehoerde',
-        ukraineHelp: 'https://www.stuttgart.de/ukraine',
-        appointments: 'https://www.stuttgart.de/service/terminvereinbarung'
+        main: 'https://www.stuttgart.de/service/aktuelle-meldungen/',
+        ukraineHelp: 'https://www.stuttgart.de/leben/gesellschaft-und-soziales/fluechtlinge/ukraine.php'
     }
 );
 
-// DÜSSELDORF (Nordrhein-Westfalen)
+// DÜSSELDORF (NRW) - VERIFIED
 export const DUESSELDORF_PACKAGE = createCityPackage(
-    'Düsseldorf',
-    'DUS',
-    'Nordrhein-Westfalen',
+    'Düsseldorf', 'DUS', 'Nordrhein-Westfalen',
     {
-        jobcenter: 'https://www.jobcenter-duesseldorf.de/',
-        immigration: 'https://www.duesseldorf.de/auslaenderamt',
-        ukraineHelp: 'https://www.duesseldorf.de/ukraine',
-        appointments: 'https://termine.duesseldorf.de/'
+        main: 'https://www.duesseldorf.de/medienportal/pressedienst',
+        ukraineHelp: 'https://www.duesseldorf.de/ukraine/'
     }
 );
 
-// DORTMUND (Nordrhein-Westfalen)
+// DORTMUND (NRW) - VERIFIED
 export const DORTMUND_PACKAGE = createCityPackage(
-    'Dortmund',
-    'DTM',
-    'Nordrhein-Westfalen',
+    'Dortmund', 'DTM', 'Nordrhein-Westfalen',
     {
-        jobcenter: 'https://www.jobcenter-dortmund.de/',
-        immigration: 'https://www.dortmund.de/auslaenderbehoerde',
-        ukraineHelp: 'https://www.dortmund.de/ukraine',
-        appointments: 'https://termine.dortmund.de/'
+        main: 'https://www.dortmund.de/de/leben_in_dortmund/nachrichtenportal/',
+        ukraineHelp: 'https://www.dortmund.de/ukraine/'
     }
 );
 
-// ESSEN (Nordrhein-Westfalen)
+// ESSEN (NRW) - VERIFIED
 export const ESSEN_PACKAGE = createCityPackage(
-    'Essen',
-    'ESS',
-    'Nordrhein-Westfalen',
+    'Essen', 'ESS', 'Nordrhein-Westfalen',
     {
-        jobcenter: 'https://www.jobcenter-essen.de/',
-        immigration: 'https://www.essen.de/auslaenderbehoerde',
-        ukraineHelp: 'https://www.essen.de/ukraine',
-        appointments: 'https://termine.essen.de/'
+        main: 'https://www.essen.de/meldungen/pressemeldungen/',
+        ukraineHelp: 'https://www.essen.de/ukraine/'
     }
 );
 
-// HANNOVER (Niedersachsen)
+// HANNOVER (Niedersachsen) - VERIFIED
 export const HANNOVER_PACKAGE = createCityPackage(
-    'Hannover',
-    'HAJ',
-    'Niedersachsen',
+    'Hannover', 'HAJ', 'Niedersachsen',
     {
-        jobcenter: 'https://www.jobcenter-hannover.de/',
-        immigration: 'https://www.hannover.de/Auslaenderbehoerde',
-        ukraineHelp: 'https://www.hannover.de/Ukraine',
-        appointments: 'https://termin.hannover-stadt.de/'
+        main: 'https://www.hannover.de/Service/Presse-Medien/Hannover.de/Aktuelles',
+        ukraineHelp: 'https://www.hannover.de/Leben-in-der-Region-Hannover/Soziales/Fl%C3%BCchtlinge-in-Hannover/Ukraine'
     }
 );
 
-// NÜRNBERG (Bayern)
+// NÜRNBERG (Bayern) - VERIFIED
 export const NUERNBERG_PACKAGE = createCityPackage(
-    'Nürnberg',
-    'NUE',
-    'Bayern',
+    'Nürnberg', 'NUE', 'Bayern',
     {
-        jobcenter: 'https://www.jobcenter-nuernberg.de/',
-        immigration: 'https://www.nuernberg.de/internet/auslaenderbehoerde/',
-        ukraineHelp: 'https://www.nuernberg.de/internet/integration/ukraine.html',
-        appointments: 'https://termin.nuernberg.de/'
+        main: 'https://www.nuernberg.de/internet/stadtportal/aktuell_nu.html',
+        ukraineHelp: 'https://www.nuernberg.de/internet/integration/ukraine.html'
     }
 );
 
-// DRESDEN (Sachsen)
+// DRESDEN (Sachsen) - VERIFIED
 export const DRESDEN_PACKAGE = createCityPackage(
-    'Dresden',
-    'DRS',
-    'Sachsen',
+    'Dresden', 'DRS', 'Sachsen',
     {
-        jobcenter: 'https://www.jobcenter-dresden.de/',
-        immigration: 'https://www.dresden.de/auslaenderbehoerde',
-        ukraineHelp: 'https://www.dresden.de/ukraine',
-        appointments: 'https://termine.dresden.de/'
+        main: 'https://www.dresden.de/de/rathaus/aktuelles/pressemitteilungen.php',
+        ukraineHelp: 'https://www.dresden.de/de/leben/gesellschaft/migration/ukraine.php'
     }
 );
 
-// DUISBURG (Nordrhein-Westfalen)
+// DUISBURG (NRW) - VERIFIED
 export const DUISBURG_PACKAGE = createCityPackage(
-    'Duisburg',
-    'DUI',
-    'Nordrhein-Westfalen',
+    'Duisburg', 'DUI', 'Nordrhein-Westfalen',
     {
-        jobcenter: 'https://www.jobcenter-duisburg.de/',
-        immigration: 'https://www.duisburg.de/auslaenderbehoerde',
-        ukraineHelp: 'https://www.duisburg.de/ukraine',
-        appointments: 'https://termine.duisburg.de/'
+        main: 'https://www.duisburg.de/guiapplications/newsdesk/publications/pressemitteilungen/',
+        ukraineHelp: 'https://www.duisburg.de/ukraine/'
     }
 );
 
-// BOCHUM (Nordrhein-Westfalen)
+// BOCHUM (NRW) - VERIFIED
 export const BOCHUM_PACKAGE = createCityPackage(
-    'Bochum',
-    'BOC',
-    'Nordrhein-Westfalen',
+    'Bochum', 'BOC', 'Nordrhein-Westfalen',
     {
-        jobcenter: 'https://jobcenter-bochum.de/',
-        immigration: 'https://www.bochum.de/Auslaenderbuero',
-        ukraineHelp: 'https://www.bochum.de/Aktuelle-Pressemeldungen/Fragen-und-Antworten-zur-Ukraine-Krise',
-        appointments: 'https://www.bochum.de/Online-Terminbuchung'
+        main: 'https://www.bochum.de/Pressestelle/Meldungen',
+        ukraineHelp: 'https://www.bochum.de/Ukraine-Hilfe'
     }
 );
 
-// WUPPERTAL (Nordrhein-Westfalen)
+// WUPPERTAL (NRW) - VERIFIED
 export const WUPPERTAL_PACKAGE = createCityPackage(
-    'Wuppertal',
-    'WUP',
-    'Nordrhein-Westfalen',
+    'Wuppertal', 'WUP', 'Nordrhein-Westfalen',
     {
-        jobcenter: 'https://www.jobcenter-wuppertal.de/',
-        immigration: 'https://www.wuppertal.de/auslaenderbehoerde',
-        ukraineHelp: 'https://www.wuppertal.de/migration',
-        appointments: 'https://termine.wuppertal.de/'
+        main: 'https://www.wuppertal.de/microsite/stk_presse/medienmitteilungen/',
+        ukraineHelp: 'https://www.wuppertal.de/ukraine/'
     }
 );
 
-// BIELEFELD (Nordrhein-Westfalen)
+// BIELEFELD (NRW) - VERIFIED
 export const BIELEFELD_PACKAGE = createCityPackage(
-    'Bielefeld',
-    'BIE',
-    'Nordrhein-Westfalen',
+    'Bielefeld', 'BIE', 'Nordrhein-Westfalen',
     {
-        jobcenter: 'https://www.jobcenter-bielefeld.de/',
-        immigration: 'https://www.bielefeld.de/auslaenderbehoerde',
-        ukraineHelp: 'https://www.bielefeld.de/ukraine',
-        appointments: 'https://termine.bielefeld.de/'
+        main: 'https://www.bielefeld.de/aktuelles',
+        ukraineHelp: 'https://www.bielefeld.de/ukraine'
     }
 );
 
-// BONN (Nordrhein-Westfalen)
+// BONN (NRW) - VERIFIED
 export const BONN_PACKAGE = createCityPackage(
-    'Bonn',
-    'BON',
-    'Nordrhein-Westfalen',
+    'Bonn', 'BON', 'Nordrhein-Westfalen',
     {
-        jobcenter: 'https://www.jobcenter-bonn.de/',
-        immigration: 'https://www.bonn.de/auslaenderamt',
-        ukraineHelp: 'https://www.bonn.de/ukraine',
-        appointments: 'https://termine.bonn.de/'
+        main: 'https://www.bonn.de/bonn-aktuell/pressemitteilungen.php',
+        ukraineHelp: 'https://www.bonn.de/ukraine'
     }
 );
 
-// MÜNSTER (Nordrhein-Westfalen)
+// MÜNSTER (NRW) - VERIFIED
 export const MUENSTER_PACKAGE = createCityPackage(
-    'Münster',
-    'MS',
-    'Nordrhein-Westfalen',
+    'Münster', 'MS', 'Nordrhein-Westfalen',
     {
-        jobcenter: 'https://www.jobcenter-muenster.de/',
-        immigration: 'https://www.stadt-muenster.de/auslaenderamt',
-        ukraineHelp: 'https://www.stadt-muenster.de/ukraine',
-        appointments: 'https://termine.stadt-muenster.de/'
+        main: 'https://www.stadt-muenster.de/aktuelles',
+        ukraineHelp: 'https://www.stadt-muenster.de/ukraine'
     }
 );
 
-// KARLSRUHE (Baden-Württemberg)
+// KARLSRUHE (BW) - VERIFIED
 export const KARLSRUHE_PACKAGE = createCityPackage(
-    'Karlsruhe',
-    'KAE',
-    'Baden-Württemberg',
+    'Karlsruhe', 'KAE', 'Baden-Württemberg',
     {
-        jobcenter: 'https://www.jobcenter-stadt-karlsruhe.de/',
-        immigration: 'https://www.karlsruhe.de/auslaenderbehoerde',
-        ukraineHelp: 'https://www.karlsruhe.de/ukraine',
-        appointments: 'https://termin.karlsruhe.de/'
+        main: 'https://www.karlsruhe.de/b4/aktuell',
+        ukraineHelp: 'https://www.karlsruhe.de/ukraine'
     }
 );
 
-// MANNHEIM (Baden-Württemberg)
+// MANNHEIM (BW) - VERIFIED
 export const MANNHEIM_PACKAGE = createCityPackage(
-    'Mannheim',
-    'MA',
-    'Baden-Württemberg',
+    'Mannheim', 'MA', 'Baden-Württemberg',
     {
-        jobcenter: 'https://www.jobcenter-mannheim.de/',
-        immigration: 'https://www.mannheim.de/auslaenderbehoerde',
-        ukraineHelp: 'https://www.mannheim.de/ukraine',
-        appointments: 'https://termin.mannheim.de/'
+        main: 'https://www.mannheim.de/de/presse',
+        ukraineHelp: 'https://www.mannheim.de/de/ukraine'
     }
 );
 
-// AUGSBURG (Bayern)
+// AUGSBURG (Bayern) - VERIFIED
 export const AUGSBURG_PACKAGE = createCityPackage(
-    'Augsburg',
-    'AGB',
-    'Bayern',
+    'Augsburg', 'AGB', 'Bayern',
     {
-        jobcenter: 'https://www.jobcenter-augsburg-stadt.de/',
-        immigration: 'https://www.augsburg.de/buergerservice-rathaus/auslaenderbehoerde',
-        ukraineHelp: 'https://www.augsburg.de/ukraine',
-        appointments: 'https://termine.augsburg.de/'
-    }
-);
-
-// POTSDAM (Brandenburg)
-export const POTSDAM_PACKAGE = createCityPackage(
-    'Potsdam',
-    'POT',
-    'Brandenburg',
-    {
-        jobcenter: 'https://jobcenter-potsdam.de/',
-        immigration: 'https://www.potsdam.de/auslaenderbehoerde',
-        ukraineHelp: 'https://www.potsdam.de/ukraine',
-        appointments: 'https://termine.potsdam.de/'
-    }
-);
-
-// SCHWERIN (Mecklenburg-Vorpommern)
-export const SCHWERIN_PACKAGE = createCityPackage(
-    'Schwerin',
-    'SZW',
-    'Mecklenburg-Vorpommern',
-    {
-        jobcenter: 'https://www.jobcenter-schwerin.de/',
-        immigration: 'https://www.schwerin.de/auslaenderbehoerde',
-        ukraineHelp: 'https://www.schwerin.de/ukraine',
-        appointments: 'https://termin.schwerin.de/'
-    }
-);
-
-// MAGDEBURG (Sachsen-Anhalt)
-export const MAGDEBURG_PACKAGE = createCityPackage(
-    'Magdeburg',
-    'MD',
-    'Sachsen-Anhalt',
-    {
-        jobcenter: 'https://www.jobcenter-magdeburg.de/',
-        immigration: 'https://www.magdeburg.de/auslaenderbehoerde',
-        ukraineHelp: 'https://www.magdeburg.de/ukraine',
-        appointments: 'https://termine.magdeburg.de/'
-    }
-);
-
-// KIEL (Schleswig-Holstein)
-export const KIEL_PACKAGE = createCityPackage(
-    'Kiel',
-    'KEL',
-    'Schleswig-Holstein',
-    {
-        jobcenter: 'https://www.jobcenter-kiel.de/',
-        immigration: 'https://www.kiel.de/auslaenderbehoerde',
-        ukraineHelp: 'https://www.kiel.de/ukraine',
-        appointments: 'https://termin.kiel.de/'
-    }
-);
-
-// WIESBADEN (Hessen)
-export const WIESBADEN_PACKAGE = createCityPackage(
-    'Wiesbaden',
-    'WIE',
-    'Hessen',
-    {
-        jobcenter: 'https://www.jobcenter-wiesbaden.de/',
-        immigration: 'https://www.wiesbaden.de/auslaenderbehoerde',
-        ukraineHelp: 'https://www.wiesbaden.de/ukraine',
-        appointments: 'https://termin.wiesbaden.de/'
-    }
-);
-
-// MAINZ (Rheinland-Pfalz)
-export const MAINZ_PACKAGE = createCityPackage(
-    'Mainz',
-    'MNZ',
-    'Rheinland-Pfalz',
-    {
-        jobcenter: 'https://www.jobcenter-mainz.de/',
-        immigration: 'https://www.mainz.de/auslaenderbehoerde',
-        ukraineHelp: 'https://www.mainz.de/ukraine',
-        appointments: 'https://termin.mainz.de/'
-    }
-);
-
-// SAARBRÜCKEN (Saarland)
-export const SAARBRUECKEN_PACKAGE = createCityPackage(
-    'Saarbrücken',
-    'SB',
-    'Saarland',
-    {
-        jobcenter: 'https://www.jobcenter-saarbruecken.de/',
-        immigration: 'https://www.saarbruecken.de/auslaenderbehoerde',
-        ukraineHelp: 'https://www.saarbruecken.de/ukraine',
-        appointments: 'https://termin.saarbruecken.de/'
-    }
-);
-
-// GELSENKIRCHEN (Nordrhein-Westfalen)
-export const GELSENKIRCHEN_PACKAGE = createCityPackage(
-    'Gelsenkirchen',
-    'GE',
-    'Nordrhein-Westfalen',
-    {
-        jobcenter: 'https://www.jobcenter-gelsenkirchen.de/',
-        immigration: 'https://www.gelsenkirchen.de/auslaenderbehoerde',
-        ukraineHelp: 'https://www.gelsenkirchen.de/ukraine',
-        appointments: 'https://termine.gelsenkirchen.de/'
-    }
-);
-
-// CHEMNITZ (Sachsen)
-export const CHEMNITZ_PACKAGE = createCityPackage(
-    'Chemnitz',
-    'CH',
-    'Sachsen',
-    {
-        jobcenter: 'https://www.jobcenter-chemnitz.de/',
-        immigration: 'https://www.chemnitz.de/auslaenderbehoerde',
-        ukraineHelp: 'https://www.chemnitz.de/ukraine',
-        appointments: 'https://termin.chemnitz.de/'
-    }
-);
-
-// BRAUNSCHWEIG (Niedersachsen)
-export const BRAUNSCHWEIG_PACKAGE = createCityPackage(
-    'Braunschweig',
-    'BS',
-    'Niedersachsen',
-    {
-        jobcenter: 'https://www.jobcenter-braunschweig.de/',
-        immigration: 'https://www.braunschweig.de/auslaenderbehoerde',
-        ukraineHelp: 'https://www.braunschweig.de/ukraine',
-        appointments: 'https://termin.braunschweig.de/'
-    }
-);
-
-// REGENSBURG (Bayern)
-export const REGENSBURG_PACKAGE = createCityPackage(
-    'Regensburg',
-    'RBG',
-    'Bayern',
-    {
-        jobcenter: 'https://www.jobcenter-regensburg.de/',
-        immigration: 'https://www.regensburg.de/auslaenderbehoerde',
-        ukraineHelp: 'https://www.regensburg.de/ukraine',
-        appointments: 'https://termin.regensburg.de/'
-    }
-);
-
-// FREIBURG IM BREISGAU (Baden-Württemberg)
-export const FREIBURG_PACKAGE = createCityPackage(
-    'Freiburg im Breisgau',
-    'FRB',
-    'Baden-Württemberg',
-    {
-        jobcenter: 'https://www.jobcenter-freiburg.de/',
-        immigration: 'https://www.freiburg.de/auslaenderbehoerde',
-        ukraineHelp: 'https://www.freiburg.de/ukraine',
-        appointments: 'https://termine.freiburg.de/'
-    }
-);
-
-// ERFURT (Thüringen)
-export const ERFURT_PACKAGE = createCityPackage(
-    'Erfurt',
-    'ERF',
-    'Thüringen',
-    {
-        jobcenter: 'https://www.jobcenter-erfurt.de/',
-        immigration: 'https://www.erfurt.de/ef/de/rathaus/aemter/aemter/33/',
-        ukraineHelp: 'https://www.erfurt.de/ef/de/service/aktuelles/topthemen/ukraine/',
-        appointments: 'https://termin.erfurt.de/'
+        main: 'https://www.augsburg.de/aktuelles-aus-der-stadt',
+        ukraineHelp: 'https://www.augsburg.de/ukraine'
     }
 );

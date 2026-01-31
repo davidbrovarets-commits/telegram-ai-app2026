@@ -268,6 +268,8 @@ function App() {
             <NewsView
               news={news}
               onNewsClick={(item) => setSelectedTask(item)}
+              land={userData.land}
+              city={userData.city}
             />
           )}
 

@@ -107,7 +107,7 @@ export const SOURCE_REGISTRY = [
         base_url: "https://www.suedkurier.de",
         language: "de",
         trust_level: "MEDIUM",
-        ingestion_method": "rss",
+        ingestion_method: "rss",
         default_priority: "LOW"
     },
 

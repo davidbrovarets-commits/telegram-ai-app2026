@@ -47,7 +47,7 @@ export const HomeView = ({ news, onNewsClick, onNavigate }: HomeViewProps) => {
                             overflow: 'hidden', position: 'relative', cursor: 'pointer',
                             boxShadow: 'var(--shadow-md)', transition: 'transform 0.2s'
                         }}
-                        onClick={() => onNewsClick({ ...featuredNews, type: 'news' })}
+                        onClick={() => onNewsClick({ ...featuredNews, type: 'news' } as any)}
                         className="bento-card"
                     >
                         <img

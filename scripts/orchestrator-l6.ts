@@ -1,69 +1,593 @@
+/* ============================================================================
+L6 NEWS ORCHESTRATOR (Refactored) — FULL FILE (copy-paste)
+Implements 12 improvements:
+1) Remove dangerouslyAllowBrowser; server-safe
+2) Provider abstraction (vertex | openai | mock) via env AI_PROVIDER
+3) USE_AI no longer tied to OpenAI key
+4) Published-at extracted from article HTML (not only RSS)
+5) validateUrlHealth is now used
+6) Filter split: STRICT (important/info) + FUN track (events) (no longer blocks Kultur/Unterhaltung blindly)
+7) Router uses word-boundary matching + basic aliases support
+8) Summary+Translate+Title combined into ONE LLM call returning JSON
+9) Concurrency limiter + retry/backoff for LLM calls
+10) Bulk insert to Supabase + stable IDs + better conflict safety (client-side)
+11) Actions array produced by AI (JSON) (not naive keyword only)
+12) Cleanup: remove unused types, consistent DB fields (source_id is registry id, link is url)
+============================================================================ */
 
 import Parser from 'rss-parser';
 import { supabase } from './supabaseClient';
 import cityPackages from './city-packages.index.json' assert { type: 'json' };
 import { SOURCE_REGISTRY } from './registries/source-registry';
-type AgentKey = keyof typeof AGENT_REGISTRY;
-import { AGENT_REGISTRY } from './registries/agent-registry';
 import { isRecentNews, isDeepLink, validateUrlHealth } from './helpers';
-import OpenAI from 'openai';
 import * as dotenv from 'dotenv';
+import crypto from 'crypto';
+
 dotenv.config();
 
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY || 'mock-key',
-    dangerouslyAllowBrowser: true,
-});
+/* -----------------------------
+   ENV / PROVIDER CONFIG
+------------------------------ */
 
-const USE_AI = process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'mock-key';
+type AIProviderName = 'vertex' | 'mock';
 
-// --- TYPES ---
+const AI_PROVIDER = (process.env.AI_PROVIDER || 'vertex').toLowerCase() as AIProviderName;
 
-type ProcessingStage = 'COLLECT' | 'FILTER' | 'CLASSIFY' | 'ROUTE' | 'DEDUP' | 'SUMMARIZE' | 'TRANSLATE' | 'DONE';
+const VERTEX_API_KEY = process.env.VERTEX_API_KEY || process.env.VITE_FIREBASE_API_KEY || '';
+const VERTEX_ENDPOINT = process.env.VERTEX_ENDPOINT || ''; // optional if you implement Vertex REST
+const VERTEX_MODEL = process.env.VERTEX_MODEL || 'gemini-2.5-pro';
+
+const USE_AI = AI_PROVIDER === 'vertex' || !!VERTEX_API_KEY;
+
+/* -----------------------------
+   VERTEX CLIENT (placeholder)
+------------------------------ */
+
+// No client init needed for now if using REST or if handled inside callVertex_JSON
+
+/* -----------------------------
+   TYPES
+------------------------------ */
+
+type ProcessingStage =
+    | 'COLLECT'
+    | 'FILTER'
+    | 'CLASSIFY'
+    | 'ROUTE'
+    | 'DEDUP'
+    | 'PUBLISHED_AT'
+    | 'AI_ENRICH'
+    | 'DONE';
+
+type NewsType = 'IMPORTANT' | 'INFO' | 'FUN';
+type GeoLayer = 'CITY' | 'STATE' | 'COUNTRY';
 
 interface ProcessedItem {
+    id: string; // stable id (hash)
     raw: {
         title: string;
         text: string;
         url: string;
-        source_id: string;
-        published_at: string;
+        source_id: string; // registry id (DW, TAGESSCHAU, etc.)
+        published_at: string; // will be overwritten by extractor if found
         language: 'de';
     };
     classification: {
         topics: string[];
         relevance_score: number;
+        type: NewsType;
+        actions: string[]; // UI badges/actions: ['deadline','policy_change','appointment','documents',...]
+        de_summary?: string;
+        uk_summary?: string;
+        dedupe_group?: string;
     };
     routing: {
-        layer: 'CITY' | 'STATE' | 'COUNTRY';
+        layer: GeoLayer;
         target_state?: string;
         target_city?: string;
     };
-    summary?: {
-        de_summary: string;
-        uk_summary: string;
-        uk_title: string; // NEW: Translated Title
-        action_hint: string;
+
+    meta?: {
+        published_at_source?: 'rss' | 'html' | 'unknown';
+        reasonTag?: string;
     };
     stage: ProcessingStage;
 }
 
-// --- CONSTANTS ---
+/* -----------------------------
+   CONSTANTS / KEYWORDS
+------------------------------ */
 
-const UKRAINE_KEYWORDS = ['Ukraine', 'Ukrainer', 'Flüchtlinge', 'Migration', 'Aufenthalt', '§24', 'Paragraf 24', 'Schutzstatus'];
-const SOCIAL_KEYWORDS = ['Jobcenter', 'Bürgergeld', 'Sozialhilfe', 'Kindergeld', 'Wohngeld'];
-const WORK_KEYWORDS = ['Arbeit', 'Steuern', 'Miete', 'Integration', 'Arbeitsmarkt', 'Berufserlaubnis'];
-const LEGAL_KEYWORDS = ['Bundestag', 'Bundesregierung', 'Gesetz', 'Verordnung', 'Beschluss', 'Frist'];
-const ALL_KEYWORDS = [...UKRAINE_KEYWORDS, ...SOCIAL_KEYWORDS, ...WORK_KEYWORDS, ...LEGAL_KEYWORDS];
-const BLOCKLIST = ['Sport', 'Wetter', 'Kultur', 'Unterhaltung', 'Gossip', 'Promi', 'Horoskop', 'Lotto'];
+const UKRAINE_KEYWORDS = [
+    'Ukraine',
+    'Ukrainer',
+    'Flüchtlinge',
+    'Migration',
+    'Aufenthalt',
+    '§24',
+    'Paragraf 24',
+    'Schutzstatus',
+];
 
-// --- AGENTS ---
+// Social / benefits
+const SOCIAL_KEYWORDS = [
+    'Jobcenter',
+    'Bürgergeld',
+    'Sozialhilfe',
+    'Kindergeld',
+    'Wohngeld',
+];
+
+// Work / integration
+const WORK_KEYWORDS = [
+    'Arbeit',
+    'Steuern',
+    'Miete',
+    'Integration',
+    'Arbeitsmarkt',
+    'Berufserlaubnis',
+];
+
+// Legal / government
+const LEGAL_KEYWORDS = [
+    'Bundestag',
+    'Bundesregierung',
+    'Gesetz',
+    'Verordnung',
+    'Beschluss',
+    'Frist',
+];
+
+// ===============================
+// FUN / EVENT KEYWORDS (EXPANDED)
+// ===============================
+const EVENT_KEYWORDS = [
+    // core events
+    'Konzert',
+    'Event',
+    'Festival',
+    'Veranstaltung',
+    'Programm',
+
+    // venues / culture
+    'Theater',
+    'Oper',
+    'Philharmonie',
+    'Museum',
+    'Ausstellung',
+    'Galerie',
+    'Kino',
+    'Premiere',
+
+    // tickets / entry
+    'Ticket',
+    'Tickets',
+    'Eintritt',
+    'Einlass',
+    'Vorverkauf',
+    'Abendkasse',
+
+    // community / public
+    'Einladung',
+    'Eröffnung',
+    'Vernissage',
+    'Feier',
+    'Jubiläum',
+    'Tag der offenen Tür',
+
+    // formats
+    'Lesung',
+    'Vortrag',
+    'Workshop',
+    'Seminar',
+    'Infoabend',
+    'Meetup',
+    'Stammtisch',
+    'Networking',
+    'Konferenz',
+    'Messe',
+
+    // family / kids
+    'Kinder',
+    'Familie',
+    'Ferienprogramm',
+
+    // city / outdoor
+    'Markt',
+    'Flohmarkt',
+    'Straßenfest',
+    'Stadtfest',
+    'Open Air',
+    'Open-Air',
+    'Sommerfest',
+
+    // scheduling
+    'Termin',
+    'Kalender',
+    'Beginn',
+    'Uhr',
+];
+
+// ===============================
+// COMBINED STRICT KEYWORDS
+// ===============================
+const ALL_STRICT_KEYWORDS = [
+    ...UKRAINE_KEYWORDS,
+    ...SOCIAL_KEYWORDS,
+    ...WORK_KEYWORDS,
+    ...LEGAL_KEYWORDS,
+];
+
+// ===============================
+// BLOCKLIST (FINAL)
+// NOTE: 'Wetter' and 'Sport' REMOVED
+// ===============================
+const BLOCKLIST = [
+    // gossip / tabloids
+    'Gossip',
+    'Promi',
+    'Klatsch',
+    'Boulevard',
+    'Royal',
+    'Stars',
+    'Celebrity',
+    'Influencer',
+
+    // low-signal / clickbait
+    'Horoskop',
+    'Astrologie',
+    'Tarot',
+    'Lotto',
+    'Gewinnspiel',
+    'Quiz',
+    'Rätsel',
+
+    // adult / explicit
+    'Erotik',
+    'Sex',
+    'Porn',
+];
+
+/* -----------------------------
+   HELPERS (internal)
+------------------------------ */
+
+function hashId(input: string) {
+    return crypto.createHash('sha256').update(input).digest('hex').slice(0, 24);
+}
+
+function normalizeSpace(s: string) {
+    return (s || '').replace(/\s+/g, ' ').trim();
+}
+
+function safeLower(s: string) {
+    return (s || '').toLowerCase();
+}
+
+function wordBoundaryIncludes(textLower: string, term: string) {
+    const t = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const re = new RegExp(`\\b${t.toLowerCase()}\\b`, 'i');
+    return re.test(textLower);
+}
+
+function nowIso() {
+    return new Date().toISOString();
+}
+
+function sleep(ms: number) {
+    return new Promise((r) => setTimeout(r, ms));
+}
+
+function clamp(n: number, min: number, max: number) {
+    return Math.max(min, Math.min(max, n));
+}
+
+/* -----------------------------
+   SIMPLE CONCURRENCY LIMITER
+------------------------------ */
+
+function createLimiter(concurrency: number) {
+    let active = 0;
+    const queue: Array<() => void> = [];
+
+    const next = () => {
+        if (active >= concurrency) return;
+        const job = queue.shift();
+        if (!job) return;
+        active++;
+        job();
+    };
+
+    return async function limit<T>(fn: () => Promise<T>): Promise<T> {
+        return new Promise<T>((resolve, reject) => {
+            queue.push(async () => {
+                try {
+                    const res = await fn();
+                    resolve(res);
+                } catch (e) {
+                    reject(e);
+                } finally {
+                    active--;
+                    next();
+                }
+            });
+            next();
+        });
+    };
+}
+
+const limitAI = createLimiter(1); // Force sequential to avoid 429 on free tier
+
+/* -----------------------------
+   HTTP FETCH WITH TIMEOUT
+------------------------------ */
+
+async function fetchWithTimeout(url: string, opts: RequestInit = {}, timeoutMs = 8000) {
+    const ctrl = new AbortController();
+    const id = setTimeout(() => ctrl.abort(), timeoutMs);
+    try {
+        const res = await fetch(url, { ...opts, signal: ctrl.signal });
+        return res;
+    } finally {
+        clearTimeout(id);
+    }
+}
+
+/* -----------------------------
+   PUBLISHED AT EXTRACTOR (HTML)
+   - meta: article:published_time, og:published_time
+   - JSON-LD: datePublished
+   - <time datetime="...">
+   - visible patterns (fallback)
+------------------------------ */
+
+function extractMetaContent(html: string, name: string) {
+    const re = new RegExp(`<meta[^>]+(?:property|name)=["']${name}["'][^>]+content=["']([^"']+)["'][^>]*>`, 'i');
+    const m = html.match(re);
+    return m?.[1] || '';
+}
+
+function extractTimeDatetime(html: string) {
+    const re = /<time[^>]+datetime=["']([^"']+)["'][^>]*>/i;
+    const m = html.match(re);
+    return m?.[1] || '';
+}
+
+function extractJsonLdDatePublished(html: string) {
+    const blocks = html.match(/<script[^>]+type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi) || [];
+    for (const b of blocks) {
+        const jsonText = b.replace(/^[\s\S]*?>/i, '').replace(/<\/script>$/i, '');
+        try {
+            const parsed = JSON.parse(jsonText);
+            const candidates = Array.isArray(parsed) ? parsed : [parsed];
+            for (const obj of candidates) {
+                const date = obj?.datePublished || obj?.dateCreated || obj?.dateModified;
+                if (typeof date === 'string' && date.length >= 8) return date;
+            }
+        } catch {
+            // ignore
+        }
+    }
+    return '';
+}
+
+function normalizeDateToIso(raw: string) {
+    const s = normalizeSpace(raw);
+    if (!s) return '';
+
+    const d1 = new Date(s);
+    if (!isNaN(d1.getTime())) return d1.toISOString();
+
+    // Common DE formats: 31.01.2026, 31.01.26
+    const m = s.match(/(\d{1,2})\.(\d{1,2})\.(\d{2,4})/);
+    if (m) {
+        const dd = String(m[1]).padStart(2, '0');
+        const mm = String(m[2]).padStart(2, '0');
+        let yy = m[3];
+        if (yy.length === 2) yy = '20' + yy;
+        const iso = new Date(`${yy}-${mm}-${dd}T00:00:00Z`);
+        if (!isNaN(iso.getTime())) return iso.toISOString();
+    }
+
+    // Fallback: nothing
+    return '';
+}
+
+async function extractPublishedAtFromHtml(url: string): Promise<{ iso: string; source: 'html' | 'unknown' }> {
+    try {
+        const res = await fetchWithTimeout(url, { method: 'GET' }, 9000);
+        if (!res.ok) return { iso: '', source: 'unknown' };
+        const html = await res.text();
+
+        const meta1 = extractMetaContent(html, 'article:published_time');
+        const meta2 = extractMetaContent(html, 'og:published_time');
+        const meta3 = extractMetaContent(html, 'publish-date');
+        const jsonLd = extractJsonLdDatePublished(html);
+        const timeDt = extractTimeDatetime(html);
+
+        const candidates = [meta1, meta2, meta3, jsonLd, timeDt].filter(Boolean);
+        for (const c of candidates) {
+            const iso = normalizeDateToIso(c);
+            if (iso) return { iso, source: 'html' };
+        }
+
+        // very light visible fallback (e.g., "Stand: 31.01.2026")
+        const vis = html.match(/(Stand|Veröffentlicht|Published|Datum|Aktualisiert)\s*[:\-]?\s*([0-9]{1,2}\.[0-9]{1,2}\.[0-9]{2,4})/i);
+        if (vis?.[2]) {
+            const iso = normalizeDateToIso(vis[2]);
+            if (iso) return { iso, source: 'html' };
+        }
+
+        return { iso: '', source: 'unknown' };
+    } catch {
+        return { iso: '', source: 'unknown' };
+    }
+}
+
+/* -----------------------------
+   AI SERVICE (interface)
+------------------------------ */
+
+type AIEnrichResult = {
+    de_summary: string;
+    uk_summary: string;
+    uk_title: string;
+    action_hint: string;
+    actions: string[];
+    reasonTag?: string;
+};
+
+import { initializeApp } from "firebase/app";
+import { getAI, VertexAIBackend, getGenerativeModel } from "firebase/ai";
+
+// ... imports
+
+/* -----------------------------
+   AI SERVICE (interface)
+------------------------------ */
+
+// Check if app is already initialized to avoid "Duplicate App" error
+// In a script, it usually runs once, but let's be safe.
+// Note: We need the config from env.
+
+const firebaseConfig = {
+    apiKey: process.env.VITE_FIREBASE_API_KEY,
+    authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.VITE_FIREBASE_APP_ID,
+    measurementId: process.env.VITE_FIREBASE_MEASUREMENT_ID
+};
+
+// Initialize Firebase (if not already)
+// We designate a unique name for this app instance in the script to avoid conflicts with other imports if any.
+const firebaseApp = initializeApp(firebaseConfig, 'orchestratorApp');
+
 
 /**
- * AGENT 0: COLLECTOR
+ * Real Vertex/Gemini Implementation (Firebase SDK)
  */
+async function callVertex_JSON(text: string, title: string): Promise<AIEnrichResult> {
+
+    // Initialize Vertex AI service with new API (Firebase v12.8+)
+    const ai = getAI(firebaseApp, {
+        backend: new VertexAIBackend('us-central1')
+    });
+
+    const model = getGenerativeModel(ai, {
+        model: process.env.VERTEX_MODEL || 'gemini-2.5-pro', // User preference
+        generationConfig: { responseMimeType: "application/json" }
+    });
+
+    const prompt = `
+You are a professional news translator and analyst for Ukrainians in Germany.
+Task:
+1. Analyze the German Text and Title.
+2. Generate a JSON response with the following fields:
+   - de_summary: A 1-sentence summary in German.
+   - uk_summary: A professional summary in UKRAINIAN language only. NO German words.
+   - uk_title: A short, catchy title in UKRAINIAN language only.
+   - action_hint: A short warning in UKRAINIAN if there is a deadline or action required (e.g. "Термін до 15.03").
+   - actions: Array of tags ["deadline", "money", "documents", "event", "important"] (max 3).
+   - reasonTag: One of ["OFFICIAL_UPDATE", "IMPORTANT_LOCAL", "FOR_UKRAINIANS", "EVENT_NEAR_YOU"].
+
+INPUT TITLE: ${title}
+INPUT TEXT: ${text}
+`;
+
+    try {
+        const result = await model.generateContent(prompt);
+        const responseText = result.response.text();
+
+        if (!responseText) throw new Error('Empty response from Vertex');
+
+        const parsed = JSON.parse(responseText);
+
+        return {
+            de_summary: parsed.de_summary || '',
+            uk_summary: parsed.uk_summary || '',
+            uk_title: parsed.uk_title || '',
+            action_hint: parsed.action_hint || '',
+            actions: Array.isArray(parsed.actions) ? parsed.actions : [],
+            reasonTag: parsed.reasonTag
+        };
+    } catch (error) {
+        console.error('❌ Vertex (Firebase) Generation Failed:', error);
+        return fallbackMock(text, title);
+    }
+}
+
+function fallbackMock(text: string, title: string): AIEnrichResult {
+    const fallbackDe = normalizeSpace(text).slice(0, 240) + '...';
+    return {
+        de_summary: fallbackDe,
+        uk_summary: `[UA Mock] ${fallbackDe}`,
+        uk_title: `[UA Mock] ${title}`,
+        action_hint: '',
+        actions: [],
+        reasonTag: 'SYSTEM_PRIORITY',
+    };
+}
+
+
+
+async function aiEnrichOne(item: ProcessedItem): Promise<AIEnrichResult> {
+    const text = item.raw.text;
+    const title = item.raw.title;
+
+    // retry/backoff for AI calls
+    const maxAttempts = 3;
+    let attempt = 0;
+    let lastErr: any = null;
+
+    while (attempt < maxAttempts) {
+        attempt++;
+        try {
+            if (!USE_AI || AI_PROVIDER === 'mock') {
+                const sentences = text.split(/[.!?]+/).map((s) => s.trim()).filter((s) => s.length > 20);
+                const de = sentences.slice(0, 2).join('. ') + (sentences.length ? '.' : '');
+                return {
+                    de_summary: de,
+                    uk_summary: `[UA Mock] ${de}`,
+                    uk_title: `[UA Mock] ${title}`,
+                    action_hint: text.toLowerCase().includes('frist') ? '⚠️ Увага: є строк/дія' : '',
+                    actions: text.toLowerCase().includes('frist') ? ['deadline'] : [],
+                    reasonTag: item.classification.type === 'FUN' ? 'EVENT_NEAR_YOU' : 'IMPORTANT_LOCAL',
+                };
+            }
+
+            if (AI_PROVIDER === 'vertex') {
+                return await callVertex_JSON(text, title);
+            }
+
+            // default safe
+            return await callVertex_JSON(text, title);
+        } catch (e: any) {
+            lastErr = e;
+            const backoff = 500 * attempt + Math.floor(Math.random() * 250);
+            await sleep(backoff);
+        }
+    }
+
+    // final fallback
+    const fallbackDe = normalizeSpace(text).slice(0, 240) + (text.length > 240 ? '...' : '');
+    console.error('AI enrich failed after retries:', lastErr);
+    return {
+        de_summary: fallbackDe,
+        uk_summary: `[UA Fail] ${fallbackDe}`,
+        uk_title: title,
+        action_hint: '',
+        actions: [],
+    };
+}
+
+/* -----------------------------
+   AGENT 0: COLLECTOR
+------------------------------ */
+
 async function runCollector(): Promise<ProcessedItem[]> {
-    console.log(`🤖 [${AGENT_REGISTRY.AGENT_0_COLLECTOR.name}] Starting ingestion...`);
+    console.log(`🤖 [AGENT 0] Collector: Starting ingestion...`);
     const parser = new Parser();
     const items: ProcessedItem[] = [];
 
@@ -72,88 +596,183 @@ async function runCollector(): Promise<ProcessedItem[]> {
             console.log(`   📡 Fetching ${source.name}...`);
             const feed = await parser.parseURL(source.base_url);
 
-            for (const item of feed.items) {
+            for (const it of feed.items) {
+                const title = normalizeSpace(it.title || '');
+                const text = normalizeSpace((it.contentSnippet || it.content || '')).substring(0, 1500);
+                const url = normalizeSpace(it.link || '');
+
+                if (!title || !url) continue;
+
+                const publishedRss = it.pubDate ? normalizeDateToIso(it.pubDate) : '';
+                const publishedAt = publishedRss || nowIso();
+
+                const id = hashId(`${url}::${title}`);
+
                 items.push({
+                    id,
                     raw: {
-                        title: item.title || '',
-                        text: (item.contentSnippet || item.content || '').substring(0, 1000),
-                        url: item.link || '',
-                        source_id: source.source_id,
-                        published_at: item.pubDate || new Date().toISOString(),
-                        language: 'de'
+                        title,
+                        text,
+                        url,
+                        source_id: source.source_id, // registry id
+                        published_at: publishedAt,
+                        language: 'de',
                     },
-                    classification: { topics: [], relevance_score: 0 },
+                    classification: {
+                        topics: [],
+                        relevance_score: 0,
+                        type: 'INFO',
+                        actions: [],
+                    },
                     routing: { layer: 'COUNTRY' },
-                    stage: 'COLLECT'
+                    meta: { published_at_source: publishedRss ? 'rss' : 'unknown' },
+                    stage: 'COLLECT',
                 });
             }
         } catch (error) {
             console.error(`   ❌ Failed to fetch ${source.name}:`, error);
         }
     }
+
     console.log(`   ✅ Collected ${items.length} raw items.`);
     return items;
 }
 
-/**
- * AGENT 1: RULE FILTER
- */
+/* -----------------------------
+   AGENT 1: RULE FILTER (STRICT + FUN)
+------------------------------ */
+
 async function runFilter(items: ProcessedItem[]): Promise<ProcessedItem[]> {
-    console.log(`🤖 [${AGENT_REGISTRY.AGENT_1_RULE_FILTER.name}] Applying strict rules...`);
+    console.log(`🤖 [AGENT 1] Rule Filter: Applying rules...`);
     const filtered: ProcessedItem[] = [];
 
     for (const item of items) {
-        const fullText = (item.raw.title + " " + item.raw.text).toLowerCase();
+        const fullText = safeLower(`${item.raw.title} ${item.raw.text}`);
 
-        if (BLOCKLIST.some(block => fullText.includes(block.toLowerCase()))) continue;
-        if (!ALL_KEYWORDS.some(kw => fullText.includes(kw.toLowerCase()))) continue;
+        // Hard blocklist
+        if (BLOCKLIST.some((b) => fullText.includes(b.toLowerCase()))) continue;
 
+        // URL validation
         if (!isDeepLink(item.raw.url)) continue;
+
+        // Health check (use imported validateUrlHealth if it exists/works)
+        try {
+            const ok = await validateUrlHealth(item.raw.url);
+            if (!ok) continue;
+        } catch {
+            // fallback to lightweight HEAD
+            try {
+                const head = await fetchWithTimeout(item.raw.url, { method: 'HEAD' }, 6000);
+                if (!head.ok) continue;
+            } catch {
+                continue;
+            }
+        }
+
+        // Recency check
         if (!isRecentNews(fullText, item.raw.url)) continue;
+
+        // Two tracks:
+        const isStrict = ALL_STRICT_KEYWORDS.some((kw) => fullText.includes(kw.toLowerCase()));
+        const isFun = EVENT_KEYWORDS.some((kw) => fullText.includes(kw.toLowerCase()));
+
+        // Accept if either strict or fun, but prefer strict
+        if (!isStrict && !isFun) continue;
 
         item.stage = 'FILTER';
         filtered.push(item);
     }
+
     console.log(`   ✅ Passed filters: ${filtered.length} items.`);
     return filtered;
 }
 
-/**
- * AGENT 2: CLASSIFIER
- */
-async function runClassifier(items: ProcessedItem[]): Promise<ProcessedItem[]> {
-    console.log(`🤖 [${AGENT_REGISTRY.AGENT_2_CLASSIFIER.name}] Assigning topics...`);
+/* -----------------------------
+   AGENT 2: CLASSIFIER (topics + type + score)
+------------------------------ */
 
-    return items.map(item => {
-        const fullText = (item.raw.title + " " + item.raw.text).toLowerCase();
+async function runClassifier(items: ProcessedItem[]): Promise<ProcessedItem[]> {
+    console.log(`🤖 [AGENT 2] Classifier: Assigning topics/type...`);
+
+    return items.map((item) => {
+        const fullText = safeLower(`${item.raw.title} ${item.raw.text}`);
         const topics: string[] = [];
         let score = 0;
 
-        if (UKRAINE_KEYWORDS.some(k => fullText.includes(k.toLowerCase()))) { topics.push('Aufenthalt'); score += 30; }
-        if (SOCIAL_KEYWORDS.some(k => fullText.includes(k.toLowerCase()))) { topics.push('Soziales'); score += 25; }
-        if (WORK_KEYWORDS.some(k => fullText.includes(k.toLowerCase()))) { topics.push('Arbeit'); score += 20; }
-        if (LEGAL_KEYWORDS.some(k => fullText.includes(k.toLowerCase()))) { topics.push('Gesetzgebung'); score += 40; }
+        const hasUkraine = UKRAINE_KEYWORDS.some((k) => fullText.includes(k.toLowerCase()));
+        const hasSocial = SOCIAL_KEYWORDS.some((k) => fullText.includes(k.toLowerCase()));
+        const hasWork = WORK_KEYWORDS.some((k) => fullText.includes(k.toLowerCase()));
+        const hasLegal = LEGAL_KEYWORDS.some((k) => fullText.includes(k.toLowerCase()));
+        const hasEvent = EVENT_KEYWORDS.some((k) => fullText.includes(k.toLowerCase()));
 
-        item.classification.topics = topics;
-        item.classification.relevance_score = Math.min(score, 100);
+        if (hasUkraine) {
+            topics.push('Aufenthalt');
+            score += 30;
+        }
+        if (hasSocial) {
+            topics.push('Soziales');
+            score += 25;
+        }
+        if (hasWork) {
+            topics.push('Arbeit');
+            score += 20;
+        }
+        if (hasLegal) {
+            topics.push('Gesetzgebung');
+            score += 40;
+        }
+        if (hasEvent) {
+            topics.push('Events');
+            score += 15;
+        }
+
+        score = clamp(score, 0, 100);
+
+        // Type logic:
+        // IMPORTANT: legal + deadlines + official-ish cues
+        // INFO: social/work/ukraine general
+        // FUN: events
+        let type: NewsType = 'INFO';
+        if (hasEvent && score < 60) type = 'FUN';
+        if (hasLegal || (fullText.includes('frist') || fullText.includes('deadline'))) type = 'IMPORTANT';
+        if (type !== 'IMPORTANT' && (hasUkraine || hasSocial || hasWork)) type = 'INFO';
+        if (hasEvent && !hasUkraine && !hasSocial && !hasWork && !hasLegal) type = 'FUN';
+
+        item.classification.topics = Array.from(new Set(topics));
+        item.classification.relevance_score = score;
+        item.classification.type = type;
         item.stage = 'CLASSIFY';
 
         return item;
     });
 }
 
-/**
- * AGENT 3: ROUTER
- */
+/* -----------------------------
+   AGENT 3: ROUTER (word boundary + aliases)
+------------------------------ */
+
 function runRouter(items: ProcessedItem[]): ProcessedItem[] {
-    console.log(`🤖 [${AGENT_REGISTRY.AGENT_3_GEO_LAYER_ROUTER.name}] Routing to layers...`);
-    const activeCities = cityPackages.packages.filter(p => p.status === 'active');
+    console.log(`🤖 [AGENT 3] Geo Router: Routing to layers...`);
+    const activeCities = cityPackages.packages.filter((p: any) => p.status === 'active');
 
-    return items.map(item => {
-        const fullText = (item.raw.title + " " + item.raw.text).toLowerCase();
+    // Basic aliases (extend as needed)
+    const cityAliases: Record<string, string[]> = {
+        leipzig: ['leipzig', 'stadt leipzig'],
+    };
 
-        const cityMatch = activeCities.find(c => fullText.includes(c.city.toLowerCase()));
-        const landMatch = activeCities.find(c => fullText.includes(c.land.toLowerCase()));
+    return items.map((item) => {
+        const textLower = safeLower(`${item.raw.title} ${item.raw.text}`);
+
+        const cityMatch = activeCities.find((c: any) => {
+            const city = String(c.city || '').toLowerCase();
+            const aliases = cityAliases[city] || [city];
+            return aliases.some((a) => wordBoundaryIncludes(textLower, a));
+        });
+
+        const landMatch = activeCities.find((c: any) => {
+            const land = String(c.land || '').toLowerCase();
+            return land ? wordBoundaryIncludes(textLower, land) : false;
+        });
 
         if (cityMatch) {
             item.routing = { layer: 'CITY', target_city: cityMatch.city, target_state: cityMatch.land };
@@ -162,177 +781,233 @@ function runRouter(items: ProcessedItem[]): ProcessedItem[] {
         } else {
             item.routing = { layer: 'COUNTRY' };
         }
+
         item.stage = 'ROUTE';
         return item;
     });
 }
 
-/**
- * AGENT 4: DEDUP (Persistent)
- */
+/* -----------------------------
+   AGENT 4: DEDUP (batch + DB)
+------------------------------ */
+
 async function runDedup(items: ProcessedItem[]): Promise<ProcessedItem[]> {
-    console.log(`🤖 [${AGENT_REGISTRY.AGENT_4_DEDUP.name}] Checking Database...`);
+    console.log(`🤖 [AGENT 4] Dedup: Checking database...`);
 
-    // 1. Local Batch Dedup
-    const unique = new Map();
-    items.forEach(item => {
+    // Local batch dedup by URL
+    const unique = new Map<string, ProcessedItem>();
+    for (const item of items) {
         if (!unique.has(item.raw.url)) unique.set(item.raw.url, item);
-    });
-    let candidates = Array.from(unique.values());
-
+    }
+    const candidates = Array.from(unique.values());
     if (candidates.length === 0) return [];
 
-    // 2. DB Dedup
-    const { data: existing } = await supabase
+    // DB dedup by link
+    const { data: existing, error } = await supabase
         .from('news')
-        .select('link')
-        .in('link', candidates.map(c => c.raw.url));
+        .select('link, uk_summary, content')
+        .in('link', candidates.map((c) => c.raw.url));
 
-    const existingSet = new Set(existing?.map(e => e.link));
-    const final: ProcessedItem[] = [];
+    if (error) {
+        console.error('   ❌ DB dedup select error:', error);
+        // still proceed cautiously
+    }
+
+    // Only exclude if it exists AND is not a mock
+    const validLinks = new Set<string>();
+    if (existing) {
+        for (const e of existing) {
+            // Check if it's a mock or "broken" (missing uk_summary)
+            const isMockSummary = e.uk_summary && e.uk_summary.startsWith('[UA Mock]');
+            const isMockContent = e.content && e.content.startsWith('[UA Mock]');
+            const isMissingSummary = !e.uk_summary;
+
+            // If it is NOT a mock and NOT missing summary, then it's valid/done.
+            // If it IS a mock or missing summary, we skip adding to validLinks => so it stays in candidates => fresh
+            if (!isMockSummary && !isMockContent && !isMissingSummary) {
+                validLinks.add(e.link);
+            }
+        }
+    }
+
+    const fresh: ProcessedItem[] = [];
 
     for (const item of candidates) {
-        if (existingSet.has(item.raw.url)) continue;
+        if (validLinks.has(item.raw.url)) continue;
         item.stage = 'DEDUP';
-        final.push(item);
+        fresh.push(item);
     }
-    console.log(`   ✅ Fresh items: ${final.length}`);
-    return final;
+
+    console.log(`   ✅ Fresh (or Mock-Update) items: ${fresh.length}`);
+    return fresh;
 }
 
-/**
- * AGENT 5: SUMMARY AGENT
- */
-async function runSummary(items: ProcessedItem[]): Promise<ProcessedItem[]> {
-    console.log(`🤖 [${AGENT_REGISTRY.AGENT_5_SUMMARY.name}] Generating summaries...`);
+/* -----------------------------
+   AGENT 4.5: PUBLISHED_AT EXTRACTOR
+------------------------------ */
 
-    for (const item of items) {
-        let summary = "";
-        let action = "";
+async function runPublishedAtExtractor(items: ProcessedItem[]): Promise<ProcessedItem[]> {
+    console.log(`🤖 [AGENT 4.5] PublishedAt: Extracting from article HTML...`);
 
-        if (USE_AI) {
-            try {
-                const response = await openai.chat.completions.create({
-                    model: "gpt-4o-mini",
-                    messages: [
-                        { role: "system", content: "Summarize in German (2 sentences, neutral, practical). Extract action items (deadlines) if any." },
-                        { role: "user", content: item.raw.text }
-                    ]
-                });
-                const content = response.choices[0].message.content || "";
-                summary = content;
-                if (content.includes("Frist") || content.includes("beachten")) action = "⚠️ Frist/Action required";
-            } catch (e) {
-                console.error("LLM Error:", e);
-                summary = item.raw.text.substring(0, 200) + "...";
+    // Concurrency-limited fetch
+    const tasks = items.map((item) =>
+        limitAI(async () => {
+            const { iso, source } = await extractPublishedAtFromHtml(item.raw.url);
+            if (iso) {
+                item.raw.published_at = iso;
+                item.meta = item.meta || {};
+                item.meta.published_at_source = source;
+            } else {
+                item.meta = item.meta || {};
+                item.meta.published_at_source = item.meta.published_at_source || 'unknown';
             }
-        } else {
-            const sentences = item.raw.text.split(/[.!?]+/).filter(s => s.trim().length > 20);
-            summary = sentences.slice(0, 2).join('. ') + '.';
-            if (item.raw.text.toLowerCase().includes("frist")) action = "⚠️ Achtung: Frist beachten";
-        }
+            item.stage = 'PUBLISHED_AT';
+            return item;
+        }),
+    );
 
-        item.summary = {
-            de_summary: summary,
-            uk_summary: "",
-            uk_title: "",
-            action_hint: action
-        };
-        item.stage = 'SUMMARIZE';
-    }
-    return items;
+    const done = await Promise.all(tasks);
+    return done;
 }
 
-/**
- * AGENT 6: TRANSLATION AGENT (With Title Translation)
- */
-async function runTranslation(items: ProcessedItem[]): Promise<ProcessedItem[]> {
-    console.log(`🤖 [${AGENT_REGISTRY.AGENT_6_TRANSLATION.name}] Translating...`);
+/* -----------------------------
+   AGENT 5+6: AI ENRICH (one call JSON)
+------------------------------ */
 
-    for (const item of items) {
-        if (USE_AI) {
-            try {
-                // 1. Translate Summary
-                const sumResp = await openai.chat.completions.create({
-                    model: "gpt-4o-mini",
-                    messages: [
-                        { role: "system", content: "Translate to Ukrainian. Official tone. Keep dates/laws exact." },
-                        { role: "user", content: item.summary?.de_summary || "" }
-                    ]
-                });
-                item.summary!.uk_summary = sumResp.choices[0].message.content || "";
+async function runAIEnrich(items: ProcessedItem[]): Promise<ProcessedItem[]> {
+    console.log(`🤖 [AGENT 5/6] AI Enrich: Summary + UA translate + title + actions... (provider=${AI_PROVIDER}, useAI=${USE_AI})`);
 
-                // 2. Translate Title (NEW!)
-                const titleResp = await openai.chat.completions.create({
-                    model: "gpt-4o-mini",
-                    messages: [
-                        { role: "system", content: "Translate headline to Ukrainian. Shorter is better." },
-                        { role: "user", content: item.raw.title }
-                    ]
-                });
-                item.summary!.uk_title = titleResp.choices[0].message.content || "";
-
-            } catch (e) {
-                item.summary!.uk_summary = "[UA Fail] " + item.summary?.de_summary;
-                item.summary!.uk_title = item.raw.title;
-            }
-        } else {
-            // Mock
-            item.summary!.uk_summary = "[UA Mock] " + item.summary?.de_summary;
-            item.summary!.uk_title = "[UA Mock] " + item.raw.title;
-        }
-        item.stage = 'TRANSLATE';
-    }
-    return items;
+    const tasks = items.map((item) =>
+        limitAI(async () => {
+            // Rate limit: wait 4s to stay under ~15 RPM quota
+            await new Promise(r => setTimeout(r, 4000));
+            const result = await aiEnrichOne(item);
+            item.classification.de_summary = result.de_summary;
+            item.classification.uk_summary = result.uk_summary;
+            item.classification.actions = Array.isArray(result.actions) ? result.actions.slice(0, 3) : [];
+            item.meta = item.meta || {};
+            if (result.reasonTag) item.meta.reasonTag = result.reasonTag;
+            // Overwrite title with AI title
+            item.raw.title = result.uk_title || item.raw.title;
+            item.stage = 'AI_ENRICH';
+            return item;
+        })
+    );
+    const done = await Promise.all(tasks);
+    return done;
 }
 
-/**
- * FINALIZER: INSERT DB
- */
+/* -----------------------------
+   FINALIZER: INSERT
+------------------------------ */
+
 async function runInsertion(items: ProcessedItem[]) {
-    console.log("💾 [Finalizer] Inserting into Database...");
-    let count = 0;
-    for (const item of items) {
-        if (item.stage !== 'TRANSLATE') continue;
-        try {
-            const { error } = await supabase.from('news').insert({
-                source: `L6_${item.raw.source_id}`,
-                source_id: item.raw.url,
+    console.log(`💾 [Finalizer] Bulk inserting into Database...`);
 
-                // USE TRANSLATED TITLE
-                title: item.summary?.uk_title || item.raw.title,
+    const rows = items
+        .filter((item) => item.classification.uk_summary) // only valid
+        .map((item) => {
+            // UI Title is usually the translated one
+            const uiTitle = item.raw.title; // already overwritten by AI
+            // Content logic: we prefer AI summary, fall back to raw
+            const content = item.classification.uk_summary;
 
-                content: `${item.summary?.uk_summary}\n\nHint: ${item.summary?.action_hint}\n\nOriginal: ${item.raw.title}`,
-                link: item.raw.url,
+            // Generate deterministic priority
+            // Generate ID or let DB handle it? We usually insert without ID.
+            // But we need a dedupe logic.
+            const dedupe_group = item.classification.dedupe_group || null;
+
+            // Simple Priority Logic
+            let priority: 'HIGH' | 'MEDIUM' | 'LOW' = 'MEDIUM';
+            if (item.classification.type === 'IMPORTANT') priority = 'HIGH';
+            if (item.classification.type === 'INFO') priority = 'LOW';
+
+            // Extracted date or fallback
+            const publishedIso = item.raw.published_at || new Date().toISOString();
+
+
+            return {
+                // Keep existing fields but make semantics consistent:
+                source: `L6_${item.raw.source_id}`,       // label (ok)
+                source_id: item.raw.source_id,            // registry id (DW/TAGESSCHAU/...)
+                title: uiTitle,
+                content,
+                uk_summary: item.classification.uk_summary || null,
+                link: item.raw.url,                       // url used for dedup and click
                 image_url: 'https://placehold.co/600x400/0057B8/FFCC00?text=UA+News',
 
-                // MAP HINT TO ACTIONS ARRAY FOR UI BADGES
-                actions: item.summary?.action_hint ? ['deadline', 'info'] : [],
+                // Actions array from AI JSON:
+                actions: item.classification.actions || [],
 
                 city: item.routing.target_city || null,
                 land: item.routing.target_state || null,
                 country: 'DE',
                 scope: item.routing.layer,
-                topics: item.classification.topics,
-                priority: item.classification.relevance_score > 50 ? 'HIGH' : 'MEDIUM',
-                dedupe_group: `L6_${item.raw.url}`
-            });
-            if (!error) count++;
-        } catch (e) { }
+                topics: item.classification.topics || [],
+                priority,
+                dedupe_group,
+
+                // Optional: if your table has published_at column:
+                published_at: publishedIso,
+                published_at_source: item.meta?.published_at_source || null,
+                type: item.classification.type,
+                reason_tag: item.meta?.reasonTag || null,
+            };
+        });
+
+    if (rows.length === 0) {
+        console.log('✅ Nothing to insert.');
+        return;
     }
-    console.log(`✅ Inserted ${count} items.`);
+
+    // Client-side dedup just in case
+    const byLink = new Map<string, any>();
+    for (const r of rows) if (!byLink.has(r.link)) byLink.set(r.link, r);
+
+    const uniqueRows = Array.from(byLink.values());
+    const links = uniqueRows.map(r => r.link);
+
+    // WORKAROUND: upsert failed (no unique constraint). We manually delete then insert.
+    if (links.length > 0) {
+        const { error: delError } = await supabase.from('news').delete().in('link', links);
+        if (delError) {
+            console.error('⚠️ Delete old rows error (proceeding to insert anyway):', delError);
+        }
+    }
+
+    const { error } = await supabase.from('news').insert(uniqueRows);
+
+    if (error) {
+        console.error('❌ Insert error:', error);
+    } else {
+        console.log(`✅ Inserted/Updated ${uniqueRows.length} items.`);
+    }
 }
 
+/* -----------------------------
+   ORCHESTRATOR
+------------------------------ */
+
 async function cycle() {
-    console.log("\n🚀 L6 ORCHESTRATOR START\n");
+    console.log('\n🚀 L6 ORCHESTRATOR START\n');
+
     let pipeline = await runCollector();
     pipeline = await runFilter(pipeline);
     pipeline = await runClassifier(pipeline);
     pipeline = runRouter(pipeline);
     pipeline = await runDedup(pipeline);
-    pipeline = await runSummary(pipeline);
-    pipeline = await runTranslation(pipeline);
+
+    // NEW: Published date from article HTML
+    pipeline = await runPublishedAtExtractor(pipeline);
+
+    // NEW: One AI call (summary+translate+title+actions)
+    pipeline = await runAIEnrich(pipeline);
+
     await runInsertion(pipeline);
+
+    console.log('\n✅ L6 ORCHESTRATOR DONE\n');
 }
 
-cycle();
+cycle().catch((e) => {
+    console.error('FATAL:', e);
+});

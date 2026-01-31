@@ -1,16 +1,32 @@
+/**
+ * News Scraper v4 - With Full Agent Pipeline
+ * 
+ * Pipeline:
+ * 1. Agent 0: Collector (fetch HTML, parse articles)
+ * 2. Agent 1: Rule Filter (keyword matching)
+ * 3. Agent 2: Classifier (type, topics, relevance)
+ * 4. Agent 4: Dedup (similarity check)
+ * 5. Agent 5+6: Summary + Translation (Vertex AI Claude)
+ */
 
 import { createClient } from '@supabase/supabase-js';
 import * as cheerio from 'cheerio';
 import dotenv from 'dotenv';
 import path from 'path';
 import { SOURCES, SourceConfig } from './config';
-import { calculateScore } from './scorer';
 import { validateUrlHealth, isDeepLink, isRecentNews } from './helpers';
+
+// Import Agents
+import { passesFilter } from './agents/filter';
+import { classify } from './agents/classifier';
+import { findDuplicate } from './agents/dedup';
+import { summarizeAndTranslate, summarizeAndTranslateMock } from './agents/summarizer';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL!;
 const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY!;
+const useMockSummary = process.env.MOCK_SUMMARY === 'true';
 
 if (!supabaseUrl || !supabaseKey) {
     console.error('Missing Supabase credentials in .env');
@@ -18,6 +34,17 @@ if (!supabaseUrl || !supabaseKey) {
 }
 
 const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Stats tracking
+const stats = {
+    fetched: 0,
+    filtered: 0,
+    duplicates: 0,
+    lowRelevance: 0,
+    added: 0,
+    errors: 0,
+    totalCost: 0
+};
 
 async function fetchHTML(url: string): Promise<string> {
     const response = await fetch(url, {
@@ -48,90 +75,170 @@ async function parseGeneric(html: string, config: SourceConfig): Promise<any[]> 
 }
 
 async function scrape() {
-    console.log('🌍 Starting Geo-Scoped News V3...');
-    let totalAdded = 0;
+    console.log('🌍 News Scraper v4 - Agent Pipeline');
+    console.log(`   Mock Summary: ${useMockSummary ? 'ON' : 'OFF (using Vertex AI Claude)'}`);
+    console.log('');
+
+    // Pre-fetch existing titles for dedup
+    const { data: existingNews } = await supabase
+        .from('news')
+        .select('id, title')
+        .order('created_at', { ascending: false })
+        .limit(500);
+
+    const existingItems = existingNews || [];
+    console.log(`📚 Loaded ${existingItems.length} existing titles for dedup\n`);
 
     for (const source of SOURCES) {
         if (!source.enabled) continue;
         console.log(`\n🔍 [${source.scope}/${source.source_id}] ${source.base_url}`);
 
         try {
+            // === AGENT 0: COLLECTOR ===
             const html = await fetchHTML(source.base_url);
             const rawItems = await parseGeneric(html, source);
-            console.log(`   Parsed: ${rawItems.length}`);
+            stats.fetched += rawItems.length;
+            console.log(`   📥 Fetched: ${rawItems.length} items`);
 
             for (const item of rawItems) {
-                // Check for duplicates
-                const { data: existing } = await supabase
-                    .from('news')
-                    .select('id')
-                    .eq('link', item.link)
-                    .maybeSingle();
+                const combinedText = item.title + ' ' + item.content;
 
-                if (existing) continue;
+                // === AGENT 1: RULE FILTER ===
+                const filterResult = passesFilter(combinedText);
+                if (!filterResult.passes) {
+                    stats.filtered++;
+                    continue; // STOP: Not relevant
+                }
 
-                // CRITICAL: Link Health Check
-                // Ensures we never capture/send broken links (404, DNS errors, etc.)
+                // === AGENT 4: DEDUP ===
+                const dupResult = findDuplicate(item.title, existingItems);
+                if (dupResult.isDuplicate) {
+                    stats.duplicates++;
+                    console.log(`   ⏭️ Duplicate (${Math.round(dupResult.similarity * 100)}%): ${item.title.substring(0, 40)}...`);
+                    continue; // STOP: Already exists
+                }
+
+                // === AGENT 2: CLASSIFIER ===
+                const classification = classify(combinedText, filterResult.hits, {
+                    default_priority: source.default_priority
+                });
+
+                if (classification.relevance_score < 30) {
+                    stats.lowRelevance++;
+                    console.log(`   ⬇️ Low relevance (${classification.relevance_score}): ${item.title.substring(0, 40)}...`);
+                    continue; // STOP: Low relevance
+                }
+
+                // Check link health
                 const isAlive = await validateUrlHealth(item.link);
                 if (!isAlive) {
-                    console.log(`   ❌ Dead/Broken link detected: ${item.link}`);
+                    console.log(`   ❌ Dead link: ${item.link.substring(0, 60)}...`);
+                    stats.errors++;
                     continue;
                 }
 
-                // NEW: Smart Filters (Deep Link & Freshness)
+                // Smart filters
                 if (!isDeepLink(item.link)) {
-                    console.log(`   ⚠️  Skipping landing page/root domain: ${item.link}`);
+                    console.log(`   ⏭️ Shallow link: ${item.link.substring(0, 60)}...`);
+                    stats.filtered++;
+                    continue;
+                }
+                if (!isRecentNews(combinedText, item.link)) {
+                    console.log(`   ⏭️ Old news: ${item.title.substring(0, 40)}...`);
+                    stats.filtered++;
                     continue;
                 }
 
-                if (!isRecentNews(item.title + " " + item.content, item.link)) {
-                    console.log(`   ⏳ Skipping old/outdated news: ${item.title}`);
-                    continue;
+                // === AGENT 5+6: SUMMARY + TRANSLATION ===
+                console.log(`   🤖 Summarizing: ${item.title.substring(0, 50)}...`);
+                const summaryFn = useMockSummary ? summarizeAndTranslateMock : summarizeAndTranslate;
+                const summary = await summaryFn({
+                    title: item.title,
+                    content: item.content
+                });
+                // NEW: Strict content check to prevent German fallbacks
+                if (!summary.uk_summary || summary.uk_summary.length < 20) {
+                    console.log(`   ⚠️ Translation incomplete/failed. Siking insert to enforce Ukrainian compliance.`);
+                    console.log(`      Res: ${JSON.stringify(summary).substring(0, 100)}...`);
+                    stats.errors++;
+                    continue; // SKIP: Do not allow untranslated content
                 }
 
-                // Calculate score
-                const baseScore = source.default_priority === 'HIGH' ? 30 : source.default_priority === 'MEDIUM' ? 15 : 5;
-                const analysis = calculateScore(
-                    item.title + ' ' + item.content,
-                    baseScore, source.scope,
-                    source.default_actions,
-                    source.default_priority
-                );
+                // Parse Headline and Body from UK Summary
+                const [ukHeadline, ...ukBodyParts] = summary.uk_summary.split('\n\n');
+                const ukBody = ukBodyParts.join('\n\n') || summary.uk_summary; // Fallback if no split
 
-                // Direct insert via Supabase client
+                // Prepare insert data
+                const publishedAt = new Date().toISOString();
+                const todayKey = new Date().toISOString().split('T')[0];
+
                 const { error } = await supabase.from('news').insert({
+                    // Basic fields - OVERWRITTEN WITH UKRAINIAN
                     source: source.source_name,
                     source_id: source.source_id,
-                    title: item.title,
-                    content: item.content,
+                    title: ukHeadline || summary.uk_summary, // Enforce UK Headline
+                    content: ukBody, // Enforce UK Body
                     link: item.link,
                     image_url: 'https://placehold.co/600x400/007AFF/ffffff?text=News',
                     region: source.geo.land || 'all',
+
+                    // L6 Fields
+                    type: classification.type,
+                    status: 'POOL',
+                    published_at: publishedAt,
+                    day_key: todayKey,
+                    priority: classification.relevance_score > 70 ? 'HIGH' :
+                        classification.relevance_score > 50 ? 'MEDIUM' : 'LOW',
+
+                    // Geo fields
                     scope: source.scope,
                     country: source.geo.country,
                     land: source.geo.land || null,
                     city: source.geo.city || null,
-                    topics: analysis.topics,
-                    priority: analysis.priority,
-                    actions: analysis.actions,
-                    score: analysis.score,
+
+                    // Agent results
+                    topics: classification.topics,
+                    keyword_hits: filterResult.hits,
+                    relevance_score: classification.relevance_score,
+
+                    // Summary fields (Agent 5+6)
+                    de_summary: summary.de_summary,
+                    uk_summary: summary.uk_summary,
+                    action_hint: summary.action_hint,
+
+                    // Meta
                     dedupe_group: source.dedupe_group,
-                    expires_at: analysis.expires_at.toISOString()
+                    expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days
                 });
 
                 if (error) {
                     console.log(`   ❌ Insert error: ${error.message}`);
+                    stats.errors++;
                 } else {
-                    console.log(`   + [${analysis.priority}] ${item.title.substring(0, 40)}...`);
-                    totalAdded++;
+                    console.log(`   ✅ [${classification.type}] ${item.title.substring(0, 40)}...`);
+                    stats.added++;
+                    // Add to existing for future dedup
+                    existingItems.push({ id: 0, title: item.title });
                 }
             }
         } catch (error: any) {
-            console.error(`   ❌ ${error.message}`);
+            console.error(`   ❌ Source error: ${error.message}`);
+            stats.errors++;
         }
     }
 
-    console.log(`\n✅ Done. New items: ${totalAdded}`);
+    // Print summary
+    console.log('\n' + '='.repeat(50));
+    console.log('📊 SCRAPE SUMMARY');
+    console.log('='.repeat(50));
+    console.log(`   Fetched:      ${stats.fetched}`);
+    console.log(`   Filtered:     ${stats.filtered} (no keywords)`);
+    console.log(`   Duplicates:   ${stats.duplicates}`);
+    console.log(`   Low Relevance: ${stats.lowRelevance}`);
+    console.log(`   Errors:       ${stats.errors}`);
+    console.log(`   ✅ Added:     ${stats.added}`);
+    console.log(`   💰 Est. Cost: $${stats.totalCost.toFixed(4)}`);
+    console.log('='.repeat(50));
 }
 
 scrape();

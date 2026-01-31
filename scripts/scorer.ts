@@ -3,6 +3,7 @@ import type { Priority } from './config';
 
 export interface ScoredItem {
     priority: Priority;
+    type: 'IMPORTANT' | 'INFO' | 'FUN';
     score: number;
     actions: string[];
     topics: string[];
@@ -94,13 +95,27 @@ export function calculateScore(
     if (score >= 50) priority = 'HIGH';
     else if (score >= 30) priority = 'MEDIUM';
 
-    // 5. Calculate Expiry
+    // 5. Determine Type (L6 Logic)
+    let type: 'IMPORTANT' | 'INFO' | 'FUN' = 'INFO'; // Default
+
+    if (priority === 'HIGH') {
+        type = 'IMPORTANT';
+    } else {
+        // Detect FUN
+        const funKeywords = ['festival', 'konzert', 'ausstellung', 'kultur', 'event', 'party', 'weekend', 'wochenende', 'museum', 'galerie', 'theater', 'kino'];
+        if (funKeywords.some(kw => lowerText.includes(kw))) {
+            type = 'FUN';
+        }
+    }
+
+    // 6. Calculate Expiry
     const actionsArray = Array.from(actions);
     const expires_at = calculateExpiry(actionsArray, new Date());
 
     return {
         priority,
         score,
+        type,
         actions: actionsArray,
         topics: Array.from(topics),
         expires_at

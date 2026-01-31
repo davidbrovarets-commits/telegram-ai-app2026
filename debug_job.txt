@@ -2,3 +2,9 @@
 [2026-01-31T02:55:25.437Z] Project: claude-vertex-prod, Location: us-central1
 [2026-01-31T02:55:25.437Z] Endpoint: https://us-central1-aiplatform.googleapis.com/v1beta1/projects/claude-vertex-prod/locations/us-central1/publishers/google/models/imagen-4.0-generate-001:predict
 [2026-01-31T02:55:34.613Z] Success! Image received (len: 1742800)
+[2026-01-31T03:21:57.343Z] Starting generation...
+[2026-01-31T03:21:57.424Z] Project: claude-vertex-prod, Location: us-central1
+[2026-01-31T03:21:57.424Z] No env token, trying gcloud CLI...
+[2026-01-31T03:21:58.318Z] Token fetched via CLI (len: 258)
+[2026-01-31T03:21:58.320Z] Endpoint: https://us-central1-aiplatform.googleapis.com/v1beta1/projects/claude-vertex-prod/locations/us-central1/publishers/google/models/imagen-4.0-generate-001:predict
+[2026-01-31T03:22:07.832Z] Success! Image received (len: 1821428)

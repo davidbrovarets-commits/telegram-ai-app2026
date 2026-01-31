@@ -1,81 +1,55 @@
 /**
- * BUNDESLAND SOURCE PACKAGE TEMPLATE
+ * BUNDESLAND SOURCE PACKAGE TEMPLATE v2 - VERIFIED URLs
  * 
- * Use this template to add a new Bundesland to the geo-scoped news system.
- * Fill in the placeholders and add to config.ts SOURCES array.
- * 
- * MANDATORY FIELDS:
- * - BUNDESLAND_NAME: Official name (e.g., "Nordrhein-Westfalen")
- * - BUNDESLAND_CODE: Short code (e.g., "nrw")
- * - UKRAINE_PORTAL_URL: Official state portal for refugees
- * - LAND_ADMINISTRATION_URL: Landesdirektion/Landesamt page
- * - EDUCATION_PORTAL_URL: DaZ/school integration portal
+ * Updated with verified URL patterns for German federal states.
  */
 
 import type { SourceConfig } from './config';
-
-// ============================================
-// TEMPLATE FUNCTION
-// ============================================
 
 export function createBundeslandPackage(
     bundeslandName: string,
     bundeslandCode: string,
     urls: {
-        ukrainePortal: string;
-        landAdministration: string;
-        education: string;
-        integration?: string; // Optional
+        main: string;           // Main state portal
+        ukrainePortal?: string; // Ukraine-specific page if exists
+        integration?: string;   // Integration page if exists
     }
 ): SourceConfig[] {
     const sources: SourceConfig[] = [
-        // SOURCE 1: Official Ukraine/Refugee Portal
+        // SOURCE 1: Main State Portal (always reliable)
         {
-            source_id: `land_${bundeslandCode}_ukraine_portal`,
-            source_name: `${bundeslandName} — Ukraine Portal`,
+            source_id: `land_${bundeslandCode}_main`,
+            source_name: `${bundeslandName} — Landesportal`,
             scope: 'LAND',
             geo: { country: 'DE', land: bundeslandName },
-            base_url: urls.ukrainePortal,
-            default_topics: ['status', 'documents', 'housing', 'benefits', 'work', 'children', 'health'],
-            default_priority: 'HIGH',
-            default_actions: ['procedure_change', 'info'],
-            dedupe_group: `land_${bundeslandCode}_main`,
-            parser_notes: 'Main official portal for refugees/Ukrainians. Track changes in rules and procedures.',
-            enabled: true
-        },
-
-        // SOURCE 2: Landesdirektion / Landesamt
-        {
-            source_id: `land_${bundeslandCode}_administration`,
-            source_name: `${bundeslandName} — Landesdirektion`,
-            scope: 'LAND',
-            geo: { country: 'DE', land: bundeslandName },
-            base_url: urls.landAdministration,
-            default_topics: ['status', 'procedures', 'accommodation', 'distribution'],
-            default_priority: 'HIGH',
-            default_actions: ['procedure_change', 'document_required', 'info'],
-            dedupe_group: `land_${bundeslandCode}_admin`,
-            parser_notes: 'Administrative body issuing procedures and instructions.',
-            enabled: true
-        },
-
-        // SOURCE 3: Education / DaZ
-        {
-            source_id: `land_${bundeslandCode}_education`,
-            source_name: `${bundeslandName} — Bildung/DaZ`,
-            scope: 'LAND',
-            geo: { country: 'DE', land: bundeslandName },
-            base_url: urls.education,
-            default_topics: ['children', 'school', 'language_integration'],
+            base_url: urls.main,
+            default_topics: ['policy', 'migration', 'news'],
             default_priority: 'MEDIUM',
             default_actions: ['info'],
-            dedupe_group: `land_${bundeslandCode}_education`,
-            parser_notes: 'Only practical education-related changes affecting access or rules.',
+            dedupe_group: `land_${bundeslandCode}_main`,
+            parser_notes: 'Main state news portal.',
             enabled: true
         }
     ];
 
-    // OPTIONAL SOURCE 4: Integration Programs
+    // Add Ukraine portal if verified
+    if (urls.ukrainePortal) {
+        sources.push({
+            source_id: `land_${bundeslandCode}_ukraine`,
+            source_name: `${bundeslandName} — Ukraine Portal`,
+            scope: 'LAND',
+            geo: { country: 'DE', land: bundeslandName },
+            base_url: urls.ukrainePortal,
+            default_topics: ['ukraine', 'refugees', 'help'],
+            default_priority: 'HIGH',
+            default_actions: ['procedure_change', 'info'],
+            dedupe_group: `land_${bundeslandCode}_ukraine`,
+            parser_notes: 'Official Ukraine/refugee portal.',
+            enabled: true
+        });
+    }
+
+    // Add integration portal if verified
     if (urls.integration) {
         sources.push({
             source_id: `land_${bundeslandCode}_integration`,
@@ -83,11 +57,11 @@ export function createBundeslandPackage(
             scope: 'LAND',
             geo: { country: 'DE', land: bundeslandName },
             base_url: urls.integration,
-            default_topics: ['integration', 'programs', 'consultation'],
+            default_topics: ['integration', 'migration'],
             default_priority: 'MEDIUM',
             default_actions: ['info'],
             dedupe_group: `land_${bundeslandCode}_integration`,
-            parser_notes: 'State-funded integration or support programs with practical relevance.',
+            parser_notes: 'State integration programs.',
             enabled: true
         });
     }
@@ -96,197 +70,165 @@ export function createBundeslandPackage(
 }
 
 // ============================================
-// EXAMPLE PACKAGES (uncomment to use)
+// VERIFIED BUNDESLAND PACKAGES
 // ============================================
 
-// SACHSEN (already in main config)
+// SACHSEN (verified)
 export const SACHSEN_PACKAGE = createBundeslandPackage(
-    'Sachsen',
-    'sachsen',
+    'Sachsen', 'SN',
     {
+        main: 'https://www.medienservice.sachsen.de/',
         ukrainePortal: 'https://www.ukrainehilfe.sachsen.de/',
-        landAdministration: 'https://www.lds.sachsen.de/asyl/?ID=23075&art_param=917',
-        education: 'https://www.bildung.sachsen.de/blog/index.php/tag/daz/'
+        integration: 'https://www.willkommen.sachsen.de/'
     }
 );
 
-// NORDRHEIN-WESTFALEN (Official v1.0)
+// NORDRHEIN-WESTFALEN (verified)
 export const NRW_PACKAGE = createBundeslandPackage(
-    'Nordrhein-Westfalen',
-    'nrw',
+    'Nordrhein-Westfalen', 'NW',
     {
+        main: 'https://www.land.nrw/pressemitteilungen',
         ukrainePortal: 'https://www.mkjfgfi.nrw/ukraine',
-        landAdministration: 'https://www.bra.nrw.de/integration-migration/fluechtlinge-nrw',
-        education: 'https://www.schulministerium.nrw/umgang-mit-den-auswirkungen-des-russland-ukraine-krieges',
-        integration: 'https://www.mkjfgfi.nrw/kommunale-integrationszentren'
+        integration: 'https://www.mkjfgfi.nrw/integration'
     }
 );
 
-// BAYERN (Official v1.0)
+// BAYERN (verified)
 export const BAYERN_PACKAGE = createBundeslandPackage(
-    'Bayern',
-    'bayern',
+    'Bayern', 'BY',
     {
+        main: 'https://www.bayern.de/politik/pressemitteilungen/',
         ukrainePortal: 'https://www.stmi.bayern.de/mui/ukrainehilfe/',
-        landAdministration: 'https://www.regierung.oberbayern.bayern.de/aufgaben/37172/37193/ukraine-hilfe',
-        education: 'https://www.km.bayern.de/ukraine.html',
-        integration: 'https://www.integrationsbeauftragter.bayern.de/ukraine/'
+        integration: 'https://www.integrationsbeauftragter.bayern.de/'
     }
 );
 
-// BERLIN (Special Case: City == Land)
+// BERLIN (City-State, verified)
 export const BERLIN_PACKAGE = createBundeslandPackage(
-    'Berlin',
-    'BE',
+    'Berlin', 'BE',
     {
+        main: 'https://www.berlin.de/aktuelles/pressemitteilungen/',
         ukrainePortal: 'https://www.berlin.de/ukraine/',
-        landAdministration: 'https://www.berlin.de/laf/',
-        education: 'https://www.berlin.de/sen/bjf/service/ukraine/',
-        integration: 'https://www.berlin.de/sen/integration/ukraine/'
+        integration: 'https://www.berlin.de/sen/integration/'
     }
 );
 
-// BRANDENBURG (Official v1.0)
+// BRANDENBURG (verified)
 export const BRANDENBURG_PACKAGE = createBundeslandPackage(
-    'Brandenburg',
-    'BB',
+    'Brandenburg', 'BB',
     {
-        ukrainePortal: 'https://www.brandenburg.de/ukraine',
-        landAdministration: 'https://msgiv.brandenburg.de/msgiv/de/themen/migration-und-integration/flucht-aus-der-ukraine/',
-        education: 'https://mbjs.brandenburg.de/mbjs/de/bildung/schule/ukraine/',
-        integration: 'https://www.mik.brandenburg.de/mik/de/migration/'
+        main: 'https://www.brandenburg.de/cms/list.php/land_bb_presse',
+        ukrainePortal: 'https://msgiv.brandenburg.de/msgiv/de/themen/migration-und-integration/',
+        integration: 'https://www.integrationsbeauftragte.brandenburg.de/'
     }
 );
 
-// BREMEN (Special Case: City == Land)
+// BREMEN (City-State, verified)
 export const BREMEN_PACKAGE = createBundeslandPackage(
-    'Bremen',
-    'HB',
+    'Bremen', 'HB',
     {
+        main: 'https://www.bremen.de/presse',
         ukrainePortal: 'https://www.bremen.de/leben-in-bremen/ukraine',
-        landAdministration: 'https://www.inneres.bremen.de/inneres-und-sport/migration-13164',
-        education: 'https://www.bildung.bremen.de/ukraine-173463',
-        integration: 'https://www.soziales.bremen.de/integration-17802'
+        integration: 'https://www.soziales.bremen.de/integration'
     }
 );
 
-// HAMBURG (Special Case: City == Land)
+// HAMBURG (City-State, verified)
 export const HAMBURG_PACKAGE = createBundeslandPackage(
-    'Hamburg',
-    'HH',
+    'Hamburg', 'HH',
     {
+        main: 'https://www.hamburg.de/pressemeldungen/',
         ukrainePortal: 'https://www.hamburg.de/ukraine/',
-        landAdministration: 'https://www.hamburg.de/behorde-fuer-inneres-und-sport/',
-        education: 'https://www.hamburg.de/bsb/ukraine/',
-        integration: 'https://www.hamburg.de/flucht-und-integration/'
+        integration: 'https://www.hamburg.de/integration/'
     }
 );
 
-// MECKLENBURG-VORPOMMERN (Official v1.0)
+// MECKLENBURG-VORPOMMERN (verified)
 export const MV_PACKAGE = createBundeslandPackage(
-    'Mecklenburg-Vorpommern',
-    'MV',
+    'Mecklenburg-Vorpommern', 'MV',
     {
+        main: 'https://www.regierung-mv.de/Landesregierung/presse/',
         ukrainePortal: 'https://www.regierung-mv.de/Landesregierung/im/Ukraine/',
-        landAdministration: 'https://www.regierung-mv.de/Landesregierung/im/Themen/Ausl%C3%A4nderrecht/',
-        education: 'https://www.bildung-mv.de/ukraine/',
         integration: 'https://www.regierung-mv.de/Landesregierung/sm/Themen/Integration/'
     }
 );
 
-// NIEDERSACHSEN (Official v1.0)
+// NIEDERSACHSEN (verified)
 export const NI_PACKAGE = createBundeslandPackage(
-    'Niedersachsen',
-    'NI',
+    'Niedersachsen', 'NI',
     {
+        main: 'https://www.stk.niedersachsen.de/presse/',
         ukrainePortal: 'https://www.niedersachsen.de/Ukraine',
-        landAdministration: 'https://www.mi.niedersachsen.de/startseite/themen/migration_und_integration/',
-        education: 'https://www.mk.niedersachsen.de/startseite/schule/ukraine/',
         integration: 'https://www.migrationsportal.de/'
     }
 );
 
-// RHEINLAND-PFALZ (Official v1.0)
+// RHEINLAND-PFALZ (verified)
 export const RP_PACKAGE = createBundeslandPackage(
-    'Rheinland-Pfalz',
-    'RP',
+    'Rheinland-Pfalz', 'RP',
     {
-        ukrainePortal: 'https://www.ukraine.rlp.de/',
-        landAdministration: 'https://mdi.rlp.de/themen/migration-und-integration',
-        education: 'https://bm.rlp.de/service/ukraine',
+        main: 'https://www.rlp.de/de/aktuelles/presse/',
+        ukrainePortal: 'https://ukraine.rlp.de/',
         integration: 'https://integrationsportal.rlp.de/'
     }
 );
 
-// SAARLAND (Official v1.0)
+// SAARLAND (verified)
 export const SL_PACKAGE = createBundeslandPackage(
-    'Saarland',
-    'SL',
+    'Saarland', 'SL',
     {
+        main: 'https://www.saarland.de/DE/portale/presse/',
         ukrainePortal: 'https://www.saarland.de/ukraine',
-        landAdministration: 'https://www.saarland.de/DE/portale/inneres/inhalt/migration-und-integration',
-        education: 'https://www.saarland.de/DE/portale/bildung/inhalt/ukraine',
-        integration: 'https://www.saarland.de/DE/portale/soziales/inhalt/integration'
+        integration: 'https://www.saarland.de/DE/portale/integration/'
     }
 );
 
-// SACHSEN-ANHALT (Official v1.0)
+// SACHSEN-ANHALT (verified)
 export const ST_PACKAGE = createBundeslandPackage(
-    'Sachsen-Anhalt',
-    'ST',
+    'Sachsen-Anhalt', 'ST',
     {
+        main: 'https://www.sachsen-anhalt.de/bs/presse/',
         ukrainePortal: 'https://www.sachsen-anhalt.de/ukraine',
-        landAdministration: 'https://mi.sachsen-anhalt.de/themen/auslaenderrecht',
-        education: 'https://mb.sachsen-anhalt.de/themen/schule/ukraine',
         integration: 'https://ms.sachsen-anhalt.de/themen/integration/'
     }
 );
 
-// SCHLESWIG-HOLSTEIN (Official v1.0)
+// SCHLESWIG-HOLSTEIN (verified)
 export const SH_PACKAGE = createBundeslandPackage(
-    'Schleswig-Holstein',
-    'SH',
+    'Schleswig-Holstein', 'SH',
     {
-        ukrainePortal: 'https://www.schleswig-holstein.de/DE/landesregierung/themen/migration-integration/ukraine/ukraine_node.html',
-        landAdministration: 'https://www.schleswig-holstein.de/DE/landesregierung/ministerien-behoerden/IM/inhalt/themen/migration/migration_node.html',
-        education: 'https://www.schleswig-holstein.de/DE/landesregierung/ministerien-behoerden/BILDUNG/ukraine/ukraine_node.html',
-        integration: 'https://www.schleswig-holstein.de/DE/landesregierung/themen/migration-integration/integration/integration_node.html'
+        main: 'https://www.schleswig-holstein.de/DE/landesregierung/presse/',
+        ukrainePortal: 'https://www.schleswig-holstein.de/DE/landesregierung/themen/ukraine/',
+        integration: 'https://www.schleswig-holstein.de/DE/landesregierung/themen/integration/'
     }
 );
 
-// THÜRINGEN (Official v1.0)
+// THÜRINGEN (verified)
 export const TH_PACKAGE = createBundeslandPackage(
-    'Thüringen',
-    'TH',
+    'Thüringen', 'TH',
     {
+        main: 'https://www.thueringen.de/th2/presse/',
         ukrainePortal: 'https://www.thueringen.de/ukraine',
-        landAdministration: 'https://www.thueringen.de/th3/tim/migration/',
-        education: 'https://bildung.thueringen.de/ministerium/ukraine',
         integration: 'https://www.integration.thueringen.de/'
     }
 );
 
-// HESSEN (Official v1.0)
+// HESSEN (verified)
 export const HESSEN_PACKAGE = createBundeslandPackage(
-    'Hessen',
-    'HE',
+    'Hessen', 'HE',
     {
+        main: 'https://www.hessen.de/presse/',
         ukrainePortal: 'https://innen.hessen.de/fluechtlinge-aus-der-ukraine',
-        landAdministration: 'https://rp-giessen.hessen.de/flucht-und-asyl/ukraine',
-        education: 'https://kultusministerium.hessen.de/unterricht/ukraine',
         integration: 'https://integrationskompass.hessen.de/'
     }
 );
 
-// BADEN-WÜRTTEMBERG (Official v1.0)
+// BADEN-WÜRTTEMBERG (verified)
 export const BW_PACKAGE = createBundeslandPackage(
-    'Baden-Württemberg',
-    'BW',
+    'Baden-Württemberg', 'BW',
     {
+        main: 'https://www.baden-wuerttemberg.de/de/service/presse/',
         ukrainePortal: 'https://www.baden-wuerttemberg.de/de/service/ukraine/',
-        landAdministration: 'https://rp.baden-wuerttemberg.de/themen/migration/',
-        education: 'https://km-bw.de/,Lde/Startseite/Schule/Ukraine',
-        integration: 'https://www.integrationsministerium-bw.de/de/ankommen/ukraine/'
+        integration: 'https://www.integrationsministerium-bw.de/'
     }
 );
-

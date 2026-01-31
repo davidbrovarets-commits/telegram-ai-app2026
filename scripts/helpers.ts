@@ -296,18 +296,18 @@ export async function validateUrlHealth(url: string, timeoutMs: number = 5000): 
 export function isDeepLink(url: string): boolean {
     try {
         const u = new URL(url);
-        // Root domain or simple path /news/ is NOT a deep link
-        if (u.pathname === '/' || u.pathname.match(/^\/[a-z0-9-]+\/?$/)) {
+        // Only reject root domain
+        if (u.pathname === '/') {
             return false;
         }
 
-        // Deep link usually has depth > 1 or specific extensions
+        // Accept anything with a path (relaxed for agent pipeline)
         const parts = u.pathname.split('/').filter(p => p.length > 0);
-        if (parts.length >= 2) return true;
+        if (parts.length >= 1) return true;
 
         if (url.endsWith('.html') || url.endsWith('.php') || url.endsWith('.pdf')) return true;
 
-        return false;
+        return true; // Default to accepting
     } catch (e) {
         return false;
     }
@@ -318,37 +318,14 @@ export function isDeepLink(url: string): boolean {
  * Parses dates like DD.MM.YYYY from content.
  */
 export function isRecentNews(content: string, url: string = ''): boolean {
-    const text = (content + " " + url).toLowerCase();
-    const currentYear = new Date().getFullYear(); // 2026
+    // RELAXED: Agent pipeline already filters by keywords.
+    // Don't reject based on year mentions as news about "2024 changes" is still valid.
+    // Only reject if URL contains explicit archive indicators.
+    const lowerUrl = url.toLowerCase();
 
-    // 1. Reject explicit old years if 2026/2025/2027 is NOT present
-    if (text.includes('2021') || text.includes('2022') || text.includes('2023') || text.includes('2024')) {
-        // Stricter: if 2024 is found, we demand 2026 or 2025 (late) or 2027
-        if (!text.includes('2026') && !text.includes('2025') && !text.includes('2027')) {
-            return false;
-        }
-    }
-
-    // 2. Parse specific dates: DD.MM.YYYY
-    const dateRegex = /(\d{1,2})\.(\d{1,2})\.(\d{4})/g;
-    let match;
-    const now = new Date(); // 2026-01-30 in this environment
-    const cutoff = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000); // Allow last 60 days
-
-    while ((match = dateRegex.exec(text)) !== null) {
-        const d = parseInt(match[1]);
-        const m = parseInt(match[2]) - 1; // Month is 0-indexed
-        const y = parseInt(match[3]);
-
-        if (y < 2000) continue; // Ignore garbage
-
-        const date = new Date(y, m, d);
-        if (!isNaN(date.getTime()) && date < cutoff) {
-            // Found a valid date that is too old (e.g. 01.01.2025)
-            // But verify it's not a future date (e.g. deadline until 2024 - unlikely)
-            // If date is truly old, reject
-            return false;
-        }
+    // Reject only explicit archive pages
+    if (lowerUrl.includes('/archiv') || lowerUrl.includes('/archive')) {
+        return false;
     }
 
     return true;

@@ -13,30 +13,69 @@ export interface Task {
   step: number;
 }
 
+export type NewsType = 'IMPORTANT' | 'INFO' | 'FUN';
+export type NewsStatus = 'ACTIVE' | 'ARCHIVED' | 'DELETED' | 'AUTO_REMOVED' | 'POOL' | 'SHADOW_DELETED' | 'AUTO_EXPIRED';
+export type EmotionalWeight = 'LOW' | 'MEDIUM' | 'HIGH';
+
 export interface News {
   id: number;
   source: string;
   source_id?: string;
   title: string;
-  date?: string;
-  created_at?: string;
+  // Standardized Date Fields
+  published_at?: string; // Original publication date from source
+  created_at?: string;   // Ingestion time
+
   region: string; // Legacy field
   image_url?: string;
-  image?: string;
+  image?: string; // Legacy
   content: string;
   link?: string;
-  type?: 'news';
+
+  // Logical Fields
+  type?: NewsType;
+  status: NewsStatus;
+
   // Geo-Scoped V2/V3 fields
-  scope?: 'DE' | 'LAND' | 'CITY';
+  scope?: 'DE' | 'LAND' | 'CITY' | 'COUNTRY';
   country?: string;
   land?: string;
   city?: string;
+
+  // Intelligence Layer
   topics?: string[];
-  priority?: 'HIGH' | 'MEDIUM' | 'LOW';
+  priority?: 'HIGH' | 'MEDIUM' | 'LOW'; // Legacy score-based priority
+  reason_tag?: string;      // e.g. 'OFFICIAL_UPDATE', 'EVENT_NEAR_YOU'
+  decay_score?: number;     // 0-100, default 100
+  emotional_weight?: EmotionalWeight;
+
   actions?: string[];
   expires_at?: string;
   score?: number;
   dedupe_group?: string;
+
+  // Agent Fields
+  keyword_hits?: string[];
+  relevance_score?: number;
+  uk_summary?: string;
+  de_summary?: string;
+}
+
+export interface UserNewsState {
+  userId?: string; // Tracks ownership of the state
+  visibleFeed: number[]; // IDs of 6 visible items
+  pool: number[];        // IDs of pool items
+  history: {
+    shown: number[];
+    archived: number[];
+    deleted: number[];
+  };
+  signals: Record<NewsType, {
+    openRate: number;
+    timeSpent: number;
+  }>;
+  lastActionDate: string; // YYYY-MM-DD
+  userState: 'BASELINE' | 'ACTIVE_READER' | 'SELECTIVE_READER' | 'PASSIVE_READER' | 'RETURNING_USER';
 }
 
 export interface UserData {

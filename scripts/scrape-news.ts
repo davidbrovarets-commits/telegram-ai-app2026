@@ -89,8 +89,20 @@ async function scrape() {
     const existingItems = existingNews || [];
     console.log(`📚 Loaded ${existingItems.length} existing titles for dedup\n`);
 
-    for (const source of SOURCES) {
-        if (!source.enabled) continue;
+    // FILTERING LOGIC
+    const filterScope = process.env.FILTER_SCOPE; // e.g. 'CITY', 'LAND', 'DE'
+    const filterId = process.env.FILTER_ID; // e.g. 'leipzig'
+
+    const activeSources = SOURCES.filter(s => {
+        if (!s.enabled) return false;
+        if (filterScope && s.scope !== filterScope) return false;
+        if (filterId && !s.source_id.includes(filterId)) return false;
+        return true;
+    });
+
+    console.log(`🌍 Active Sources: ${activeSources.length} (Filter: Scope=${filterScope || 'ALL'}, ID=${filterId || 'ALL'})`);
+
+    for (const source of activeSources) {
         console.log(`\n🔍 [${source.scope}/${source.source_id}] ${source.base_url}`);
 
         try {

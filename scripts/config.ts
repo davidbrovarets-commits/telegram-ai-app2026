@@ -42,9 +42,44 @@ const STATE_MAP: Record<string, string> = {
     'th': 'Thüringen'
 };
 
+const CITY_MAP: Record<string, { city: string, land: string }> = {
+    'leipzig': { city: 'Leipzig', land: 'Sachsen' },
+    'muenchen': { city: 'München', land: 'Bayern' },
+    'koeln': { city: 'Köln', land: 'Nordrhein-Westfalen' },
+    'frankfurt': { city: 'Frankfurt am Main', land: 'Hessen' },
+    'stuttgart': { city: 'Stuttgart', land: 'Baden-Württemberg' },
+    'duesseldorf': { city: 'Düsseldorf', land: 'Nordrhein-Westfalen' },
+    'dortmund': { city: 'Dortmund', land: 'Nordrhein-Westfalen' },
+    'essen': { city: 'Essen', land: 'Nordrhein-Westfalen' },
+    'hannover': { city: 'Hannover', land: 'Niedersachsen' },
+    'nuernberg': { city: 'Nürnberg', land: 'Bayern' },
+    'dresden': { city: 'Dresden', land: 'Sachsen' },
+    'duisburg': { city: 'Duisburg', land: 'Nordrhein-Westfalen' },
+    'bochum': { city: 'Bochum', land: 'Nordrhein-Westfalen' },
+    'wuppertal': { city: 'Wuppertal', land: 'Nordrhein-Westfalen' },
+    'bielefeld': { city: 'Bielefeld', land: 'Nordrhein-Westfalen' },
+    'bonn': { city: 'Bonn', land: 'Nordrhein-Westfalen' },
+    'muenster': { city: 'Münster', land: 'Nordrhein-Westfalen' },
+    'karlsruhe': { city: 'Karlsruhe', land: 'Baden-Württemberg' },
+    'mannheim': { city: 'Mannheim', land: 'Baden-Württemberg' },
+    'augsburg': { city: 'Augsburg', land: 'Bayern' }
+};
+
 // Helper: infer scope/geo from source_id
 function inferGeo(sourceId: string): { scope: Scope, geo: { country: 'DE', land?: string, city?: string } } {
     const prefix = sourceId.split('_')[0];
+
+    // Check if prefix is a known City
+    if (CITY_MAP[prefix]) {
+        return {
+            scope: 'CITY',
+            geo: {
+                country: 'DE',
+                land: CITY_MAP[prefix].land,
+                city: CITY_MAP[prefix].city
+            }
+        };
+    }
 
     // Check if prefix is a known Bundesland code
     if (STATE_MAP[prefix]) {

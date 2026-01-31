@@ -814,6 +814,586 @@ export const SOURCE_REGISTRY = [
         trust_level: "MEDIUM",
         ingestion_method: "rss",
         default_priority: "LOW"
-    }
+    },
+
+    // --- L3: CITY (LEIPZIG) ---
+    {
+        source_id: "leipzig_official",
+        name: "Stadt Leipzig – Offizielles Stadtportal",
+        base_url: "https://www.leipzig.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "leipzig_mdr",
+        name: "MDR Sachsen – Leipzig",
+        base_url: "https://www.mdr.de/sachsen/leipzig/index.html",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "leipzig_lvz",
+        name: "Leipziger Volkszeitung (LVZ)",
+        base_url: "https://www.lvz.de/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (MÜNCHEN) ---
+    {
+        source_id: "muenchen_official",
+        name: "Stadt München – Offizielles Portal",
+        base_url: "https://www.muenchen.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "muenchen_br",
+        name: "BR Nachrichten – Bayern",
+        base_url: "https://www.br.de/nachrichten/bayern/",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "muenchen_sz",
+        name: "Süddeutsche Zeitung – München",
+        base_url: "https://www.sueddeutsche.de/muenchen",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (KÖLN) ---
+    {
+        source_id: "koeln_official",
+        name: "Stadt Köln – Offizielles Portal",
+        base_url: "https://www.stadt-koeln.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "koeln_wdr",
+        name: "WDR Nachrichten – NRW",
+        base_url: "https://www1.wdr.de/nachrichten/index.html",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "koeln_ksta",
+        name: "Kölner Stadt-Anzeiger",
+        base_url: "https://www.ksta.de/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (FRANKFURT AM MAIN) ---
+    {
+        source_id: "frankfurt_official",
+        name: "Stadt Frankfurt am Main",
+        base_url: "https://www.frankfurt.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "frankfurt_hr",
+        name: "Hessenschau (hr)",
+        base_url: "https://www.hessenschau.de/",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "frankfurt_fr",
+        name: "Frankfurter Rundschau – Frankfurt",
+        base_url: "https://www.fr.de/frankfurt/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (STUTTGART) ---
+    {
+        source_id: "stuttgart_official",
+        name: "Stadt Stuttgart",
+        base_url: "https://www.stuttgart.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "stuttgart_swr",
+        name: "SWR Aktuell – Baden-Württemberg",
+        base_url: "https://www.swr.de/swraktuell/baden-wuerttemberg/",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "stuttgart_stz",
+        name: "Stuttgarter Zeitung",
+        base_url: "https://www.stuttgarter-zeitung.de/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (DÜSSELDORF) ---
+    {
+        source_id: "duesseldorf_official",
+        name: "Stadt Düsseldorf",
+        base_url: "https://www.duesseldorf.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "duesseldorf_wdr",
+        name: "WDR Nachrichten – NRW",
+        base_url: "https://www1.wdr.de/nachrichten/index.html",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "duesseldorf_rp",
+        name: "Rheinische Post – Düsseldorf",
+        base_url: "https://rp-online.de/nrw/staedte/duesseldorf/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (DORTMUND) ---
+    {
+        source_id: "dortmund_official",
+        name: "Stadt Dortmund",
+        base_url: "https://www.dortmund.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "dortmund_wdr",
+        name: "WDR Nachrichten – NRW",
+        base_url: "https://www1.wdr.de/nachrichten/index.html",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "dortmund_ruhr",
+        name: "Ruhr Nachrichten – Dortmund",
+        base_url: "https://www.ruhrnachrichten.de/dortmund/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (ESSEN) ---
+    {
+        source_id: "essen_official",
+        name: "Stadt Essen",
+        base_url: "https://www.essen.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "essen_wdr",
+        name: "WDR Nachrichten – NRW",
+        base_url: "https://www1.wdr.de/nachrichten/index.html",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "essen_waz",
+        name: "WAZ – Essen",
+        base_url: "https://www.waz.de/staedte/essen/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (HANNOVER) ---
+    {
+        source_id: "hannover_official",
+        name: "Region Hannover / Stadt Hannover",
+        base_url: "https://www.hannover.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "hannover_ndr",
+        name: "NDR Niedersachsen",
+        base_url: "https://www.ndr.de/nachrichten/niedersachsen/",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "hannover_haz",
+        name: "Hannoversche Allgemeine Zeitung",
+        base_url: "https://www.haz.de/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (NÜRNBERG) ---
+    {
+        source_id: "nuernberg_official",
+        name: "Stadt Nürnberg",
+        base_url: "https://www.nuernberg.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "nuernberg_br",
+        name: "BR Nachrichten – Bayern",
+        base_url: "https://www.br.de/nachrichten/bayern/",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "nuernberg_nn",
+        name: "Nürnberger Nachrichten",
+        base_url: "https://www.nordbayern.de/region/nuernberg",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (DRESDEN) ---
+    {
+        source_id: "dresden_official",
+        name: "Stadt Dresden",
+        base_url: "https://www.dresden.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "dresden_mdr",
+        name: "MDR Sachsen – Dresden",
+        base_url: "https://www.mdr.de/sachsen/dresden/index.html",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "dresden_sz",
+        name: "Sächsische Zeitung",
+        base_url: "https://www.saechsische.de/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (DUISBURG) ---
+    {
+        source_id: "duisburg_official",
+        name: "Stadt Duisburg",
+        base_url: "https://www.duisburg.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "duisburg_wdr",
+        name: "WDR Nachrichten – NRW",
+        base_url: "https://www1.wdr.de/nachrichten/index.html",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "duisburg_waz",
+        name: "WAZ – Duisburg",
+        base_url: "https://www.waz.de/staedte/duisburg/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (BOCHUM) ---
+    {
+        source_id: "bochum_official",
+        name: "Stadt Bochum",
+        base_url: "https://www.bochum.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "bochum_wdr",
+        name: "WDR Nachrichten – NRW",
+        base_url: "https://www1.wdr.de/nachrichten/index.html",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "bochum_waz",
+        name: "WAZ – Bochum",
+        base_url: "https://www.waz.de/staedte/bochum/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (WUPPERTAL) ---
+    {
+        source_id: "wuppertal_official",
+        name: "Stadt Wuppertal",
+        base_url: "https://www.wuppertal.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "wuppertal_wdr",
+        name: "WDR Nachrichten – NRW",
+        base_url: "https://www1.wdr.de/nachrichten/index.html",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "wuppertal_rundschau",
+        name: "Wuppertaler Rundschau",
+        base_url: "https://www.wuppertaler-rundschau.de/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (BIELEFELD) ---
+    {
+        source_id: "bielefeld_official",
+        name: "Stadt Bielefeld",
+        base_url: "https://www.bielefeld.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "bielefeld_wdr",
+        name: "WDR Nachrichten – NRW",
+        base_url: "https://www1.wdr.de/nachrichten/index.html",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "bielefeld_nw",
+        name: "Neue Westfälische",
+        base_url: "https://www.nw.de/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (BONN) ---
+    {
+        source_id: "bonn_official",
+        name: "Bundesstadt Bonn",
+        base_url: "https://www.bonn.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "bonn_wdr",
+        name: "WDR Nachrichten – NRW",
+        base_url: "https://www1.wdr.de/nachrichten/index.html",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "bonn_ga",
+        name: "General-Anzeiger Bonn",
+        base_url: "https://ga.de/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (MÜNSTER) ---
+    {
+        source_id: "muenster_official",
+        name: "Stadt Münster",
+        base_url: "https://www.muenster.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "muenster_wdr",
+        name: "WDR Nachrichten – NRW",
+        base_url: "https://www1.wdr.de/nachrichten/index.html",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "muenster_wn",
+        name: "Westfälische Nachrichten",
+        base_url: "https://www.wn.de/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (KARLSRUHE) ---
+    {
+        source_id: "karlsruhe_official",
+        name: "Stadt Karlsruhe",
+        base_url: "https://www.karlsruhe.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "karlsruhe_swr",
+        name: "SWR Aktuell – Baden-Württemberg",
+        base_url: "https://www.swr.de/swraktuell/baden-wuerttemberg/",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "karlsruhe_bnn",
+        name: "Badische Neueste Nachrichten",
+        base_url: "https://bnn.de/karlsruhe",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (MANNHEIM) ---
+    {
+        source_id: "mannheim_official",
+        name: "Stadt Mannheim",
+        base_url: "https://www.mannheim.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "mannheim_swr",
+        name: "SWR Aktuell – Baden-Württemberg",
+        base_url: "https://www.swr.de/swraktuell/baden-wuerttemberg/",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "mannheim_mm",
+        name: "Mannheimer Morgen",
+        base_url: "https://www.mannheimer-morgen.de/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (AUGSBURG) ---
+    {
+        source_id: "augsburg_official",
+        name: "Stadt Augsburg",
+        base_url: "https://www.augsburg.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "augsburg_br",
+        name: "BR Nachrichten – Bayern",
+        base_url: "https://www.br.de/nachrichten/bayern/",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "augsburg_aa",
+        name: "Augsburger Allgemeine",
+        base_url: "https://www.augsburger-allgemeine.de/augsburg/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "LOW"
+    },
 
 ] as const;

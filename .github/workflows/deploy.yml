@@ -51,12 +51,13 @@ jobs:
           credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
 
       - name: 'Deploy Cloud Function'
-        uses: 'google-github-actions/deploy-cloud-functions@v2'
-        with:
-          name: 'generate-banner-weekly'
-          runtime: 'nodejs20'
-          entry_point: 'generateBanner'
-          source_dir: './functions/generate-banner'
-          region: 'europe-west1'
-          project_id: '${{ secrets.GOOGLE_PROJECT_ID }}'
+        run: |
+          gcloud functions deploy generate-banner-weekly \
+            --gen2 \
+            --runtime=nodejs20 \
+            --region=europe-west1 \
+            --source=./functions/generate-banner \
+            --entry-point=generateBanner \
+            --trigger-http \
+            --allow-unauthenticated
 

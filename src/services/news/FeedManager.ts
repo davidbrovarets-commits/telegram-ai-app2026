@@ -204,12 +204,16 @@ export class FeedManager {
     static async forceRefillFeed() {
         console.log('[FeedManager] Force refilling feed with geo via Edge Function:', userGeo);
 
+        const state = newsStore.getState();
+        const userId = state.userId;
+
         // Call Server-Side Feed Function
         // This replaces the complex local filtering/sorting logic
         const { data, error } = await supabase.functions.invoke('serve-feed', {
             body: {
                 city: userGeo.city,
                 land: userGeo.land,
+                userId: userId,
                 limit: 100
             }
         });

@@ -1,0 +1,50 @@
+name: Weekly Production Update
+
+on:
+  schedule:
+    # Every Monday at 07:00 UTC
+    - cron: '0 7 * * 1'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  update-banner-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Generate Banner
+        env:
+          # Use the Service Account Key from Secrets
+          GOOGLE_APPLICATION_CREDENTIALS: 'service-account.json'
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          GOOGLE_CLOUD_PROJECT: 'claude-vertex-prod'
+        run: |
+          # Write the secret to a file
+          echo "$GCP_SA_KEY" > service-account.json
+          
+          # Run the generation script
+          # IMPORTANT: The Service Account used here MUST have 'Vertex AI User' role
+          npx tsx scripts/weekly_news_banner_job.ts
+
+      - name: Build App
+        run: npm run build
+
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.GCP_SA_KEY }}
+          channelId: live
+          projectId: claude-vertex-prod

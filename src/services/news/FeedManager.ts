@@ -1,6 +1,7 @@
 import { newsStore } from '../../stores/newsStore';
 import { supabase } from '../../supabaseClient';
 import type { News } from '../../types';
+import { CITY_REGISTRY, LAND_NEIGHBORS } from '../../config/cities';
 
 // Slot Configuration
 const SLOTS = [
@@ -121,95 +122,30 @@ export class FeedManager {
 
     // --- LOGIC HELPERS ---
 
-    // Mapping: Local City/Land -> [Fallback Cities/Lands]
-    // Keys should match what is stored in userGeo.city (usually Capitalized from UI selection)
-    // We'll support both Title Case and lowercase to be safe.
-    private static readonly GEO_FALLBACKS: Record<string, string[]> = {
-        // Cities -> Neighbors
-        'Leipzig': ['Berlin', 'Dresden', 'Halle'],
-        'Dresden': ['Berlin', 'Leipzig', 'Chemnitz'],
-        'Chemnitz': ['Leipzig', 'Dresden', 'Zwickau'],
-        'Halle (Saale)': ['Leipzig', 'Magdeburg', 'Dessau'],
-        'Rostock': ['Schwerin', 'Kiel', 'Hamburg'],
-        'Cottbus': ['Berlin', 'Dresden', 'Potsdam'],
-        'Frankfurt (Oder)': ['Berlin', 'Cottbus', 'Potsdam'],
-        'Aachen': ['Köln', 'Düsseldorf', 'Bonn'],
-        'Gelsenkirchen': ['Essen', 'Bochum', 'Dortmund'],
-        'Oberhausen': ['Duisburg', 'Essen', 'Bottrop'],
-        'Wolfsburg': ['Braunschweig', 'Hannover', 'Magdeburg'],
-        'Braunschweig': ['Wolfsburg', 'Hannover', 'Hildesheim'],
-        'Potsdam': ['Berlin', 'Brandenburg'],
-        'Bremen': ['Hamburg', 'Niedersachsen'],
-        'Hamburg': ['Schleswig-Holstein', 'Niedersachsen', 'Lübeck'],
-        'Wiesbaden': ['Mainz', 'Frankfurt', 'Hessen'],
-        'Mainz': ['Wiesbaden', 'Frankfurt', 'Rheinland-Pfalz'],
-        'Schwerin': ['Hamburg', 'Rostock', 'Mecklenburg-Vorpommern'],
-        'Saarbrücken': ['Trier', 'Rheinland-Pfalz', 'Saarland'],
-        'Magdeburg': ['Berlin', 'Halle', 'Leipzig'],
-        'Kiel': ['Hamburg', 'Lübeck', 'Schleswig-Holstein'],
-        'Erfurt': ['Weimar', 'Jena', 'Leipzig'],
-        'Kaiserslautern': ['Mainz', 'Saarbrücken', 'Mannheim'],
-        'Mönchengladbach': ['Düsseldorf', 'Köln', 'Krefeld'],
-        'Bremerhaven': ['Bremen', 'Hamburg', 'Cuxhaven'],
-        'Ulm': ['Stuttgart', 'Augsburg', 'München'],
-        'Heidelberg': ['Mannheim', 'Karlsruhe', 'Stuttgart'],
-        'Trier': ['Saarbrücken', 'Koblenz', 'Luxemburg'],
-        'Recklinghausen': ['Dortmund', 'Essen', 'Bochum'],
-        'Krefeld': ['Düsseldorf', 'Duisburg', 'Mönchengladbach'],
-        'Lübeck': ['Hamburg', 'Kiel', 'Rostock'],
-        'Regensburg': ['München', 'Nürnberg', 'Ingolstadt'],
+    // Get neighbors from centralized registry
+    private static getNeighbors(place: string): string[] {
+        if (!place) return [];
+        const inputLower = place.toLowerCase();
 
-        // Lowercase aliases (for safety if IDs are used)
-        'leipzig': ['Berlin', 'Dresden', 'Halle'],
-        'dresden': ['Berlin', 'Leipzig', 'Chemnitz'],
-        'chemnitz': ['Leipzig', 'Dresden', 'Zwickau'],
-        'halle': ['Leipzig', 'Magdeburg', 'Dessau'],
-        'rostock': ['Schwerin', 'Kiel', 'Hamburg'],
-        'cottbus': ['Berlin', 'Dresden', 'Potsdam'],
-        'frankfurt_oder': ['Berlin', 'Cottbus', 'Potsdam'],
-        'aachen': ['Köln', 'Düsseldorf', 'Bonn'],
-        'gelsenkirchen': ['Essen', 'Bochum', 'Dortmund'],
-        'oberhausen': ['Duisburg', 'Essen', 'Bottrop'],
-        'wolfsburg': ['Braunschweig', 'Hannover', 'Magdeburg'],
-        'braunschweig': ['Wolfsburg', 'Hannover', 'Hildesheim'],
-        'potsdam': ['Berlin', 'Brandenburg'],
-        'bremen': ['Hamburg', 'Niedersachsen'],
-        'hamburg': ['Schleswig-Holstein', 'Niedersachsen'],
-        'wiesbaden': ['Mainz', 'Frankfurt', 'Hessen'],
-        'mainz': ['Wiesbaden', 'Frankfurt', 'Rheinland-Pfalz'],
-        'schwerin': ['Hamburg', 'Rostock', 'Mecklenburg-Vorpommern'],
-        'saarbrücken': ['Trier', 'Rheinland-Pfalz', 'Saarland'],
-        'magdeburg': ['Berlin', 'Halle', 'Leipzig'],
-        'kiel': ['Hamburg', 'Lübeck', 'Schleswig-Holstein'],
-        'erfurt': ['Weimar', 'Jena', 'Leipzig'],
-        'kaiserslautern': ['Mainz', 'Saarbrücken', 'Mannheim'],
-        'moenchengladbach': ['Düsseldorf', 'Köln', 'Krefeld'],
-        'bremerhaven': ['Bremen', 'Hamburg', 'Cuxhaven'],
-        'ulm': ['Stuttgart', 'Augsburg', 'München'],
-        'heidelberg': ['Mannheim', 'Karlsruhe', 'Stuttgart'],
-        'trier': ['Saarbrücken', 'Koblenz', 'Luxemburg'],
-        'recklinghausen': ['Dortmund', 'Essen', 'Bochum'],
-        'krefeld': ['Düsseldorf', 'Duisburg', 'Mönchengladbach'],
-        'luebeck': ['Hamburg', 'Kiel', 'Rostock'],
-        'regensburg': ['München', 'Nürnberg', 'Ingolstadt'],
+        // 1. Try City Registry (Direct key or loose match)
+        // Direct key (most reliable if config uses keys)
+        if (CITY_REGISTRY[inputLower]) return CITY_REGISTRY[inputLower].neighbors;
 
-        // Lands -> Neighboring Lands / Major Cities
-        'Sachsen': ['Berlin', 'Brandenburg', 'Sachsen-Anhalt'],
-        'Sachsen-Anhalt': ['Sachsen', 'Niedersachsen', 'Berlin'],
-        'Thüringen': ['Sachsen', 'Hessen', 'Bayern'],
-        'Brandenburg': ['Berlin', 'Sachsen', 'Mecklenburg-Vorpommern'],
-        'Schleswig-Holstein': ['Hamburg', 'Niedersachsen'],
-        'Mecklenburg-Vorpommern': ['Brandenburg', 'Hamburg', 'Berlin'],
-        'Hessen': ['Rheinland-Pfalz', 'Bayern', 'Thüringen'],
-        'Rheinland-Pfalz': ['Hessen', 'Saarland', 'Baden-Württemberg'],
-        'Saarland': ['Rheinland-Pfalz'],
-        'Bayern': ['Baden-Württemberg', 'Thüringen', 'Hessen'],
-        'Baden-Württemberg': ['Bayern', 'Hessen', 'Rheinland-Pfalz'],
-        'Nordrhein-Westfalen': ['Niedersachsen', 'Hessen', 'Rheinland-Pfalz'],
-        'Niedersachsen': ['Hamburg', 'Bremen', 'Nordrhein-Westfalen', 'Schleswig-Holstein'],
-        'Berlin': ['Brandenburg', 'Potsdam']
-    };
+        // "Frankfurt (Oder)" -> "frankfurt_oder" normalization attempt
+        const normalized = inputLower.replace(/[()]/g, '').trim().replace(/\s+/g, '_');
+        if (CITY_REGISTRY[normalized]) return CITY_REGISTRY[normalized].neighbors;
 
+        // Search by name (safest for UI strings like "Halle (Saale)")
+        const foundCity = Object.values(CITY_REGISTRY).find(c => c.name.toLowerCase() === inputLower);
+        if (foundCity) return foundCity.neighbors;
+
+        // 2. Try Land Neighbors
+        if (LAND_NEIGHBORS[place] || LAND_NEIGHBORS[inputLower]) {
+            return LAND_NEIGHBORS[place] || LAND_NEIGHBORS[inputLower];
+        }
+
+        return [];
+    }
 
     // Sort candidates to prioritize Local > Land > Fallback > DE
     private static sortCandidatesByGeo(items: News[]): News[] {
@@ -248,23 +184,17 @@ export class FeedManager {
 
             // 3. Proximity Fallback (New Logic)
             if (allowFallback) {
-                // Check City Fallbacks
-                if (userGeo.city && this.GEO_FALLBACKS[userGeo.city]) {
-                    if (item.city && this.GEO_FALLBACKS[userGeo.city].includes(item.city)) return true;
-                }
+                const neighbors = [
+                    ...this.getNeighbors(userGeo.city || ''),
+                    ...this.getNeighbors(userGeo.land || '')
+                ];
 
-                // Check Land Fallbacks
-                if (userGeo.land && this.GEO_FALLBACKS[userGeo.land]) {
-                    // Allow if item is from a neighbor LAND
-                    if (item.scope === 'LAND' && item.land && this.GEO_FALLBACKS[userGeo.land].includes(item.land)) return true;
-                    // Allow if item is a CITY in a neighbor LAND (simplification: strict mapping usually better, but this allows "Berlin news for Sachsen users")
-                    if (item.scope === 'CITY' && item.city && this.GEO_FALLBACKS[userGeo.land].includes(item.city)) return true;
-                }
+                // Allow if item is from a neighbor CITY or LAND
+                if (item.city && neighbors.includes(item.city)) return true;
+                if (item.land && neighbors.includes(item.land)) return true;
 
-                // Special Case: Berlin is often a fallback for everyone in East Germany
-                if (item.city === 'Berlin' && ['Sachsen', 'Brandenburg', 'Thüringen', 'Sachsen-Anhalt'].includes(userGeo.land || '')) {
-                    return true;
-                }
+                // Note: The registry now handles specific fallbacks like "Berlin for Brandenburg",
+                // so we don't need hardcoded special cases here anymore.
             }
 
             return false;

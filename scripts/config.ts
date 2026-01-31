@@ -42,58 +42,15 @@ const STATE_MAP: Record<string, string> = {
     'th': 'Thüringen'
 };
 
-const CITY_MAP: Record<string, { city: string, land: string }> = {
-    'leipzig': { city: 'Leipzig', land: 'Sachsen' },
-    'muenchen': { city: 'München', land: 'Bayern' },
-    'koeln': { city: 'Köln', land: 'Nordrhein-Westfalen' },
-    'frankfurt': { city: 'Frankfurt am Main', land: 'Hessen' },
-    'stuttgart': { city: 'Stuttgart', land: 'Baden-Württemberg' },
-    'duesseldorf': { city: 'Düsseldorf', land: 'Nordrhein-Westfalen' },
-    'dortmund': { city: 'Dortmund', land: 'Nordrhein-Westfalen' },
-    'essen': { city: 'Essen', land: 'Nordrhein-Westfalen' },
-    'hannover': { city: 'Hannover', land: 'Niedersachsen' },
-    'nuernberg': { city: 'Nürnberg', land: 'Bayern' },
-    'dresden': { city: 'Dresden', land: 'Sachsen' },
-    'duisburg': { city: 'Duisburg', land: 'Nordrhein-Westfalen' },
-    'bochum': { city: 'Bochum', land: 'Nordrhein-Westfalen' },
-    'wuppertal': { city: 'Wuppertal', land: 'Nordrhein-Westfalen' },
-    'bielefeld': { city: 'Bielefeld', land: 'Nordrhein-Westfalen' },
-    'bonn': { city: 'Bonn', land: 'Nordrhein-Westfalen' },
-    'muenster': { city: 'Münster', land: 'Nordrhein-Westfalen' },
-    'karlsruhe': { city: 'Karlsruhe', land: 'Baden-Württemberg' },
-    'mannheim': { city: 'Mannheim', land: 'Baden-Württemberg' },
-    'augsburg': { city: 'Augsburg', land: 'Bayern' },
-    'potsdam': { city: 'Potsdam', land: 'Brandenburg' },
-    'bremen': { city: 'Bremen', land: 'Bremen' },
-    'hamburg': { city: 'Hamburg', land: 'Hamburg' },
-    'wiesbaden': { city: 'Wiesbaden', land: 'Hessen' },
-    'schwerin': { city: 'Schwerin', land: 'Mecklenburg-Vorpommern' },
-    'mainz': { city: 'Mainz', land: 'Rheinland-Pfalz' },
-    'saarbruecken': { city: 'Saarbrücken', land: 'Saarland' },
-    'magdeburg': { city: 'Magdeburg', land: 'Sachsen-Anhalt' },
-    'kiel': { city: 'Kiel', land: 'Schleswig-Holstein' },
-    'erfurt': { city: 'Erfurt', land: 'Thüringen' },
-    'chemnitz': { city: 'Chemnitz', land: 'Sachsen' },
-    'halle': { city: 'Halle (Saale)', land: 'Sachsen-Anhalt' },
-    'rostock': { city: 'Rostock', land: 'Mecklenburg-Vorpommern' },
-    'cottbus': { city: 'Cottbus', land: 'Brandenburg' },
-    'frankfurt_oder': { city: 'Frankfurt (Oder)', land: 'Brandenburg' },
-    'aachen': { city: 'Aachen', land: 'Nordrhein-Westfalen' },
-    'gelsenkirchen': { city: 'Gelsenkirchen', land: 'Nordrhein-Westfalen' },
-    'oberhausen': { city: 'Oberhausen', land: 'Nordrhein-Westfalen' },
-    'wolfsburg': { city: 'Wolfsburg', land: 'Niedersachsen' },
-    'braunschweig': { city: 'Braunschweig', land: 'Niedersachsen' },
-    'kaiserslautern': { city: 'Kaiserslautern', land: 'Rheinland-Pfalz' },
-    'moenchengladbach': { city: 'Mönchengladbach', land: 'Nordrhein-Westfalen' },
-    'bremerhaven': { city: 'Bremerhaven', land: 'Bremen' },
-    'ulm': { city: 'Ulm', land: 'Baden-Württemberg' },
-    'heidelberg': { city: 'Heidelberg', land: 'Baden-Württemberg' },
-    'trier': { city: 'Trier', land: 'Rheinland-Pfalz' },
-    'recklinghausen': { city: 'Recklinghausen', land: 'Nordrhein-Westfalen' },
-    'krefeld': { city: 'Krefeld', land: 'Nordrhein-Westfalen' },
-    'luebeck': { city: 'Lübeck', land: 'Schleswig-Holstein' },
-    'regensburg': { city: 'Regensburg', land: 'Bayern' }
-};
+import { CITY_REGISTRY } from '../src/config/cities';
+
+
+
+// Transform shared registry to existing format { city, land }
+const CITY_MAP: Record<string, { city: string, land: string }> = Object.entries(CITY_REGISTRY).reduce((acc, [key, val]) => {
+    acc[key] = { city: val.name, land: val.land };
+    return acc;
+}, {} as Record<string, { city: string, land: string }>);
 
 // Helper: infer scope/geo from source_id
 function inferGeo(sourceId: string): { scope: Scope, geo: { country: 'DE', land?: string, city?: string } } {

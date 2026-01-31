@@ -91,7 +91,7 @@ async function generateImageNanoBananaPro(prompt) {
     // Explicitly use process.env provided by Cloud Function config
     const project = process.env.GOOGLE_CLOUD_PROJECT || 'claude-vertex-prod';
     const location = process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
-    const modelId = 'imagen-3.0-generate-001';
+    const modelId = 'imagen-4.0-generate-001';
 
     console.log(`Using Project: ${project}, Location: ${location}`);
 

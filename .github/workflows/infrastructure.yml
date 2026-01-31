@@ -1,10 +1,10 @@
 name: Infrastructure (Terraform)
 
 on:
-  push:
-    branches: [ "main" ]
-    paths: [ "infrastructure/**" ]
-  workflow_dispatch:
+  workflow_dispatch: # Manual trigger only (Deprecated in favor of deploy.yml)
+  # push:
+  #   branches: [ "main" ]
+  #   paths: [ "infrastructure/**" ]
 
 jobs:
   terraform:

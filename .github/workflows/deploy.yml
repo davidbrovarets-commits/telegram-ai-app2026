@@ -56,9 +56,16 @@ jobs:
           gcloud services enable aiplatform.googleapis.com
           gcloud services enable firebasevertexai.googleapis.com
 
-          # Grant Vertex AI User role to the default App Engine Service Account (used by Cloud Function)
+          # Grant Vertex AI User role to the default Compute Service Account (used by Gen2 Functions)
           PROJECT_ID=${{ secrets.GOOGLE_PROJECT_ID }}
-          # Use App Engine default service account: PROJECT_ID@appspot.gserviceaccount.com
+          PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
+          
+          # Compute Engine Default SA (Used by Gen2)
+          gcloud projects add-iam-policy-binding $PROJECT_ID \
+            --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
+            --role="roles/aiplatform.user" || echo "IAM binding failed or already exists, continuing..."
+
+          # App Engine Default SA (Legacy/Backup)
           gcloud projects add-iam-policy-binding $PROJECT_ID \
             --member="serviceAccount:$PROJECT_ID@appspot.gserviceaccount.com" \
             --role="roles/aiplatform.user" || echo "IAM binding failed or already exists, continuing..."

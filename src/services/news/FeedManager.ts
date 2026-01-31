@@ -237,11 +237,13 @@ export class FeedManager {
         console.log(`[FeedManager] Received ${newsItems.length} items from server`);
 
         // Filter out history (Client-side is fine for this)
-        const state = newsStore.getState();
+        // Filter out history (Client-side is fine for this)
+        // Fetch fresh state after async call
+        const currentState = newsStore.getState();
         const usedIds = new Set<number>([
-            ...state.history.deleted,
-            ...state.history.archived,
-            ...state.visibleFeed.filter(id => id > 0)
+            ...currentState.history.deleted,
+            ...currentState.history.archived,
+            ...currentState.visibleFeed.filter(id => id > 0)
         ]);
 
         const validCandidates = newsItems.filter((n: News) => !usedIds.has(n.id));

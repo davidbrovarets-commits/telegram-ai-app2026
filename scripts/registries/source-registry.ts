@@ -1396,4 +1396,874 @@ export const SOURCE_REGISTRY = [
         default_priority: "LOW"
     },
 
+    // --- L3: CITY (POTSDAM - BRANDENBURG) ---
+    {
+        source_id: "potsdam_official",
+        name: "Landeshauptstadt Potsdam (offizielles Stadtportal)",
+        base_url: "https://www.potsdam.de/de",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "potsdam_ard",
+        name: "ARD Tagesschau – Regional Brandenburg (öffentlich-rechtlich)",
+        base_url: "https://www.tagesschau.de/inland/regional/brandenburg/",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "potsdam_pnn",
+        name: "Tagesspiegel Potsdam / PNN (lokale Qualitätsberichte)",
+        base_url: "https://www.tagesspiegel.de/potsdam/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (BREMEN - BREMEN) ---
+    {
+        source_id: "bremen_official",
+        name: "Bremen.de (Stadtportal / offizielles Stadtangebot)",
+        base_url: "https://www.bremen.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "bremen_ard",
+        name: "ARD Tagesschau – Regional Bremen (öffentlich-rechtlich)",
+        base_url: "https://www.tagesschau.de/inland/regional/bremen/",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "bremen_wk",
+        name: "WESER-KURIER (lokale Nachrichten Bremen)",
+        base_url: "https://www.weser-kurier.de/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (HAMBURG - HAMBURG) ---
+    {
+        source_id: "hamburg_official",
+        name: "Hamburg.de (offizielles Stadtportal)",
+        base_url: "https://www.hamburg.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "hamburg_ard",
+        name: "ARD Tagesschau – Regional Hamburg (öffentlich-rechtlich)",
+        base_url: "https://www.tagesschau.de/inland/regional/hamburg/",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "hamburg_abendblatt",
+        name: "Hamburger Abendblatt (lokale Nachrichten)",
+        base_url: "https://www.abendblatt.de/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (WIESBADEN - HESSEN) ---
+    {
+        source_id: "wiesbaden_official",
+        name: "Wiesbaden.de (offizielles Stadtportal)",
+        base_url: "https://www.wiesbaden.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "wiesbaden_ard",
+        name: "ARD Tagesschau – Regional Hessen (öffentlich-rechtlich)",
+        base_url: "https://www.tagesschau.de/inland/regional/hessen/",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "wiesbaden_wk",
+        name: "Wiesbadener Kurier (lokale Nachrichten)",
+        base_url: "https://www.wiesbadener-kurier.de/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (SCHWERIN - MECKLENBURG-VORPOMMERN) ---
+    {
+        source_id: "schwerin_official",
+        name: "Landeshauptstadt Schwerin (offizielles Stadtportal)",
+        base_url: "https://www.schwerin.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "schwerin_ard",
+        name: "ARD Tagesschau – Regional Mecklenburg-Vorpommern (öffentlich-rechtlich)",
+        base_url: "https://www.tagesschau.de/inland/regional/mecklenburgvorpommern/",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "schwerin_svz",
+        name: "Schweriner Volkszeitung (SVZ) – Lokal Schwerin",
+        base_url: "https://www.svz.de/lokales/schwerin/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (MAINZ - RHEINLAND-PFALZ) ---
+    {
+        source_id: "mainz_official",
+        name: "Landeshauptstadt Mainz (offizielles Stadtportal)",
+        base_url: "https://www.mainz.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "mainz_ard",
+        name: "ARD Tagesschau – Regional Rheinland-Pfalz (öffentlich-rechtlich)",
+        base_url: "https://www.tagesschau.de/inland/regional/rheinlandpfalz/",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "mainz_az",
+        name: "Allgemeine Zeitung – Lokales Mainz",
+        base_url: "https://www.allgemeine-zeitung.de/lokales/mainz/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (SAARBRÜCKEN - SAARLAND) ---
+    {
+        source_id: "saarbruecken_official",
+        name: "Landeshauptstadt Saarbrücken (offizielles Stadtportal)",
+        base_url: "https://www.saarbruecken.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "saarbruecken_ard",
+        name: "ARD Tagesschau – Regional Saarland (öffentlich-rechtlich)",
+        base_url: "https://www.tagesschau.de/inland/regional/saarland/",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "saarbruecken_sz",
+        name: "Saarbrücker Zeitung (lokale Nachrichten)",
+        base_url: "https://www.saarbruecker-zeitung.de/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (MAGDEBURG - SACHSEN-ANHALT) ---
+    {
+        source_id: "magdeburg_official",
+        name: "Landeshauptstadt Magdeburg (offizielles Stadtportal)",
+        base_url: "https://www.magdeburg.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "magdeburg_ard",
+        name: "ARD Tagesschau – Regional Sachsen-Anhalt (öffentlich-rechtlich)",
+        base_url: "https://www.tagesschau.de/inland/regional/sachsenanhalt/",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "magdeburg_volksstimme",
+        name: "Volksstimme – Lokales Magdeburg",
+        base_url: "https://www.volksstimme.de/lokal/magdeburg",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (KIEL - SCHLESWIG-HOLSTEIN) ---
+    {
+        source_id: "kiel_official",
+        name: "Landeshauptstadt Kiel (offizielles Stadtportal)",
+        base_url: "https://www.kiel.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "kiel_ard",
+        name: "ARD Tagesschau – Regional Schleswig-Holstein (öffentlich-rechtlich)",
+        base_url: "https://www.tagesschau.de/inland/regional/schleswigholstein/",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "kiel_kn",
+        name: "Kieler Nachrichten (KN) – Online",
+        base_url: "https://www.kn-online.de/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (ERFURT - THÜRINGEN) ---
+    {
+        source_id: "erfurt_official",
+        name: "Erfurt.de (offizielles Stadtportal)",
+        base_url: "https://www.erfurt.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "erfurt_ard",
+        name: "ARD Tagesschau – Regional Thüringen (öffentlich-rechtlich)",
+        base_url: "https://www.tagesschau.de/inland/regional/thueringen/",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "erfurt_ta",
+        name: "Thüringer Allgemeine – Lokales Erfurt",
+        base_url: "https://www.thueringer-allgemeine.de/lokales/erfurt/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "rss_or_html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (CHEMNITZ - SACHSEN) ---
+    {
+        source_id: "chemnitz_official",
+        name: "Stadt Chemnitz – Offizielles Stadtportal",
+        base_url: "https://www.chemnitz.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "chemnitz_mdr",
+        name: "MDR Sachsen – Chemnitz",
+        base_url: "https://www.mdr.de/sachsen/chemnitz/index.html",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "chemnitz_fp",
+        name: "Freie Presse – Chemnitz",
+        base_url: "https://www.freiepresse.de/chemnitz/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (HALLE (SAALE) - SACHSEN-ANHALT) ---
+    {
+        source_id: "halle_official",
+        name: "Stadt Halle (Saale) – Offizielles Portal",
+        base_url: "https://www.halle.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "halle_mdr",
+        name: "MDR Sachsen-Anhalt – Halle",
+        base_url: "https://www.mdr.de/sachsen-anhalt/halle/index.html",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "halle_mz",
+        name: "Mitteldeutsche Zeitung – Halle",
+        base_url: "https://www.mz.de/lokal/halle-saale",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (ROSTOCK - MECKLENBURG-VORPOMMERN) ---
+    {
+        source_id: "rostock_official",
+        name: "Hanse- und Universitätsstadt Rostock",
+        base_url: "https://www.rostock.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "rostock_ard",
+        name: "ARD Tagesschau – Regional Mecklenburg-Vorpommern",
+        base_url: "https://www.tagesschau.de/inland/regional/mecklenburgvorpommern/",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "rostock_ostsee",
+        name: "Ostsee-Zeitung – Rostock",
+        base_url: "https://www.ostsee-zeitung.de/rostock",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (COTTBUS - BRANDENBURG) ---
+    {
+        source_id: "cottbus_official",
+        name: "Stadt Cottbus / Chóśebuz",
+        base_url: "https://www.cottbus.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "cottbus_ard",
+        name: "ARD Tagesschau – Regional Brandenburg",
+        base_url: "https://www.tagesschau.de/inland/regional/brandenburg/",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "cottbus_lr",
+        name: "Lausitzer Rundschau – Cottbus",
+        base_url: "https://www.lr-online.de/lausitz/cottbus/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (FRANKFURT (ODER) - BRANDENBURG) ---
+    {
+        source_id: "frankfurt_oder_official",
+        name: "Stadt Frankfurt (Oder)",
+        base_url: "https://www.frankfurt-oder.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "frankfurt_oder_ard",
+        name: "ARD Tagesschau – Regional Brandenburg",
+        base_url: "https://www.tagesschau.de/inland/regional/brandenburg/",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "frankfurt_oder_moz",
+        name: "Märkische Oderzeitung – Frankfurt (Oder)",
+        base_url: "https://www.moz.de/lokales/frankfurt-oder/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (AACHEN - NRW) ---
+    {
+        source_id: "aachen_official",
+        name: "Stadt Aachen – Offizielles Portal",
+        base_url: "https://www.aachen.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "aachen_wdr",
+        name: "WDR Nachrichten – NRW",
+        base_url: "https://www1.wdr.de/nachrichten/index.html",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "aachen_az",
+        name: "Aachener Zeitung",
+        base_url: "https://www.aachener-zeitung.de/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (GELSENKIRCHEN - NRW) ---
+    {
+        source_id: "gelsenkirchen_official",
+        name: "Stadt Gelsenkirchen",
+        base_url: "https://www.gelsenkirchen.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "gelsenkirchen_wdr",
+        name: "WDR Nachrichten – NRW",
+        base_url: "https://www1.wdr.de/nachrichten/index.html",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "gelsenkirchen_waz",
+        name: "WAZ – Gelsenkirchen",
+        base_url: "https://www.waz.de/staedte/gelsenkirchen/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (OBERHAUSEN - NRW) ---
+    {
+        source_id: "oberhausen_official",
+        name: "Stadt Oberhausen",
+        base_url: "https://www.oberhausen.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "oberhausen_wdr",
+        name: "WDR Nachrichten – NRW",
+        base_url: "https://www1.wdr.de/nachrichten/index.html",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "oberhausen_waz",
+        name: "WAZ – Oberhausen",
+        base_url: "https://www.waz.de/staedte/oberhausen/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (WOLFSBURG - NIEDERSACHSEN) ---
+    {
+        source_id: "wolfsburg_official",
+        name: "Stadt Wolfsburg",
+        base_url: "https://www.wolfsburg.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "wolfsburg_ndr",
+        name: "NDR Niedersachsen",
+        base_url: "https://www.ndr.de/nachrichten/niedersachsen/",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "wolfsburg_waz",
+        name: "WAZ – Wolfsburg",
+        base_url: "https://www.waz-online.de/region/wolfsburg/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (BRAUNSCHWEIG - NIEDERSACHSEN) ---
+    {
+        source_id: "braunschweig_official",
+        name: "Stadt Braunschweig",
+        base_url: "https://www.braunschweig.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "braunschweig_ndr",
+        name: "NDR Niedersachsen",
+        base_url: "https://www.ndr.de/nachrichten/niedersachsen/",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "braunschweig_bz",
+        name: "Braunschweiger Zeitung",
+        base_url: "https://www.braunschweiger-zeitung.de/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (KAISERSLAUTERN - RHEINLAND-PFALZ) ---
+    {
+        source_id: "kaiserslautern_official",
+        name: "Stadt Kaiserslautern – Offizielles Stadtportal",
+        base_url: "https://www.kaiserslautern.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "kaiserslautern_ard",
+        name: "ARD Tagesschau – Regional Rheinland-Pfalz",
+        base_url: "https://www.tagesschau.de/inland/regional/rheinlandpfalz/",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "kaiserslautern_rp",
+        name: "Rheinpfalz – Kaiserslautern",
+        base_url: "https://www.rheinpfalz.de/lokal/kaiserslautern/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (MÖNCHENGLADBACH - NRW) ---
+    {
+        source_id: "moenchengladbach_official",
+        name: "Stadt Mönchengladbach",
+        base_url: "https://www.moenchengladbach.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "moenchengladbach_wdr",
+        name: "WDR Nachrichten – NRW",
+        base_url: "https://www1.wdr.de/nachrichten/index.html",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "moenchengladbach_rp",
+        name: "Rheinische Post – Mönchengladbach",
+        base_url: "https://rp-online.de/nrw/staedte/moenchengladbach/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (BREMERHAVEN - BREMEN) ---
+    {
+        source_id: "bremerhaven_official",
+        name: "Stadt Bremerhaven",
+        base_url: "https://www.bremerhaven.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "bremerhaven_ard",
+        name: "ARD Tagesschau – Regional Bremen",
+        base_url: "https://www.tagesschau.de/inland/regional/bremen/",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "bremerhaven_nordsee",
+        name: "Nordsee-Zeitung – Bremerhaven",
+        base_url: "https://www.nordsee-zeitung.de/Region/Bremerhaven",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (ULM - BADEN-WÜRTTEMBERG) ---
+    {
+        source_id: "ulm_official",
+        name: "Stadt Ulm",
+        base_url: "https://www.ulm.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "ulm_swr",
+        name: "SWR Aktuell – Baden-Württemberg",
+        base_url: "https://www.swr.de/swraktuell/baden-wuerttemberg/",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "ulm_swp",
+        name: "Südwest Presse – Ulm",
+        base_url: "https://www.swp.de/lokales/ulm/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (HEIDELBERG - BADEN-WÜRTTEMBERG) ---
+    {
+        source_id: "heidelberg_official",
+        name: "Stadt Heidelberg",
+        base_url: "https://www.heidelberg.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "heidelberg_swr",
+        name: "SWR Aktuell – Baden-Württemberg",
+        base_url: "https://www.swr.de/swraktuell/baden-wuerttemberg/",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "heidelberg_rnz",
+        name: "Rhein-Neckar-Zeitung – Heidelberg",
+        base_url: "https://www.rnz.de/region/heidelberg/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (TRIER - RHEINLAND-PFALZ) ---
+    {
+        source_id: "trier_official",
+        name: "Stadt Trier",
+        base_url: "https://www.trier.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "trier_ard",
+        name: "ARD Tagesschau – Regional Rheinland-Pfalz",
+        base_url: "https://www.tagesschau.de/inland/regional/rheinlandpfalz/",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "trier_volksfreund",
+        name: "Trierischer Volksfreund",
+        base_url: "https://www.volksfreund.de/region/trier/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (RECKLINGHAUSEN - NRW) ---
+    {
+        source_id: "recklinghausen_official",
+        name: "Stadt Recklinghausen",
+        base_url: "https://www.recklinghausen.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "recklinghausen_wdr",
+        name: "WDR Nachrichten – NRW",
+        base_url: "https://www1.wdr.de/nachrichten/index.html",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "recklinghausen_waz",
+        name: "WAZ – Recklinghausen",
+        base_url: "https://www.waz.de/staedte/recklinghausen/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (KREFELD - NRW) ---
+    {
+        source_id: "krefeld_official",
+        name: "Stadt Krefeld",
+        base_url: "https://www.krefeld.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "krefeld_wdr",
+        name: "WDR Nachrichten – NRW",
+        base_url: "https://www1.wdr.de/nachrichten/index.html",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "krefeld_rp",
+        name: "Rheinische Post – Krefeld",
+        base_url: "https://rp-online.de/nrw/staedte/krefeld/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (LÜBECK - SCHLESWIG-HOLSTEIN) ---
+    {
+        source_id: "luebeck_official",
+        name: "Hansestadt Lübeck",
+        base_url: "https://www.luebeck.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "luebeck_ard",
+        name: "ARD Tagesschau – Regional Schleswig-Holstein",
+        base_url: "https://www.tagesschau.de/inland/regional/schleswigholstein/",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "luebeck_ln",
+        name: "Lübecker Nachrichten",
+        base_url: "https://www.ln-online.de/lokales/luebeck/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "html",
+        default_priority: "LOW"
+    },
+
+    // --- L3: CITY (REGENSBURG - BAYERN) ---
+    {
+        source_id: "regensburg_official",
+        name: "Stadt Regensburg",
+        base_url: "https://www.regensburg.de/",
+        language: "de",
+        trust_level: "official_high",
+        ingestion_method: "html",
+        default_priority: "HIGH"
+    },
+    {
+        source_id: "regensburg_br",
+        name: "BR Nachrichten – Bayern",
+        base_url: "https://www.br.de/nachrichten/bayern/",
+        language: "de",
+        trust_level: "public_broadcaster_high",
+        ingestion_method: "html",
+        default_priority: "MEDIUM"
+    },
+    {
+        source_id: "regensburg_mz",
+        name: "Mittelbayerische Zeitung – Regensburg",
+        base_url: "https://www.mittelbayerische.de/region/regensburg/",
+        language: "de",
+        trust_level: "media_high",
+        ingestion_method: "html",
+        default_priority: "LOW"
+    },
+
 ] as const;

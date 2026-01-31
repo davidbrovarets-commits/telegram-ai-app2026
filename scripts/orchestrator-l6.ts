@@ -20,6 +20,7 @@ import { supabase } from './supabaseClient';
 import cityPackages from './city-packages.index.json' assert { type: 'json' };
 import { SOURCE_REGISTRY } from './registries/source-registry';
 import { isRecentNews, isDeepLink, validateUrlHealth } from './helpers';
+import { runAutoHealer } from './auto-healer';
 import * as dotenv from 'dotenv';
 import crypto from 'crypto';
 
@@ -1008,6 +1009,28 @@ async function cycle() {
     console.log('\n✅ L6 ORCHESTRATOR DONE\n');
 }
 
-cycle().catch((e) => {
-    console.error('FATAL:', e);
-});
+// MAIN LOOP with Integrated Auto-Healer Scheduler
+async function main() {
+    console.log('🚀 SYSTEM STARTUP: Orchestrator + Auto-Healer');
+
+    // 1. Run News Cycle Immediately
+    await cycle().catch(e => console.error('FATAL Cycle Error:', e));
+
+    // 2. Run Healer Immediately
+    await runAutoHealer().catch(e => console.error('FATAL Healer Error:', e));
+
+    // 3. Schedule Healer (Every 60 minutes)
+    setInterval(() => {
+        runAutoHealer().catch(e => console.error('Scheduled Healer Error:', e));
+    }, 60 * 60 * 1000);
+
+    // 4. (Optional) Schedule News Cycle? 
+    // Currently users run this manually or in a loop. 
+    // For now we just keep the process alive for the healer.
+    console.log('🕒 Scheduler Active: Auto-Healer running every 60m.');
+
+    // Keep alive hack (if intervals don't hold it open in some envs)
+    setInterval(() => { }, 1000 * 60 * 60);
+}
+
+main();

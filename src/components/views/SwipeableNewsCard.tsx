@@ -1,0 +1,132 @@
+import React, { useState } from 'react';
+import { motion, useMotionValue, useTransform, AnimatePresence, type PanInfo } from 'framer-motion';
+import { Trash2, Archive, ArrowRight, ArrowLeft } from 'lucide-react';
+
+interface SwipeableNewsCardProps {
+    children: React.ReactNode;
+    onDelete: () => void;
+    onArchive?: () => void; // Optional now, as archive mode might use onDelete for both
+    deleteLabel?: string;
+    archiveLabel?: string;
+    mode?: 'feed' | 'archive';
+}
+
+export const SwipeableNewsCard: React.FC<SwipeableNewsCardProps> = ({
+    children,
+    onDelete,
+    onArchive,
+    deleteLabel = "Kustuta",
+    archiveLabel = "Arhiveeri",
+    mode = 'feed'
+}) => {
+    const x = useMotionValue(0);
+    const [isPresent, setIsPresent] = useState(true);
+
+    // Transform background opacity based on drag distance
+    const deleteOpacity = useTransform(x, [10, 50], [0, 1]); // Show even earlier
+    const archiveOpacity = useTransform(x, [-10, -50], [0, 1]); // Show even earlier
+
+    // Dynamic zIndex to ensure the correct background is on top
+    const deleteZIndex = useTransform(x, (v) => v > 0 ? 1 : 0);
+    const archiveZIndex = useTransform(x, (v) => v < 0 ? 1 : 0);
+
+    // Transform background color containers
+    // We'll use absolute positioned divs for backgrounds to avoid complex color interpolation issues
+
+    const handleDragEnd = async (_: any, info: PanInfo) => {
+        const threshold = 80; // Drag distance to trigger action (lowered slightly)
+
+        if (info.offset.x > threshold) {
+            // Swiped Right -> Delete
+            setIsPresent(false);
+            setTimeout(() => {
+                onDelete();
+            }, 200);
+        } else if (info.offset.x < -threshold) {
+            // Swiped Left
+            setIsPresent(false);
+            setTimeout(() => {
+                if (mode === 'archive') {
+                    onDelete(); // Both directions delete in archive
+                } else if (onArchive) {
+                    onArchive();
+                }
+            }, 200);
+        }
+        // If not passed threshold, it snaps back automatically due to dragConstraints
+    };
+
+    return (
+        <AnimatePresence>
+            {isPresent && (
+                <motion.div
+                    layout
+                    initial={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                    transition={{ duration: 0.2 }}
+                    style={{ position: 'relative', overflow: 'hidden', touchAction: 'pan-y' }}
+                >
+                    {/* Background Layer - DELETE (Red, Left side visible when swiping right) */}
+                    <motion.div
+                        style={{
+                            position: 'absolute',
+                            top: 0,
+                            bottom: 0,
+                            left: 0,
+                            width: '100%',
+                            background: '#FF3B30', // System Red
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'flex-start',
+                            paddingLeft: '24px',
+                            zIndex: deleteZIndex,
+                            borderRadius: '18px',
+                        }}
+                    >
+                        <motion.div style={{ opacity: deleteOpacity, display: 'flex', alignItems: 'center', gap: '8px', color: 'white' }}>
+                            <Trash2 size={24} />
+                            <span style={{ fontWeight: 600, fontSize: '15px' }}>{deleteLabel}</span>
+                            <ArrowRight size={20} />
+                        </motion.div>
+                    </motion.div>
+
+                    {/* Background Layer - ARCHIVE (Black/Gray, Right side visible when swiping left) */}
+                    <motion.div
+                        style={{
+                            position: 'absolute',
+                            top: 0,
+                            bottom: 0,
+                            right: 0,
+                            width: '100%',
+                            background: mode === 'archive' ? '#FF3B30' : '#8E8E93', // Red if archive mode (delete), else Gray
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'flex-end',
+                            paddingRight: '24px',
+                            zIndex: archiveZIndex,
+                            borderRadius: '18px',
+                        }}
+                    >
+                        <motion.div style={{ opacity: archiveOpacity, display: 'flex', alignItems: 'center', gap: '8px', color: 'white' }}>
+                            {mode === 'archive' ? <ArrowLeft size={20} /> : <ArrowLeft size={20} />}
+                            <span style={{ fontWeight: 600, fontSize: '15px' }}>{mode === 'archive' ? deleteLabel : archiveLabel}</span>
+                            {mode === 'archive' ? <Trash2 size={24} /> : <Archive size={24} />}
+                        </motion.div>
+                    </motion.div>
+
+                    {/* Foreground Card */}
+                    <motion.div
+                        style={{ x, cursor: 'grab', background: 'transparent', position: 'relative', zIndex: 1 }}
+                        drag="x"
+                        dragConstraints={{ left: 0, right: 0 }}
+                        dragElastic={0.7} // Rubber band effect
+                        onDragEnd={handleDragEnd}
+                        whileTap={{ cursor: 'grabbing' }}
+                    >
+                        {children}
+                    </motion.div>
+                </motion.div>
+            )}
+        </AnimatePresence>
+    );
+};

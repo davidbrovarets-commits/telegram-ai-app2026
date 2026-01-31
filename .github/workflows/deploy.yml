@@ -79,7 +79,7 @@ jobs:
             --entry-point=generateBanner \
             --trigger-http \
             --allow-unauthenticated \
-            --set-env-vars GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=europe-west1
+            --set-env-vars GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=us-central1
 
       - name: 'Enable APIs & Setup Scheduler'
         run: |

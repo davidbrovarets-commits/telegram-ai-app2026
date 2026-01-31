@@ -21,6 +21,7 @@ import { passesFilter } from './agents/filter';
 import { classify } from './agents/classifier';
 import { findDuplicate } from './agents/dedup';
 import { summarizeAndTranslate, summarizeAndTranslateMock } from './agents/summarizer';
+import { sendAlert } from './utils/telegram-notifier';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
@@ -281,13 +282,12 @@ async function scrape() {
 
                     // Trigger Alert (Non-blocking)
                     sendAlert({
-                        id: 0, // Placeholder
                         title: ukHeadline || summary.uk_summary,
                         uk_summary: summary.uk_summary,
                         priority: classification.relevance_score > 70 ? 'HIGH' : 'MEDIUM',
+                        score: classification.relevance_score,
                         city: source.geo.city || null,
                         land: source.geo.land || null,
-                        score: classification.relevance_score
                     }).catch(e => console.error(e));
 
                     // Add to existing for future dedup

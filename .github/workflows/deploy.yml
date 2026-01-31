@@ -61,3 +61,26 @@ jobs:
             --trigger-http \
             --allow-unauthenticated
 
+      - name: 'Enable APIs & Setup Scheduler'
+        run: |
+          gcloud services enable firebasevertexai.googleapis.com
+          
+          # Create or Update Scheduler
+          # URI must be retrieved from function
+          FUNCTION_URI=$(gcloud functions describe generate-banner-weekly --gen2 --region=europe-west1 --format='value(serviceConfig.uri)')
+          
+          gcloud scheduler jobs create http trigger-weekly-banner \
+            --schedule="0 8 * * 1" \
+            --time-zone="Europe/Berlin" \
+            --uri="$FUNCTION_URI" \
+            --http-method=POST \
+            --oidc-service-account-email="banner-generator-sa@${{ secrets.GOOGLE_PROJECT_ID }}.iam.gserviceaccount.com" \
+            --location=europe-west1 \
+            || gcloud scheduler jobs update http trigger-weekly-banner \
+            --schedule="0 8 * * 1" \
+            --time-zone="Europe/Berlin" \
+            --uri="$FUNCTION_URI" \
+            --http-method=POST \
+            --oidc-service-account-email="banner-generator-sa@${{ secrets.GOOGLE_PROJECT_ID }}.iam.gserviceaccount.com" \
+            --location=europe-west1
+

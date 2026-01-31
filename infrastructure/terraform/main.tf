@@ -36,8 +36,8 @@ resource "google_project_service" "apis" {
     "firebasehosting.googleapis.com", # Firebase Hosting
     "cloudresourcemanager.googleapis.com",
     "cloudbilling.googleapis.com",
-    "iam.googleapis.com",
-    "firebasevertexai.googleapis.com" # Required for new Vertex AI Client SDK
+    "iam.googleapis.com"
+    # "firebasevertexai.googleapis.com" # Handled via gcloud in CI/CD
   ])
 
   service = each.key
@@ -119,19 +119,19 @@ resource "google_storage_bucket" "function_bucket" {
   location = var.region
 }
 
-# 8. Zip Source Code
-data "archive_file" "function_zip" {
-  type        = "zip"
-  source_dir  = "../../functions/generate-banner"
-  output_path = "../../dist/function-source.zip"
-}
+# 8. Zip Source Code (DEPRECATED - Moved to CI/CD)
+# data "archive_file" "function_zip" {
+#   type        = "zip"
+#   source_dir  = "../../functions/generate-banner"
+#   output_path = "../../dist/function-source.zip"
+# }
 
-# 9. Upload Source Code
-resource "google_storage_bucket_object" "function_source" {
-  name   = "source-${data.archive_file.function_zip.output_md5}.zip"
-  bucket = google_storage_bucket.function_bucket.name
-  source = data.archive_file.function_zip.output_path
-}
+# 9. Upload Source Code (DEPRECATED)
+# resource "google_storage_bucket_object" "function_source" {
+#   name   = "source-${data.archive_file.function_zip.output_md5}.zip"
+#   bucket = google_storage_bucket.function_bucket.name
+#   source = data.archive_file.function_zip.output_path
+# }
 
 # 10. Service Account for Function
 resource "google_service_account" "banner_sa" {
@@ -152,58 +152,18 @@ resource "google_project_iam_member" "sa_storage" {
   member  = "serviceAccount:${google_service_account.banner_sa.email}"
 }
 
-# 11. Cloud Function (2nd Gen)
-resource "google_cloudfunctions2_function" "generate_banner" {
-  name        = "generate-banner-weekly"
-  location    = var.region
-  description = "Generates weekly news banner using Vertex AI Nano Banana"
+# 11. Cloud Function (DEPRECATED - Managed by GitHub Actions)
+# resource "google_cloudfunctions2_function" "generate_banner" {
+# ... matches deploy.yml now ...
+# }
 
-  build_config {
-    runtime     = "nodejs20"
-    entry_point = "generateBanner" # matches exports.generateBanner in index.js
-    source {
-      storage_source {
-        bucket = google_storage_bucket.function_bucket.name
-        object = google_storage_bucket_object.function_source.name
-      }
-    }
-  }
+# 12. Cloud Scheduler (DEPRECATED - Managed by GitHub Actions)
+# resource "google_cloud_scheduler_job" "weekly_banner" {
+# ...
+# }
 
-  service_config {
-    max_instance_count = 1
-    available_memory   = "512M"
-    timeout_seconds    = 300
-    service_account_email = google_service_account.banner_sa.email
-    environment_variables = {
-        GOOGLE_CLOUD_PROJECT = var.project_id
-        GOOGLE_CLOUD_LOCATION = var.region
-    }
-  }
-}
-
-# 12. Cloud Scheduler
-resource "google_cloud_scheduler_job" "weekly_banner" {
-  name        = "trigger-weekly-banner"
-  description = "Triggers the banner generation function every Monday at 8 AM"
-  schedule    = "0 8 * * 1" # Every Monday at 8:00
-  time_zone   = "Europe/Berlin"
-
-  http_target {
-    uri         = google_cloudfunctions2_function.generate_banner.service_config[0].uri
-    http_method = "POST"
-    
-    oidc_token {
-      service_account_email = google_service_account.banner_sa.email
-    }
-  }
-}
-
-# Allow Scheduler (token creator) to invoke the function
-resource "google_cloud_run_service_iam_member" "invoker" {
-    project = var.project_id
-    location = var.region
-    service = google_cloudfunctions2_function.generate_banner.name
-    role = "roles/run.invoker"
-    member = "serviceAccount:${google_service_account.banner_sa.email}"
-}
+# Allow Scheduler (token creator) to invoke the function (Managed manually or via gcloud)
+# resource "google_cloud_run_service_iam_member" "invoker" {
+# ...
+# }
 

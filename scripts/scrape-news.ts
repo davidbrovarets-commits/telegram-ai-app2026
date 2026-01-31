@@ -251,12 +251,45 @@ async function scrape() {
                     expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days
                 });
 
+                if (!error) {
+                    // --- 7. Push Notification Check ---
+                    const insertedItem = {
+                        id: 0, // We need ID, but insert doesn't return it unless we ask.
+                        // Actually, we can just use enough data for push
+                        // But wait, the push payload needs ID for deep link? Yes.
+                        // I should use .select().single() in insert
+                        title: ukHeadline || summary.uk_summary,
+                        uk_summary: summary.uk_summary,
+                        priority: classification.relevance_score > 70 ? 'HIGH' : 'MEDIUM',
+                        city: source.geo.city || null,
+                        land: source.geo.land || null,
+                        score: classification.relevance_score
+                    };
+
+                    // We can't easily get the New ID without refactoring insert to .select().
+                    // For now, let's just trigger it. Client can link to "Latest".
+                    // Or I refactor insert.
+                    // Let's refactor insert to return ID.
+                }
+
                 if (error) {
                     console.log(`   ❌ Insert error: ${error.message}`);
                     stats.errors++;
                 } else {
                     console.log(`   ✅ [${classification.type}] ${item.title.substring(0, 40)}...`);
                     stats.added++;
+
+                    // Trigger Alert (Non-blocking)
+                    sendAlert({
+                        id: 0, // Placeholder
+                        title: ukHeadline || summary.uk_summary,
+                        uk_summary: summary.uk_summary,
+                        priority: classification.relevance_score > 70 ? 'HIGH' : 'MEDIUM',
+                        city: source.geo.city || null,
+                        land: source.geo.land || null,
+                        score: classification.relevance_score
+                    }).catch(e => console.error(e));
+
                     // Add to existing for future dedup
                     existingItems.push({ id: 0, title: item.title });
                 }

@@ -180,6 +180,31 @@ async function scrape() {
                 const [ukHeadline, ...ukBodyParts] = summary.uk_summary.split('\n\n');
                 const ukBody = ukBodyParts.join('\n\n') || summary.uk_summary; // Fallback if no split
 
+                // --- 5. Generate Embedding (Vector Search) ---
+                let embedding: number[] | null = null;
+                const textToEmbed = `${item.title}\n${summary.uk_summary}`;
+
+                try {
+                    embedding = await generateEmbedding(textToEmbed);
+
+                    // --- 5.1 Semantic Deduplication Check ---
+                    if (embedding) {
+                        const { data: semDupes } = await supabase.rpc('match_news', {
+                            query_embedding: embedding,
+                            match_threshold: 0.85, // 85% similarity (High threshold for "Same Story")
+                            match_count: 1
+                        });
+
+                        if (semDupes && semDupes.length > 0) {
+                            console.log(`   🔁 SEMANTIC DUPLICATE detected (Score: ${semDupes[0].similarity.toFixed(2)}). Skipping.`);
+                            stats.duplicates++;
+                            continue;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('   ⚠️ Vector ops failed:', e);
+                }
+
                 // Prepare insert data
                 const publishedAt = new Date().toISOString();
                 const todayKey = new Date().toISOString().split('T')[0];
@@ -217,6 +242,9 @@ async function scrape() {
                     de_summary: summary.de_summary,
                     uk_summary: summary.uk_summary,
                     action_hint: summary.action_hint,
+
+                    // Vector Embedding
+                    embedding: embedding,
 
                     // Meta
                     dedupe_group: source.dedupe_group,

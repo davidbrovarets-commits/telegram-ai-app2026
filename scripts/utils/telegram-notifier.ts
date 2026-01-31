@@ -5,8 +5,8 @@ import path from 'path';
 // Load env if not already loaded
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const CHAT_ID = process.env.TELEGRAM_CHAT_ID; // Your Personal ID or Admin Group
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN?.trim();
+const CHAT_ID = process.env.TELEGRAM_CHAT_ID?.trim(); // Your Personal ID or Admin Group
 
 export interface AlertData {
     title: string;
@@ -60,6 +60,9 @@ export async function sendAlert(data: AlertData): Promise<void> {
     const icon = data.priority === 'HIGH' ? '🚨' : 'ℹ️';
     const loc = data.city ? `📍 ${data.city}` : data.land ? `📍 ${data.land}` : '🌍 National';
 
+    // Fallback URL if env is missing
+    const appUrl = process.env.APP_URL || 'http://localhost:5173';
+
     const message = `
 ${icon} *Valid News Detected*
 ${loc} (Score: ${data.score})
@@ -68,7 +71,7 @@ ${loc} (Score: ${data.score})
 
 ${data.uk_summary.substring(0, 200)}...
 
-[View in App](${process.env.APP_URL || 'http://localhost'})
+[View in App](${appUrl})
 `.trim();
 
     await sendTelegramMessage(message);

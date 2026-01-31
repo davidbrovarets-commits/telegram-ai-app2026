@@ -52,6 +52,18 @@ jobs:
 
       - name: 'Deploy Cloud Function'
         run: |
+          # Enable required APIs
+          gcloud services enable aiplatform.googleapis.com
+          gcloud services enable firebasevertexai.googleapis.com
+
+          # Grant Vertex AI User role to the default App Engine Service Account (used by Cloud Function)
+          PROJECT_ID=${{ secrets.GOOGLE_PROJECT_ID }}
+          # Use App Engine default service account: PROJECT_ID@appspot.gserviceaccount.com
+          gcloud projects add-iam-policy-binding $PROJECT_ID \
+            --member="serviceAccount:$PROJECT_ID@appspot.gserviceaccount.com" \
+            --role="roles/aiplatform.user" || echo "IAM binding failed or already exists, continuing..."
+
+          # Deploy Function with Env Vars
           gcloud functions deploy generate-banner-weekly \
             --gen2 \
             --runtime=nodejs20 \
@@ -59,7 +71,8 @@ jobs:
             --source=./functions/generate-banner \
             --entry-point=generateBanner \
             --trigger-http \
-            --allow-unauthenticated
+            --allow-unauthenticated \
+            --set-env-vars GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=europe-west1
 
       - name: 'Enable APIs & Setup Scheduler'
         run: |

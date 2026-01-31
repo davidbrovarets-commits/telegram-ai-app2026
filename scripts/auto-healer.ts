@@ -59,7 +59,7 @@ export async function runAutoHealer() {
     // 3. RUN SUB-TASKS
     await runDatabaseCleaner();
     await checkSourceHealth();
-    // await runAIReviver(); // Advanced: Enable if needed
+    await runAIReviver(); // Level 3: AI Reviver
 
     // 4. Fetch OPEN Client Errors
     const { data: errors, error } = await supabase

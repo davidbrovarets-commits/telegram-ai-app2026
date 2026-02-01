@@ -2834,3 +2834,164 @@ if (sourceConfig?.extractor?.published_at) {
     *   **Foundation for Self-Healing:** The `auto-healer` (mentioned in the original code) now has a clear target. If `extractFromHtml` fails for a source, the `auto-healer` could be triggered to fetch the page, analyze its structure, and *suggest* a new, working CSS selector, creating a truly self-adapting system.
 
 By implementing a config-driven extractor, we transform a fragile implementation detail into a robust, scalable, and synergistic core component of the architecture.
+
+## Critique 2026-02-01T10:58:31.724Z
+Excellent. This is a solid foundation. The recent refactoring has clearly addressed several key issues, particularly around security, provider abstraction, and data enrichment. The code demonstrates a clear, linear flow from collection to storage.
+
+My role is to find what is "Good" and propose a path to "Great." After reviewing the orchestrator, I've identified a central architectural weakness that, if addressed, will significantly improve the system's robustness, maintainability, and long-term intelligence.
+
+***
+
+### Critique: Hardcoded Intelligence
+
+The current orchestrator's "brain"—its knowledge of what is important, what is an event, what to block, and how to route—is hardcoded into constant arrays (`UKRAINE_KEYWORDS`, `EVENT_KEYWORDS`, `BLOCKLIST`, etc.).
+
+*   **This is Good:** It's simple, explicit, and fast to execute. For a V1, it's a perfectly reasonable approach.
+*   **This is Not Great:** It's brittle and inflexible. Every change to the system's logic requires a code modification, a pull request, and a full redeployment. As we learn more about the news landscape, our ability to react is bottlenecked by our development cycle. If a bad keyword starts letting in spam, we can't "turn it off" without a hotfix.
+
+The system is a static script, but it needs to become a dynamic engine.
+
+---
+
+### Architectural Proposal: The Dynamic Configuration Core
+
+My proposal is to externalize the orchestrator's business rules from the application code into the database. We will create a "Configuration Core" within Supabase that the orchestrator loads on startup. This moves the system's "intelligence" from static code to manageable data.
+
+#### 1. The "What": New Supabase Configuration Tables
+
+We will create dedicated tables in Supabase to hold our rules.
+
+**Table: `config_keywords`**
+
+This table will replace all the hardcoded keyword arrays.
+
+```sql
+CREATE TABLE config_keywords (
+    id SERIAL PRIMARY KEY,
+    keyword TEXT NOT NULL UNIQUE,
+    type TEXT NOT NULL, -- 'STRICT', 'FUN', 'BLOCKLIST'
+    weight NUMERIC DEFAULT 1.0, -- For future scoring models
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Example Data:
+INSERT INTO config_keywords (keyword, type) VALUES
+('Bürgergeld', 'STRICT'),
+('Gesetz', 'STRICT'),
+('Konzert', 'FUN'),
+('Horoskop', 'BLOCKLIST');
+```
+
+**Table: `config_routing_rules`**
+
+This table will replace hardcoded city/state logic. It allows us to create sophisticated routing without touching the code.
+
+```sql
+CREATE TABLE config_routing_rules (
+    id SERIAL PRIMARY KEY,
+    match_term TEXT NOT NULL UNIQUE, -- e.g., 'Berlin', 'Hamburg', 'Bundestag'
+    match_type TEXT NOT NULL DEFAULT 'keyword', -- 'keyword', 'regex'
+    target_layer "public"."GeoLayer" NOT NULL, -- Using the existing type
+    target_city TEXT,   -- e.g., 'berlin'
+    target_state TEXT,  -- e.g., 'berlin'
+    priority INT DEFAULT 100, -- Higher priority wins
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Example Data:
+INSERT INTO config_routing_rules (match_term, target_layer, target_city, target_state, priority) VALUES
+('Bundestag', 'COUNTRY', NULL, NULL, 10), -- High priority rule
+('Berlin', 'CITY', 'berlin', 'berlin', 100),
+('Hamburg', 'CITY', 'hamburg', 'hamburg', 100);
+```
+
+#### 2. The "How": A Configuration Service
+
+The orchestrator will fetch this configuration at startup. This can be encapsulated in a new service or a simple startup function.
+
+```typescript
+// src/config/service.ts (New File)
+
+import { supabase } from '../supabaseClient';
+
+interface KeywordConfig {
+    strict: Set<string>;
+    fun: Set<string>;
+    blocklist: Set<string>;
+}
+
+// Simplified example, could be expanded for routing rules, etc.
+export class ConfigService {
+    private static instance: ConfigService;
+    public keywords: KeywordConfig = { strict: new Set(), fun: new Set(), blocklist: new Set() };
+    public isInitialized = false;
+
+    private constructor() {}
+
+    public static getInstance(): ConfigService {
+        if (!ConfigService.instance) {
+            ConfigService.instance = new ConfigService();
+        }
+        return ConfigService.instance;
+    }
+
+    async initialize() {
+        console.log('Fetching dynamic configuration from Supabase...');
+        const { data, error } = await supabase
+            .from('config_keywords')
+            .select('keyword, type')
+            .eq('is_active', true);
+
+        if (error) {
+            console.error('FATAL: Could not load configuration. Falling back to empty rules.', error);
+            this.isInitialized = false;
+            return;
+        }
+
+        this.keywords = { strict: new Set(), fun: new Set(), blocklist: new Set() };
+        for (const row of data) {
+            const k = row.keyword.toLowerCase();
+            if (row.type === 'STRICT') this.keywords.strict.add(k);
+            if (row.type === 'FUN') this.keywords.fun.add(k);
+            if (row.type === 'BLOCKLIST') this.keywords.blocklist.add(k);
+        }
+
+        console.log(
+          `Config loaded: ${this.keywords.strict.size} STRICT, ${this.keywords.fun.size} FUN, ${this.keywords.blocklist.size} BLOCKLIST keywords.`
+        );
+        this.isInitialized = true;
+    }
+}
+
+// In your main orchestrator file:
+async function main() {
+    const config = ConfigService.getInstance();
+    await config.initialize();
+
+    if (!config.isInitialized) {
+        // Decide on a failure strategy: exit, use hardcoded fallbacks, or proceed with caution.
+        console.error("Orchestrator cannot run without a valid configuration.");
+        return;
+    }
+    
+    // ... rest of the orchestration logic, now using config.keywords ...
+    // e.g., const ALL_STRICT_KEYWORDS = Array.from(config.keywords.strict);
+}
+
+main();
+```
+
+#### 3. The "Why": The Synergistic Benefits
+
+This single change transforms the entire project:
+
+*   **Agility & Maintainability:** A project manager or content strategist can now tune the system's relevance by editing a Supabase table. A bad keyword can be disabled instantly by setting `is_active = false`. No developer intervention, no redeployment.
+*   **Robustness & Specificity:** We can now evolve our rules. We could add a `source_id` column to `config_keywords` to have source-specific blocklists. We can use the `weight` column to build a more sophisticated relevance scoring model than simple keyword counting.
+*   **Synergy:** This "Configuration Core" becomes the central brain. If we build a separate admin dashboard, it reads and writes to these same tables. If we create a new microservice, it can also load this configuration. It unifies the business logic across the entire platform.
+*   **Self-Healing:** The ability to instantly disable a problematic rule without a code rollback is a form of operational self-healing. It dramatically reduces the Mean Time To Repair (MTTR) for logic-based issues.
+
+### Conclusion
+
+By moving from hardcoded constants to a **Dynamic Configuration Core**, we elevate the orchestrator from a static script to a living, adaptable engine. This is a non-breaking, synergistic change that aligns perfectly with our existing stack and lays the groundwork for a more intelligent and maintainable system. This is how we go from "Good" to "Great."

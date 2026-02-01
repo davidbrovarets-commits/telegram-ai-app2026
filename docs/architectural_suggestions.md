@@ -1658,3 +1658,150 @@ This is a refactor, not a rewrite. The core business logic inside your filtering
 3.  **Wrap Existing Logic:** Encapsulate your current processing functions (e.g., the keyword filtering logic) inside the new worker structure.
 
 By making the database the source of truth for the pipeline's state, you elevate the orchestrator from a "good" script to a "great," production-grade, and resilient ETL system that perfectly aligns with the existing Supabase-centric stack.
+
+## Critique 2026-02-01T02:47:05.757Z
+Excellent. As the Lead Architect, I've reviewed the provided orchestrator logic.
+
+This is a very strong refactor. The move to a server-side, provider-agnostic, and more robust data processing pipeline is a significant leap forward from a typical V1. The code is clean, well-structured, and demonstrates a clear understanding of the problem domain. The inclusion of features like a concurrency limiter, timeout-based fetching, and sophisticated date extraction shows a commitment to production-readiness.
+
+However, a "Good" system can always become "Great". The most significant opportunity for architectural improvement lies in how we handle classification and routing.
+
+### The Core Architectural Tension: Static Logic vs. Dynamic Reality
+
+The current system, while effective, has a central point of fragility: its classification and routing logic is **hardcoded in constant arrays**.
+
+```typescript
+const UKRAINE_KEYWORDS = [ 'Ukraine', 'Ukrainer', 'Flüchtlinge', ... ];
+const SOCIAL_KEYWORDS = [ 'Jobcenter', 'Bürgergeld', ... ];
+const EVENT_KEYWORDS = [ 'Konzert', 'Event', ... ];
+const BLOCKLIST = [ 'Gossip', 'Promi', ... ];
+```
+
+This approach is a "Good" starting point, but it creates a bottleneck for growth, maintenance, and intelligence.
+
+*   **Brittleness:** A new, crucial term (e.g., a new government program) requires a developer to edit code, commit, and redeploy the entire orchestrator.
+*   **Scalability:** As we add more categories or support new languages, these arrays will become unmanageable. The logic to process them will grow in complexity.
+*   **Lack of Nuance:** Every keyword has equal weight. "Gesetz" (law) is treated with the same importance as "Bundestag" (parliament), even though one might be more indicative of a critical policy change. An article mentioning a "cancelled concert" will be flagged as `FUN` just like an upcoming one.
+
+---
+
+### Architectural Proposal: A Dynamic Classifier Configuration
+
+My proposal is to **decouple the classification rules from the application logic**. We will move the "what to look for" into the database (Supabase), transforming the orchestrator from a static script into a dynamic engine that runs on a configurable ruleset.
+
+This is an additive change that perfectly aligns with our existing stack.
+
+#### 1. The Database Schema: `classifier_rules`
+
+We will create a new table in Supabase to house our classification logic.
+
+**Table: `classifier_rules`**
+
+| Column         | Type         | Description                                                                  |
+| :------------- | :----------- | :--------------------------------------------------------------------------- |
+| `id`           | `uuid`       | Primary Key.                                                                 |
+| `topic`        | `text`       | A machine-readable topic name (e.g., `POLICY_LEGAL`, `BENEFITS_SOCIAL`).       |
+| `keyword`      | `text`       | The specific word or phrase to match.                                        |
+| `weight`       | `integer`    | A score. Positive for inclusion, negative for blocking (e.g., `10`, `-50`).   |
+| `type`         | `text`       | The news type this rule contributes to (`IMPORTANT`, `INFO`, `FUN`).         |
+| `is_blocker`   | `boolean`    | If `true` and matched, immediately disqualifies the article.                 |
+| `language`     | `varchar(2)` | The language of the keyword (e.g., `de`, `uk`). Default `de`.                |
+| `created_at`   | `timestamptz`|                                                                              |
+
+**Example Rows:**
+
+| topic          | keyword         | weight | type      | is_blocker |
+| :------------- | :-------------- | :----- | :-------- | :--------- |
+| `POLICY_LEGAL` | `Gesetz`        | 10     | `IMPORTANT` | `false`    |
+| `POLICY_LEGAL` | `Bundestag`     | 5      | `IMPORTANT` | `false`    |
+| `POLICY_LEGAL` | `Verordnung`    | 15     | `IMPORTANT` | `false`    |
+| `CULTURE_EVENT`| `Konzert`       | 10     | `FUN`       | `false`    |
+| `CULTURE_EVENT`| `abgesagt`      | -20    | `FUN`       | `false`    |
+| `NOISE`        | `Horoskop`      | 0      | `N/A`       | `true`     |
+
+#### 2. The Refactored Orchestrator Logic
+
+The orchestrator will now begin its lifecycle by fetching and caching these rules.
+
+**Step 1: Cache Rules on Startup**
+
+At the top of the script, we'll add a function to load all active rules into memory. This avoids hitting the DB for every single article.
+
+```typescript
+// At the top level of the script
+let CLASSIFIER_RULES: any[] = [];
+
+async function loadClassifierRules() {
+    console.log('Loading classifier rules from Supabase...');
+    const { data, error } = await supabase.from('classifier_rules').select('*');
+    if (error) {
+        console.error('FATAL: Could not load classifier rules!', error);
+        process.exit(1); // or implement a retry mechanism
+    }
+    CLASSIFIER_RULES = data;
+    console.log(`Successfully loaded ${CLASSIFIER_RULES.length} rules.`);
+}
+
+// Call this before the main loop starts
+await loadClassifierRules();
+```
+
+**Step 2: Refactor the Classification Stage**
+
+The core filtering/classification logic will be replaced. Instead of checking against hardcoded arrays, we'll implement a scoring system.
+
+```typescript
+function classifyItem(item: ProcessedItem): { score: number; type: NewsType; topics: string[]; is_blocked: boolean } {
+    const text = `${item.raw.title} ${item.raw.text}`.toLowerCase();
+    let totalScore = 0;
+    const topicScores: Record<string, number> = {};
+    let primaryType: NewsType = 'INFO'; // Default
+    let highestScore = 0;
+
+    for (const rule of CLASSIFIER_RULES) {
+        // Use the existing robust word boundary check
+        if (wordBoundaryIncludes(text, rule.keyword)) {
+            if (rule.is_blocker) {
+                return { score: -999, type: 'INFO', topics: [], is_blocked: true };
+            }
+
+            // Add to the score for the specific topic
+            topicScores[rule.topic] = (topicScores[rule.topic] || 0) + rule.weight;
+            totalScore += rule.weight;
+
+            // Determine the primary type based on the highest-scoring rule matched
+            if (rule.weight > highestScore) {
+                highestScore = rule.weight;
+                primaryType = rule.type as NewsType;
+            }
+        }
+    }
+
+    // Identify all topics that meet a minimum threshold
+    const matchedTopics = Object.entries(topicScores)
+        .filter(([, score]) => score > 5) // Example threshold
+        .map(([topic]) => topic);
+
+    return { score: totalScore, type: primaryType, topics: matchedTopics, is_blocked: false };
+}
+```
+
+This new function would replace the multiple checks against `ALL_STRICT_KEYWORDS`, `EVENT_KEYWORDS`, and `BLOCKLIST`. The `classifyAndRoute` stage becomes much cleaner and more powerful.
+
+### Synergy: How This Improvement Elevates the Whole System
+
+1.  **HARMONY (Fits Existing Patterns):**
+    *   This solution uses Supabase as the source of truth, which is already central to our stack.
+    *   It leverages TypeScript and the existing helper functions (`wordBoundaryIncludes`).
+    *   It's a pure backend change, respecting the `server-safe` principle.
+
+2.  **NON-BREAKING (Additive Refactor):**
+    *   We can migrate incrementally. The old keyword arrays can coexist while we populate the `classifier_rules` table. We can run the new scoring logic in "shadow mode," logging its decisions without acting on them, to fine-tune weights before switching over.
+
+3.  **SYNERGY (Improves Other Parts):**
+    *   **Code Simplification:** The massive, hardcoded keyword arrays are **deleted**. This makes the orchestrator code shorter, cleaner, and focused on *process*, not *data*.
+    *   **Operational Agility:** This is the biggest win. A non-technical team member could eventually be given a simple admin interface (e.g., using Retool or a simple web app) to tweak the news feed's focus. Want to prioritize news about a new visa program? Add a rule with a high weight. Seeing too much spam about a specific topic? Add a negative weight or a blocker rule. **This happens in real-time, with no code deployment.**
+    *   **Smarter AI Prompts:** The classification is now more nuanced. Instead of just knowing an article is "IMPORTANT," we might know it scored highly for `POLICY_LEGAL` and `BENEFITS_SOCIAL`. This allows us to generate much more specific prompts for the `AI_ENRICH` stage, leading to better summaries and action extraction.
+    *   **Foundation for Self-Healing:** The `auto-healer` now has a target for its suggestions. It could analyze published articles and suggest new keywords or identify rules that consistently lead to low-engagement articles, proposing their `weight` be lowered.
+
+By moving classification logic into the database, we transform a static script into a dynamic, intelligent, and far more maintainable system. This is the single most impactful architectural improvement we can make to elevate this project from "Good" to "Great".

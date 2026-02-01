@@ -2546,3 +2546,141 @@ This single change has a cascading positive impact across the entire system.
     *   **Enabling True Auto-Healing:** The `runAutoHealer` function, currently a placeholder, gains a clear purpose. It could analyze processed articles and identify keywords that frequently lead to low-value or discarded news. It could then programmatically *lower the weight* or set `is_active = false` for that keyword in the `config_keywords` table, allowing the system to heal and adapt itself over time.
 
 By moving configuration to the database, we are not just cleaning up constants. We are laying the foundation for a more intelligent, adaptable, and self-improving news pipeline that can be managed and scaled effectively. This is the architectural leap from a good, functional script to a great, resilient service.
+
+## Critique 2026-02-01T09:03:58.474Z
+Excellent. This is a well-structured and significantly improved orchestrator. The comments alone, detailing the 12 specific improvements, demonstrate a mature approach to refactoring. The move to a server-side, provider-agnostic, and more robust processing pipeline is a huge step forward.
+
+You have a "Good" system. Let's talk about how to make it "Great".
+
+My critique focuses on a single, powerful architectural shift that will enhance robustness, enable self-healing, and improve maintainability, all while adhering to your project's principles.
+
+### The Core Idea: Decouple Configuration from Code
+
+The current implementation, while clean, hard-codes a significant amount of business logic and configuration directly into the TypeScript files. This includes the source registry, keyword lists, and blocklists.
+
+**This is "Good"** because it's simple, version-controlled, and explicit.
+**This becomes "Great"** when this configuration is moved into the database (Supabase), transforming the orchestrator from a static script into a dynamic, data-driven application.
+
+My primary recommendation is to **migrate the `SOURCE_REGISTRY` into a Supabase table.**
+
+---
+
+### The Problem: Static, Code-Based Source Management
+
+Currently, `SOURCE_REGISTRY` is imported from a static file (`./registries/source-registry`). This implies a structure like this:
+
+```typescript
+// In source-registry.ts (example)
+export const SOURCE_REGISTRY = {
+  TAGESSCHAU: { url: '...', city: 'berlin', ... },
+  DW: { url: '...', country: 'germany', ... },
+  // ... and so on
+};
+```
+
+This approach has several architectural limitations:
+
+1.  **Rigidity:** Adding, disabling, or modifying a source requires a code change, a git commit, and a full redeployment. This is slow and requires developer intervention for what is essentially an administrative task.
+2.  **Lack of State:** The system has no memory of a source's health. If the `TAGESSCHAU` RSS feed is down, the orchestrator will try to fetch it on every single run, failing each time. There is no mechanism to temporarily "deactivate" a problematic source without a code change.
+3.  **Limited Granularity:** All sources are treated equally. You can't easily specify different polling frequencies, apply source-specific keywords, or assign different priority levels without complicating the static object structure immensely.
+
+### The Solution: A Dynamic `sources` Table in Supabase
+
+Let's model the source registry as data, not code. Create a `sources` table in Supabase.
+
+**Proposed `sources` Table Schema:**
+
+| Column | Type | Description |
+| :--- | :--- | :--- |
+| `id` | `uuid` (pk) | Primary Key |
+| `source_id` | `text` (unique) | The human-readable ID (e.g., 'TAGESSCHAU', 'BERLIN_DE'). |
+| `name` | `text` | Display name (e.g., "Tagesschau Inland", "Berlin.de News"). |
+| `url` | `text` | The RSS feed URL. |
+| `is_active` | `boolean` | **Crucial field.** Allows enabling/disabling a source via the DB. |
+| `last_polled_at` | `timestamptz` | When this source was last successfully fetched. |
+| `polling_interval_minutes` | `integer` | (Future-proofing) How often to poll this source. |
+| `error_count` | `integer` | Number of consecutive fetch failures. |
+| `metadata` | `jsonb` | For source-specific rules (e.g., `{"city": "berlin"}`). |
+
+**How the Orchestrator Changes:**
+
+The main processing loop no longer starts with a static list. It begins with a query to Supabase.
+
+**Before (Conceptual):**
+
+```typescript
+// main.ts
+import { SOURCE_REGISTRY } from './registries/source-registry';
+
+async function orchestrate() {
+    const sourcesToProcess = Object.values(SOURCE_REGISTRY);
+    for (const source of sourcesToProcess) {
+        // ... process source
+    }
+}
+```
+
+**After (Conceptual):**
+
+```typescript
+// main.ts
+import { supabase } from './supabaseClient';
+
+async function orchestrate() {
+    // 1. Fetch only active sources from the database
+    const { data: sourcesToProcess, error } = await supabase
+        .from('sources')
+        .select('*')
+        .eq('is_active', true);
+
+    if (error || !sourcesToProcess) {
+        console.error("Could not fetch sources from DB.", error);
+        return;
+    }
+
+    // 2. Process them
+    for (const source of sourcesToProcess) {
+        try {
+            // ... process source (using source.url, source.source_id, etc.)
+            
+            // On success, update its status
+            await supabase.from('sources').update({ 
+                last_polled_at: new Date().toISOString(),
+                error_count: 0 
+            }).eq('id', source.id);
+
+        } catch (e) {
+            // On failure, increment error count
+            const newErrorCount = (source.error_count || 0) + 1;
+            await supabase.from('sources').update({ 
+                error_count: newErrorCount 
+            }).eq('id', source.id);
+        }
+    }
+}
+```
+
+---
+
+### Architectural Benefits of This Change
+
+This single change creates a cascade of positive effects, directly addressing robustness and self-healing.
+
+1.  **Dynamic Control & Operability:**
+    *   You can add, remove, or temporarily disable a news source by flipping a boolean in a database table. **No deployment is required.**
+    *   This paves the way for a simple admin UI (using Supabase's built-in interface or a simple frontend) for non-developers to manage the news feeds.
+
+2.  **Enhanced Robustness & Self-Healing (Synergy with `auto-healer`):**
+    *   The `error_count` field is now the foundation for self-healing. Your `runAutoHealer` function is no longer an abstract concept; it has a clear purpose.
+    *   **Auto-Healer Logic:** A simple cron job or a step in your orchestrator can run a query like: `UPDATE sources SET is_active = false WHERE error_count > 5;`. This automatically disables broken sources, making the entire system more efficient and resilient to external failures.
+    *   The system can also self-recover by periodically attempting to poll `is_active = false` sources and resetting their status on success.
+
+3.  **Improved Observability & Statefulness:**
+    *   The orchestrator becomes stateful. You know exactly when each source was last checked, if it's failing, and why. This is invaluable for debugging.
+
+4.  **Scalability & Granularity:**
+    *   The `metadata` JSONB field allows for source-specific overrides. You could add custom keywords, define a different relevance threshold, or specify routing hints for a particular source, all without changing the orchestrator's core logic.
+
+### Conclusion
+
+Migrating the `SOURCE_REGISTRY` from a static code file to a dynamic Supabase table is a classic architectural improvement that moves your system from a "script" to a "service". It decouples the "what" (the sources) from the "how" (the processing logic). This change is non-breaking in spirit, harmonizes perfectly with your existing Supabase/TypeScript stack, and creates powerful synergistic opportunities for a truly robust and self-healing news pipeline. This is the path from a "Good" solution to a "Great" one.

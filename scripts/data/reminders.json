@@ -1,10 +1,10 @@
 {
-    "reminders": [
-        {
-            "id": "init-1",
-            "cron": "0 8 * * *",
-            "message": "🌅 Good morning! Here are the latest AI architectural suggestions.",
-            "type": "system"
-        }
-    ]
+  "reminders": [
+    {
+      "id": "init-1",
+      "cron": "0 8 * * *",
+      "message": "🌅 Good morning! Here are the latest AI architectural suggestions.",
+      "type": "system"
+    }
+  ]
 }

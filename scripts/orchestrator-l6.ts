@@ -469,15 +469,20 @@ const firebaseApp = initializeApp(firebaseConfig, 'orchestratorApp');
 /**
  * Real Vertex/Gemini Implementation (Firebase SDK)
  */
+/**
+ * Real Vertex/Gemini Implementation (Server-Side SDK)
+ * Uses the same robust auth as Secretary Bot
+ */
 async function callVertex_JSON(text: string, title: string): Promise<AIEnrichResult> {
+    // Lazy import to avoid startup overhead if mocked
+    const { VertexAI } = await import('@google-cloud/vertexai');
 
-    // Initialize Vertex AI service with new API (Firebase v12.8+)
-    const ai = getAI(firebaseApp, {
-        backend: new VertexAIBackend('us-central1')
-    });
+    const project = process.env.GOOGLE_PROJECT_ID || 'claude-vertex-prod';
+    const location = process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
 
-    const model = getGenerativeModel(ai, {
-        model: process.env.VERTEX_MODEL || 'gemini-2.5-pro', // User preference
+    const vertexAI = new VertexAI({ project, location });
+    const model = vertexAI.getGenerativeModel({
+        model: process.env.VERTEX_MODEL || 'gemini-2.5-pro',
         generationConfig: { responseMimeType: "application/json" }
     });
 
@@ -499,7 +504,9 @@ INPUT TEXT: ${text}
 
     try {
         const result = await model.generateContent(prompt);
-        const responseText = result.response.text();
+        // Handle various response structures
+        const candidate = result.response.candidates?.[0];
+        const responseText = candidate?.content?.parts?.[0]?.text || "";
 
         if (!responseText) throw new Error('Empty response from Vertex');
 
@@ -514,7 +521,7 @@ INPUT TEXT: ${text}
             reasonTag: parsed.reasonTag
         };
     } catch (error) {
-        console.error('❌ Vertex (Firebase) Generation Failed:', error);
+        console.error('❌ Vertex (Server) Generation Failed:', error);
         return fallbackMock(text, title);
     }
 }

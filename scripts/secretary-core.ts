@@ -18,8 +18,23 @@ if (!fs.existsSync(DATA_DIR)) {
 const INBOX_PATH = path.join(DATA_DIR, 'inbox.json');
 const REMINDERS_PATH = path.join(DATA_DIR, 'reminders.json');
 const STATE_PATH = path.join(DATA_DIR, 'state.json');
+const PHOTOS_DIR = path.join(DATA_DIR, 'photos');
+const DOCS_DIR = path.join(DATA_DIR, 'documents');
+const VOICE_DIR = path.join(DATA_DIR, 'voice');
 
-// Try to find project knowledge - this might need adjustment based on valid path
+// Ensure data dirs exist
+if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+if (!fs.existsSync(PHOTOS_DIR)) {
+    fs.mkdirSync(PHOTOS_DIR, { recursive: true });
+}
+if (!fs.existsSync(DOCS_DIR)) {
+    fs.mkdirSync(DOCS_DIR, { recursive: true });
+}
+if (!fs.existsSync(VOICE_DIR)) {
+    fs.mkdirSync(VOICE_DIR, { recursive: true });
+}
 const PROJECT_KNOWLEDGE_PATH = path.join(__dirname, '..', '..', 'brain', 'project_knowledge.md');
 
 // -- TYPES --
@@ -232,7 +247,14 @@ export async function runSecretaryCore(options: {
                             const imgBuf = await (await fetch(imgUrl)).arrayBuffer();
                             const base64Img = Buffer.from(imgBuf).toString('base64');
 
-                            await sendTelegramMessage("👁️ Analüüsin pilti...");
+                            // SAVE IMAGE LOCALLY
+                            const photoId = generateId('photo');
+                            const photoFilename = `${photoId}.jpg`;
+                            const photoPath = path.join(PHOTOS_DIR, photoFilename);
+                            fs.writeFileSync(photoPath, Buffer.from(imgBuf));
+                            console.log(`📸 Saved photo to: ${photoPath}`);
+
+                            await sendTelegramMessage("👁️ Pilt salvestatud. Analüüsin...");
                             const vertexAI = new VertexAI({ project: process.env.GOOGLE_PROJECT_ID, location: process.env.GOOGLE_CLOUD_LOCATION || 'us-central1' });
                             const model = vertexAI.getGenerativeModel({ model: 'gemini-2.5-pro' });
 
@@ -240,7 +262,7 @@ export async function runSecretaryCore(options: {
                                 contents: [{
                                     role: 'user',
                                     parts: [
-                                        { text: "Analyze this image. If it contains text or a task, extract it as a command for a personal secretary. Respond ONLY with the command text." },
+                                        { text: "Analyze this image in detail. Describe everything you see: text, UI elements, objects, and context. If it is a screenshot, explain what is happening. Respond in Russian/Estonian as appropriate for the user." },
                                         { inlineData: { mimeType: 'image/jpeg', data: base64Img } }
                                     ]
                                 }]
@@ -250,18 +272,129 @@ export async function runSecretaryCore(options: {
                             text = res.response.candidates?.[0]?.content?.parts?.[0]?.text || "";
                             isVision = true;
 
-                            await sendTelegramMessage(`👁️ Pilt analüüsitud. Salvestan info: "${text.substring(0, 50)}..."`);
+                            await sendTelegramMessage(`👁️ **Pildi Analüüs:**\n${text}`);
 
                             inbox.push({
                                 id: generateId('img'),
                                 created_at: new Date().toISOString(),
                                 raw_text: `[IMAGE_CONTEXT] ${text}`,
-                                processed: false
+                                processed: false,
+                                result: `Saved to ${photoFilename}`
                             });
                         }
                     } catch (err) {
                         console.error("Vision Error:", err);
                         await sendTelegramMessage("❌ Viga pildi analüüsimisel.");
+                    }
+                }
+
+                // Handle DOCUMENT (PDF, etc.)
+                if (msg.document) {
+                    const doc = msg.document;
+                    const fileId = doc.file_id;
+                    const token = process.env.TELEGRAM_BOT_TOKEN;
+
+                    try {
+                        const fRes = await fetch(`https://api.telegram.org/bot${token}/getFile?file_id=${fileId}`);
+                        const fData = await fRes.json();
+                        if (fData.ok) {
+                            const remotePath = fData.result.file_path;
+                            const fileUrl = `https://api.telegram.org/file/bot${token}/${remotePath}`;
+                            const fileBuf = await (await fetch(fileUrl)).arrayBuffer();
+
+                            // Use original name or generated
+                            const originalName = doc.file_name || `doc_${Date.now()}.pdf`;
+                            const safeName = originalName.replace(/[^a-zA-Z0-9._-]/g, '_');
+                            const savePath = path.join(DOCS_DIR, safeName);
+
+                            fs.writeFileSync(savePath, Buffer.from(fileBuf));
+                            console.log(`📄 Saved document to: ${savePath}`);
+                            await sendTelegramMessage(`📄 Dokument salvestatud: ${safeName}\n🧠 Analüüsin sisu...`);
+
+                            // AI ANALYSIS
+                            const vertexAI = new VertexAI({ project: process.env.GOOGLE_PROJECT_ID, location: process.env.GOOGLE_CLOUD_LOCATION || 'us-central1' });
+                            const model = vertexAI.getGenerativeModel({ model: 'gemini-2.5-pro' });
+
+                            const req = {
+                                contents: [{
+                                    role: 'user',
+                                    parts: [
+                                        { text: "Analyze this document. Summarize its content concisely and extract any action items, dates, or deadlines. Respond in Russian/Estonian as appropriate." },
+                                        { inlineData: { mimeType: 'application/pdf', data: Buffer.from(fileBuf).toString('base64') } }
+                                    ]
+                                }]
+                            };
+
+                            const res = await model.generateContent(req);
+                            const analysis = res.response.candidates?.[0]?.content?.parts?.[0]?.text || "No analysis generated.";
+
+                            await sendTelegramMessage(`📄 **Analüüs:**\n${analysis}`);
+
+                            inbox.push({
+                                id: generateId('doc'),
+                                created_at: new Date().toISOString(),
+                                raw_text: `[DOCUMENT] ${safeName} - ${analysis}`,
+                                processed: true,
+                                result: `Saved & Analyzed: ${savePath}`
+                            });
+                        }
+                    } catch (e) {
+                        console.error("Doc Error:", e);
+                        await sendTelegramMessage("❌ Viga dokumendi salvestamisel.");
+                    }
+                }
+
+                // Handle VOICE
+                if (msg.voice) {
+                    const voice = msg.voice;
+                    const fileId = voice.file_id;
+                    const token = process.env.TELEGRAM_BOT_TOKEN;
+
+                    try {
+                        const fRes = await fetch(`https://api.telegram.org/bot${token}/getFile?file_id=${fileId}`);
+                        const fData = await fRes.json();
+                        if (fData.ok) {
+                            const remotePath = fData.result.file_path; // usually voice/file_x.oga
+                            const fileUrl = `https://api.telegram.org/file/bot${token}/${remotePath}`;
+                            const fileBuf = await (await fetch(fileUrl)).arrayBuffer();
+
+                            const filename = `voice_${Date.now()}.ogg`;
+                            const savePath = path.join(VOICE_DIR, filename);
+
+                            fs.writeFileSync(savePath, Buffer.from(fileBuf));
+                            console.log(`mic Saved voice to: ${savePath}`);
+                            await sendTelegramMessage(`🎤 Häälsõnum salvestatud: ${filename}\n🧠 Transkribeerin...`);
+
+                            // AI TRANSCRIPTION
+                            const vertexAI = new VertexAI({ project: process.env.GOOGLE_PROJECT_ID, location: process.env.GOOGLE_CLOUD_LOCATION || 'us-central1' });
+                            const model = vertexAI.getGenerativeModel({ model: 'gemini-2.5-pro' });
+
+                            const req = {
+                                contents: [{
+                                    role: 'user',
+                                    parts: [
+                                        { text: "Transcribe this audio message exactly. Then, if it contains a task or request, summarize it briefly. Respond in the language of the audio." },
+                                        { inlineData: { mimeType: 'audio/ogg', data: Buffer.from(fileBuf).toString('base64') } }
+                                    ]
+                                }]
+                            };
+
+                            const res = await model.generateContent(req);
+                            const transcription = res.response.candidates?.[0]?.content?.parts?.[0]?.text || "No transcription.";
+
+                            await sendTelegramMessage(`🎤 **Transkriptsioon:**\n${transcription}`);
+
+                            inbox.push({
+                                id: generateId('voice'),
+                                created_at: new Date().toISOString(),
+                                raw_text: `[VOICE] ${filename} - ${transcription}`,
+                                processed: true,
+                                result: `Saved & Transcribed: ${savePath}`
+                            });
+                        }
+                    } catch (e) {
+                        console.error("Voice Error:", e);
+                        await sendTelegramMessage("❌ Viga häälsõnumi salvestamisel.");
                     }
                 }
 

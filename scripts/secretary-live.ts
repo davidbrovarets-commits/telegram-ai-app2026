@@ -1,5 +1,14 @@
 
-import 'dotenv/config'; // Ensure env vars are loaded locally
+import 'dotenv/config';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// FORCE OVERRIDE of system credentials for this process
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const KEY_PATH = path.join(__dirname, '..', 'claude-vertex-prod-firebase-adminsdk-fbsvc-1cbb42469e.json');
+process.env.GOOGLE_APPLICATION_CREDENTIALS = KEY_PATH;
+console.log(`🔑 Forced Credentials: ${process.env.GOOGLE_APPLICATION_CREDENTIALS}`);
+
 import { runSecretaryCore } from './secretary-core';
 
 // This is the Live version (Local)

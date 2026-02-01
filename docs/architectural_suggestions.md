@@ -344,3 +344,113 @@ async function main() {
     *   **Maintainability:** Want to add a new deduplication step before the AI enrichment? Create a `DeduplicationStage` class and insert `new DeduplicationStage()` into the `pipeline` array. No other code needs to change. The logic is decoupled.
     *   **Testability:** Each stage is now a standalone unit. You can write a unit test for `FilterStage` by passing it a mock `ProcessedItem` and asserting the output, without needing to make a real HTTP request or call an AI.
     *   **Observability:** The `runPipeline` function is the perfect place to add detailed logging, giving you a clear trace of each item's journey through the stages. This is invaluable for debugging why a specific article was dropped or improperly classified.
+
+## Critique 2026-02-01T00:08:46.647Z
+Excellent. This is a well-structured and thoughtfully refactored orchestrator. The initial 12 improvements have already addressed major concerns like server-side execution, provider abstraction, and data handling. It's a "Good" system. My goal is to propose a single, synergistic improvement to make it "Great."
+
+## Architectural Critique: From Stateless Orchestration to a Resilient, State-Aware Pipeline
+
+The current orchestrator operates as a robust, in-memory batch processor. It fetches data, processes it through a series of sequential steps within a single run, and bulk-inserts the final product. This is efficient for a single, successful execution.
+
+However, its primary architectural weakness is its **stateless nature between runs**. If the process fails at the `AI_ENRICH` stage (e.g., due to an extended provider outage or a fatal bug), all the preceding work of that run—collection, filtering, routing, deduplication—is lost. The next run must start from scratch, re-fetching and re-processing every article from the RSS feeds, including those that were nearly complete.
+
+This is an opportunity to evolve the architecture from a simple script into a truly resilient and observable data pipeline.
+
+---
+
+### The "Good": A Robust In-Memory State Machine
+
+The current design brilliantly uses the `ProcessedItem` interface with its `stage` property as an in-memory state machine. Each item's journey through the various functions (`collect`, `filter`, `route`, etc.) is tracked. The stable, hashed `id` is a cornerstone of this, providing idempotency for the final database insertion. This foundation is solid.
+
+### The "Great": A Persistent, State-Aware Pipeline
+
+The proposal is to **persist the state of each `ProcessedItem` in Supabase throughout its lifecycle**, not just at the end. This transforms the orchestrator from a transient script into a durable, fault-tolerant pipeline.
+
+We will introduce a new Supabase table, let's call it `processing_queue`, which mirrors the `ProcessedItem` structure.
+
+#### Revised Workflow:
+
+1.  **Collect & Persist:** The `collect` stage fetches RSS items as before. However, instead of holding them in a memory array, it immediately performs a bulk `upsert` into the `processing_queue` table with `stage: 'COLLECT'`. The `onConflict` clause would be on the `id`, preventing duplicates from being added if a previous run was interrupted.
+
+2.  **Process by Stage:** Each subsequent processing step is no longer a simple array transformation. Instead, it becomes a function that:
+    a. **Queries** the `processing_queue` for a batch of items at the appropriate stage (e.g., `SELECT * FROM processing_queue WHERE stage = 'COLLECT' LIMIT 100`).
+    b. **Processes** the batch.
+    c. **Updates** the stage of the processed items in the table (e.g., `UPDATE processing_queue SET stage = 'FILTER', classification = ... WHERE id = ...`).
+
+3.  **Finalization:** The final step queries for items in the `AI_ENRICH` stage, processes them, and upon success:
+    a. Inserts the final, clean data into the main `news` table.
+    b. **Deletes** the corresponding item from the `processing_queue` table.
+
+#### Implementation Sketch (Illustrating the Shift)
+
+Let's refactor a part of the main orchestrator logic to reflect this new, state-aware pattern.
+
+```typescript
+// (Inside runOrchestrator or a new dedicated function)
+
+// STAGE 1: Collect
+// This function remains similar, but its final action is to save to the queue.
+async function runCollectStage() {
+    // ... logic to fetch from all sources and create initial ProcessedItems ...
+    const { data, error } = await supabase
+        .from('processing_queue')
+        .upsert(collectedItems, { onConflict: 'id', ignoreDuplicates: true });
+
+    if (error) console.error('Error persisting initial items to queue:', error);
+    console.log(`Collected and queued ${data?.length || 0} new items.`);
+}
+
+
+// STAGE 2: Filter & Route
+// This function now reads from the database, not a memory array.
+async function runFilterAndRouteStage() {
+    const { data: itemsToFilter, error } = await supabase
+        .from('processing_queue')
+        .select('*')
+        .eq('stage', 'COLLECT')
+        .limit(200); // Process in batches
+
+    if (error || !itemsToFilter) return;
+
+    const updates: Partial<ProcessedItem>[] = [];
+    for (const item of itemsToFilter) {
+        // ... existing filtering and routing logic is applied here ...
+        // Let's assume it passes and is routed.
+        const updatedItem = {
+            ...item,
+            stage: 'ROUTE', // Or 'FILTER_FAILED'
+            routing: { /* ... */ },
+            classification: { /* ... */ },
+        };
+        updates.push(updatedItem);
+    }
+    
+    // Bulk update the stage and data for the processed batch
+    const { error: updateError } = await supabase
+      .from('processing_queue')
+      .upsert(updates, { onConflict: 'id' });
+
+    if (updateError) console.error('Error updating filtered items:', updateError);
+}
+
+// ... and so on for each stage (DEDUP, AI_ENRICH) ...
+
+// The final stage would move the item to the 'news' table and delete from 'processing_queue'.
+```
+
+### Synergistic Benefits of This Architecture
+
+This single change creates a cascade of improvements across the system, fulfilling the **HARMONY**, **NON-BREAKING**, and **SYNERGY** constraints.
+
+1.  **True Self-Healing (Synergy):** The `runAutoHealer` function is no longer an abstract concept. It can now be a simple, focused process that queries the `processing_queue` for items that have been "stuck" in a stage (e.g., `stage = 'AI_ENRICH'` and `updated_at < NOW() - '1 hour'`). It can then retry them, perhaps with an incremental `retry_count` column added to the table.
+
+2.  **Enhanced Observability (Synergy):** Your Supabase dashboard instantly becomes a pipeline monitoring tool. You can build views to answer critical questions:
+    *   How many articles are pending in each stage?
+    *   What is the failure rate at the AI enrichment step?
+    *   Which sources are producing the most articles that fail filtering?
+
+3.  **Decoupled & Scalable Workers (Harmony):** This architecture paves the way for future scaling. The monolithic `runOrchestrator` function can be broken down into smaller, independent Cloud Functions/Edge Functions. One function could handle `COLLECT`, another could handle `AI_ENRICH`. They don't need to know about each other; they only need to read from and write to the `processing_queue` table, fully embracing a distributed, event-driven pattern that fits perfectly with the Supabase ecosystem.
+
+4.  **Increased Efficiency:** By persisting state, you eliminate redundant work. A network blip during the AI step no longer requires re-running the entire fetch and filter process for hundreds of articles. The next run simply picks up where the last one left off.
+
+This proposal doesn't rewrite the core logic; it *re-platforms* it. It leverages the existing `stage` property and Supabase infrastructure to create a system that is not only robust in its execution but also resilient in its operation. It's a foundational shift that elevates the project from a "good" script to a "great," production-grade data pipeline.

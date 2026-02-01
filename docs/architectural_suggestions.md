@@ -1539,3 +1539,122 @@ This is more than just adding a table; it fundamentally changes the system's cha
 4.  **Harmony with Existing Code:** This proposal builds directly on what's already there. The `ProcessingStage` enum becomes the central pillar of the new design. The existing logic for filtering, routing, and AI interaction can be lifted and placed into the new worker functions with minimal changes. It uses Supabase, fitting the existing stack perfectly.
 
 By implementing this stateful pipeline, we evolve the orchestrator from a fragile script into a robust, scalable, and observable workflow engine, ready for production workloads.
+
+## Critique 2026-02-01T02:42:51.171Z
+Excellent. The provided code demonstrates a significant level of thought and a clear evolution toward a robust system. The 12 listed improvements are all high-value changes that address common pitfalls in data processing pipelines. The code is clean, well-structured, and shows a strong grasp of modern TypeScript and server-side best practices.
+
+My role is to find what's "Good" and propose a path to make it "Great." The current architecture is a well-designed, sequential, in-memory pipeline. This is perfectly fine for many scenarios, but its primary weakness is its ephemeral nature. Let's focus on an architectural improvement that introduces resilience and turns the pipeline into a truly self-healing system.
+
+### Architectural Critique: Ephemeral In-Memory Processing
+
+The current design appears to operate as a single, monolithic run:
+1.  Fetch all articles from all sources.
+2.  Process them through a series of in-memory transformations (`FILTER`, `CLASSIFY`, `AI_ENRICH`, etc.).
+3.  Bulk-insert the final results into Supabase.
+
+This is efficient for a single, successful run. However, it's vulnerable. If the orchestrator crashes mid-way through—perhaps due to a network error during an AI call, a malformed article causing a parsing error, or the host process being terminated—all the work done on that batch is lost. The next run will start from scratch, potentially re-processing items that were almost finished.
+
+---
+
+### The Proposal: A Persistent, State-Driven Orchestrator
+
+The "Great" version of this orchestrator would not treat a run as a single, all-or-nothing transaction. Instead, it would treat each *article* as a stateful entity whose progress is persisted through the pipeline. The `ProcessingStage` type is the key to unlocking this.
+
+I propose we transition from an in-memory pipeline to a **database-backed state machine**. Each processing stage becomes a transactional update in the database.
+
+#### How It Works
+
+Instead of passing an array of `ProcessedItem` objects from one function to the next in memory, we use the database as the "message bus" and source of truth.
+
+1.  **Stage 0: Ingestion (`COLLECT`)**
+    *   The orchestrator fetches RSS feeds as it does now.
+    *   For each new article, it creates a `ProcessedItem` with `stage: 'COLLECT'`.
+    *   It **immediately inserts these items into a Supabase table** (e.g., `news_pipeline`). This acts as our durable "inbox." The `id` (hash of the URL) prevents duplicates at the entry point.
+
+2.  **Stage 1+: Asynchronous Workers**
+    *   Separate, stateless functions (or "workers") are responsible for advancing items from one stage to the next.
+    *   A `filterWorker` would query the database: `SELECT * FROM news_pipeline WHERE stage = 'COLLECT' LIMIT 10;`.
+    *   For each item, it applies the filtering logic.
+        *   If an item is rejected, it updates its stage: `UPDATE news_pipeline SET stage = 'DROPPED', meta = '{"reason": "BLOCKLIST_MATCH"}' WHERE id = ...;`.
+        *   If an item passes, it updates its stage: `UPDATE news_pipeline SET stage = 'FILTER' WHERE id = ...;`.
+    *   An `enrichmentWorker` would query for items in the `PUBLISHED_AT` stage. It would perform the AI call and, in a single transaction, update the item with the summary, title, and new stage: `UPDATE news_pipeline SET classification = ..., stage = 'AI_ENRICH' WHERE id = ...;`.
+
+This pattern continues for all stages until `DONE`.
+
+#### A Simplified Worker Function Example:
+
+```typescript
+// This function could be a Supabase Edge Function or part of a Node.js cron job.
+
+async function processStage(
+    fromStage: ProcessingStage,
+    toStage: ProcessingStage,
+    workerLogic: (item: ProcessedItem) => Promise<Partial<ProcessedItem>>
+) {
+    // 1. Fetch a batch of items ready for this stage
+    const { data: items, error } = await supabase
+        .from('news_pipeline')
+        .select('*')
+        .eq('stage', fromStage)
+        .limit(5); // Process in small, manageable batches
+
+    if (error) {
+        console.error(`Error fetching items for stage ${fromStage}:`, error);
+        return;
+    }
+
+    // 2. Process each item
+    for (const item of items) {
+        try {
+            const updates = await workerLogic(item as ProcessedItem);
+
+            // 3. Atomically update the item with new data and the next stage
+            const { error: updateError } = await supabase
+                .from('news_pipeline')
+                .update({ ...updates, stage: toStage, updated_at: nowIso() })
+                .eq('id', item.id);
+
+            if (updateError) {
+                console.error(`Failed to transition item ${item.id} to ${toStage}:`, updateError);
+                // The item remains in `fromStage` to be retried later.
+            }
+        } catch (workerError) {
+            console.error(`Worker logic failed for item ${item.id} at stage ${fromStage}:`, workerError);
+            // Optionally, move to an 'ERROR' stage to prevent infinite retries.
+            await supabase.from('news_pipeline').update({ stage: 'ERROR', meta: { error: workerError.message } }).eq('id', item.id);
+        }
+    }
+}
+
+// How you'd use it:
+// await processStage('COLLECT', 'FILTER', filteringLogic);
+// await processStage('FILTER', 'ROUTE', routingLogic);
+// await processStage('AI_ENRICH', 'DONE', finalizationLogic);
+```
+
+### The Architectural Benefits (Synergy)
+
+1.  **True Robustness & Self-Healing:** If the orchestrator crashes during an AI call, no work is lost. The item simply remains in the `PUBLISHED_AT` stage in the database. When the orchestrator restarts, the `enrichmentWorker` picks it up again. This is the definition of self-healing.
+
+2.  **Enhanced Observability & Debugging:** The `news_pipeline` table becomes a perfect, real-time dashboard of your entire operation. You can easily answer questions like:
+    *   "How many articles are currently waiting for AI enrichment?"
+    *   "Which articles have been stuck in the `FILTER` stage for more than an hour?"
+    *   "Show me all articles that were dropped and why."
+
+3.  **Scalability & Concurrency Control:** This architecture decouples the stages. You can run multiple `filterWorker` instances concurrently because they are fast and stateless. However, you can ensure only one `enrichmentWorker` runs at a time, naturally respecting your `limitAI(1)` constraint without complex in-memory locks.
+
+4.  **Synergy with `runAutoHealer`:** The `runAutoHealer` function now has a clear and powerful purpose. It can be a simple cron job that:
+    *   Finds items stuck in a stage for too long (e.g., `updated_at` is older than 1 hour) and moves them back to the previous stage for a retry.
+    *   Identifies items in an `ERROR` state and sends a notification for manual review.
+
+5.  **Idempotency:** Because each stage transition is based on the current state, re-running a worker on an already-processed item has no effect, making the entire system idempotent and much safer.
+
+### Implementation Path (Non-Breaking)
+
+This is a refactor, not a rewrite. The core business logic inside your filtering, routing, and AI-calling functions remains the same.
+
+1.  **Augment Schema:** Add a `news_pipeline` table to Supabase with fields matching `ProcessedItem` and an `updated_at` timestamp.
+2.  **Refactor Main Loop:** Replace the current in-memory loop with a scheduler that calls the worker functions for each stage in sequence.
+3.  **Wrap Existing Logic:** Encapsulate your current processing functions (e.g., the keyword filtering logic) inside the new worker structure.
+
+By making the database the source of truth for the pipeline's state, you elevate the orchestrator from a "good" script to a "great," production-grade, and resilient ETL system that perfectly aligns with the existing Supabase-centric stack.

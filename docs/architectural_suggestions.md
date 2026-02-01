@@ -822,3 +822,149 @@ This change directly satisfies all project constraints while elevating the archi
     4.  **Increased Robustness:** You can react to a breaking news event or a new spam vector in seconds by adding a row to the database, rather than minutes or hours through a full deployment.
 
 By centralizing business logic into a queryable, extensible, and dynamic data structure, you transform the orchestrator from a static script into a responsive and intelligent platform. This is the next logical step in its architectural evolution.
+
+## Critique 2026-02-01T01:50:28.392Z
+Excellent. This is a well-structured orchestrator, and the comments detailing the recent refactoring show a clear commitment to improvement. The logic is server-safe, abstracts providers, and has already tackled several complex problems like date extraction and concurrency. This is a "Good" foundation.
+
+My goal is to elevate it to "Great" by proposing one architectural improvement that enhances robustness and maintainability.
+
+### Executive Summary: The Core Critique
+
+The current logic, while functionally separated, is orchestrated as a single, monolithic process. The flow of a `ProcessedItem` through its various stages (`COLLECT`, `FILTER`, `CLASSIFY`, etc.) is implicit within the main execution block. This makes the system harder to test, debug, and extend. When a single item fails or is filtered out, tracing *why* and *where* requires digging through logs from the entire run.
+
+### The Architectural Proposal: Formalize the Processing Pipeline
+
+My primary recommendation is to refactor the orchestration logic into an explicit, composable **Pipeline of Stages**. Instead of having one large function that calls a series of helpers, we define each processing step as a self-contained, predictable "Stage" that operates on an array of items.
+
+A stage is simply a function that receives an array of `ProcessedItem`s and returns a (potentially modified) array of `ProcessedItem`s.
+
+#### 1. Why is this a "Great" solution?
+
+The current implicit flow is "Good" because it works. An explicit pipeline is "Great" because it makes the system's structure reflect its logic, yielding significant benefits:
+
+*   **Testability:** Each stage can be unit-tested in complete isolation. You can feed it a known input array of `ProcessedItem`s and assert the output, without needing to run the entire orchestrator, mock databases, or make live network calls.
+*   **Observability & Debugging:** It becomes trivial to inspect the state of your data *between* stages. You can log the number of items entering and exiting each stage, or even sample the items that were filtered out at a specific step. This is invaluable for debugging issues like "Why was this important article dropped?".
+*   **Extensibility & Reusability:** Adding a new processing step (e.g., a more advanced deduplication stage) is as simple as creating a new stage function and inserting it into the pipeline array. Reordering stages becomes a one-line change.
+*   **Robustness:** Each stage can have its own error handling logic. A failure in one stage can be caught and handled gracefully (e.g., by logging and removing the problematic items) without halting the entire batch.
+
+#### 2. How to Implement This (Non-Breaking Refactor)
+
+This is a structural refactoring, not a rewrite. We can achieve this by formalizing the concept of a "stage".
+
+**Step 1: Define the Stage Function Type**
+
+First, let's create a type for our pipeline stages to ensure consistency.
+
+```typescript
+// In your TYPES section
+type ProcessingStageFn = (items: ProcessedItem[]) => Promise<ProcessedItem[]>;
+```
+
+**Step 2: Refactor Logic into Stage Functions**
+
+Now, we wrap existing logic into functions that conform to this type. Let's take the filtering logic as an example.
+
+```typescript
+// BEFORE (Conceptual - logic is likely mixed in a loop)
+for (const item of items) {
+    const textLower = safeLower(item.raw.title + ' ' + item.raw.text);
+    if (containsBlocklistedTerm(textLower)) {
+        // drop item
+    }
+    if (isStrictMatch(textLower)) {
+        item.classification.type = 'IMPORTANT';
+    } else if (isFunMatch(textLower)) {
+        item.classification.type = 'FUN';
+    } else {
+        // drop item
+    }
+}
+
+// AFTER (Refactored into a formal Stage)
+const createFilterStage = (): ProcessingStageFn => {
+    return async (items: ProcessedItem[]): Promise<ProcessedItem[]> => {
+        console.log(`[FilterStage] Processing ${items.length} items...`);
+
+        const filteredItems = items.filter(item => {
+            const textLower = safeLower(item.raw.title + ' ' + item.raw.text);
+
+            // 1. Blocklist check
+            const blocklisted = BLOCKLIST.some(term => wordBoundaryIncludes(textLower, term));
+            if (blocklisted) {
+                // We could log this for analysis
+                // console.log(`[FilterStage] Dropped (blocklist): ${item.raw.url}`);
+                return false;
+            }
+
+            // 2. Keyword check
+            const isStrict = ALL_STRICT_KEYWORDS.some(term => wordBoundaryIncludes(textLower, term));
+            if (isStrict) {
+                item.classification.type = 'IMPORTANT';
+                item.meta = { ...item.meta, reasonTag: 'strict-keyword' };
+                return true;
+            }
+
+            const isFun = EVENT_KEYWORDS.some(term => wordBoundaryIncludes(textLower, term));
+            if (isFun) {
+                item.classification.type = 'FUN';
+                item.meta = { ...item.meta, reasonTag: 'event-keyword' };
+                return true;
+            }
+            
+            // If it's neither, drop it
+            // console.log(`[FilterStage] Dropped (no match): ${item.raw.url}`);
+            return false;
+        });
+
+        console.log(`[FilterStage] Completed. ${filteredItems.length} items remain.`);
+        return filteredItems.map(item => ({ ...item, stage: 'CLASSIFY' }));
+    };
+};
+```
+*Note: This refactored stage is now more robust and easier to debug. It applies a `reasonTag` for better traceability.*
+
+**Step 3: Define and Run the Pipeline**
+
+The main orchestrator logic now becomes beautifully simple. It's just a declaration of the pipeline and a loop to execute it.
+
+```typescript
+async function runOrchestrator() {
+    // Stage 1: Collect items from all sources
+    const initialItems = await collectFromAllSources(); // Assume this function is created
+
+    // Define the full processing pipeline
+    const pipeline: ProcessingStageFn[] = [
+        createFilterStage(),
+        createHealthCheckStage(), // New stage for URL validation
+        createPublishedAtExtractionStage(), // Formalizes the date extractor
+        createAiEnrichmentStage(limitAI), // Passes the limiter in
+        createRoutingStage(),
+        // ... any other stages we want to add
+    ];
+
+    // Execute the pipeline
+    let processedItems: ProcessedItem[] = initialItems;
+    for (const stage of pipeline) {
+        if (processedItems.length === 0) {
+            console.log("Pipeline halted: no items remaining.");
+            break;
+        }
+        processedItems = await stage(processedItems);
+    }
+
+    // Final Stage: Persist to database
+    await persistToSupabase(processedItems);
+
+    console.log("Orchestration complete.");
+}
+```
+
+### Synergy: How This Improvement Helps Other Parts
+
+1.  **Enables Smarter Filtering:** The current keyword-based filtering is effective but brittle. The next logical step is to use the LLM for more nuanced, semantic filtering. With the pipeline architecture, you can create an `AIFilterStage`, run it *in parallel* with the `KeywordFilterStage`, and compare the results. Once confident, you can swap them by changing just one line in the `pipeline` array.
+
+2.  **Improves Auto-Healer:** The `runAutoHealer` function is mentioned. A pipeline provides concrete data for it. If a source consistently produces items that are all dropped at the `HealthCheckStage` (due to `validateUrlHealth` failing), the pipeline's logs can provide a clear signal to the auto-healer to temporarily disable that source.
+
+3.  **Simplifies Concurrency Management:** Instead of sprinkling `limitAI` calls everywhere, you can inject it only into the stages that need it (e.g., `createAiEnrichmentStage(limitAI)`). The other stages (`filter`, `route`) can run at full speed without being concerned with rate limits.
+
+By refactoring the implicit flow into an explicit pipeline, we aren't just rearranging code; we're investing in a more robust, maintainable, and extensible architecture for the entire project. This is the hallmark of moving from a "good" solution to a "great" one.

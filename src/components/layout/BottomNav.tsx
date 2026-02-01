@@ -1,7 +1,5 @@
-
 import type { TabType } from '../../types';
 import { Home, CheckSquare, FolderOpen, Newspaper, Menu, Bot } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 
 interface BottomNavProps {
     activeTab: TabType;
@@ -9,7 +7,6 @@ interface BottomNavProps {
 }
 
 export const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
-    const { t } = useTranslation();
 
     const getIcon = (id: TabType, isActive: boolean) => {
         const props = {
@@ -30,12 +27,12 @@ export const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
     };
 
     const tabs: { id: TabType; label: string }[] = [
-        { id: 'home', label: t('nav.home') },
-        { id: 'tasks', label: t('nav.tasks') },
-        { id: 'assistant', label: t('nav.assistant') },
-        { id: 'portfolio', label: t('nav.portfolio') },
-        { id: 'news', label: t('nav.news') },
-        { id: 'menu', label: t('nav.menu') },
+        { id: 'home', label: 'Головна' },
+        { id: 'tasks', label: 'Завдання' },
+        { id: 'assistant', label: 'Асистент' },
+        { id: 'portfolio', label: 'Документи' },
+        { id: 'news', label: 'Новини' },
+        { id: 'menu', label: 'Меню' },
     ];
 
     return (

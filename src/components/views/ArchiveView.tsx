@@ -51,39 +51,55 @@ export const ArchiveView = ({ onBack }: ArchiveViewProps) => {
         <div className="archive-view" style={{ maxWidth: '600px', margin: '0 auto', paddingBottom: '40px' }}>
             {/* Header */}
             <div className="task-card" style={{
+                position: 'relative', // Needed for absolute positioning of back button
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
+                justifyContent: 'center', // Center title
                 marginBottom: '20px',
                 background: '#8E8E93', // Gray for Archive Header
                 color: 'white',
                 boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                padding: '16px'
+                padding: '16px',
+                minHeight: '60px' // Ensure enough height for touch target
             }}>
-                <button
+                {/* Large Touch Target Wrapper */}
+                <div
                     onClick={(e) => {
+                        e.preventDefault();
                         e.stopPropagation();
                         onBack();
                     }}
                     style={{
-                        background: 'transparent',
-                        border: 'none',
-                        color: 'white',
+                        position: 'absolute',
+                        left: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: '80px', // Wide touch area (Green zone)
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
+                        zIndex: 9999, // Max priority
                         cursor: 'pointer',
-                        padding: '12px',
-                        margin: '-12px',
-                        position: 'relative',
-                        zIndex: 100, // Ensure it's on top of everything
-                        touchAction: 'manipulation'
+                        paddingLeft: '8px' // Slight offset to align visual
                     }}
                 >
-                    <ArrowLeft size={24} style={{ pointerEvents: 'none' }} />
-                </button>
-                <h4 style={{ fontSize: '18px', fontWeight: '700', margin: 0 }}>АРХІВ НОВИН</h4>
-                <div style={{ width: '24px' }}></div> {/* Spacer for centering */}
+                    {/* Visual Button (White Box) */}
+                    <div style={{
+                        width: '40px',
+                        height: '40px',
+                        background: 'white',
+                        borderRadius: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                        color: '#1C1C1E'
+                    }}>
+                        <ArrowLeft size={24} />
+                    </div>
+                </div>
+
+                <h4 style={{ fontSize: '18px', fontWeight: '700', margin: 0, zIndex: 1 }}>АРХІВ НОВИН</h4>
             </div>
 
             {/* List */}

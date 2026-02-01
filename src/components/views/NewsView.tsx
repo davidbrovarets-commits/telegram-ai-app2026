@@ -34,31 +34,20 @@ export const NewsView = ({ onNewsClick, land, city }: NewsViewProps) => {
                     data.forEach((item: News) => next[item.id] = item);
                     return next;
                 });
-
-                // Self-Healing: Detect IDs that don't exist in DB anymore
-                // IMPORTANT: Only run if result is non-empty to distinguish from network error
-                if (data.length > 0) {
-                    const foundIds = new Set(data.map((item: News) => item.id));
-                    const missingIds = idsToFetch.filter(id => !foundIds.has(id));
-
-                    if (missingIds.length > 0) {
-                        console.warn('[NewsView] Found dead IDs, removing:', missingIds);
-                        import('../../stores/newsStore').then(({ newsStore }) => {
-                            newsStore.setState(prev => ({
-                                ...prev,
-                                visibleFeed: prev.visibleFeed.map(id => missingIds.includes(id) ? 0 : id)
-                            }));
-                            // Trigger refill
-                            import('../../services/news/FeedManager').then(({ FeedManager }) => {
-                                FeedManager.fillEmptySlots();
-                            });
-                        });
-                    }
-                }
             }
         };
         fetchItems();
-    }, [visibleFeed]);
+    }, [visibleFeed]); // Re-run when feed changes
+
+    // FORCE REFRESH ON MOUNT if empty
+    useEffect(() => {
+        if (visibleFeed.length === 0 || visibleFeed.every(id => id <= 0)) {
+            console.log('[NewsView] Feed empty on mount. Forcing check...');
+            import('../../services/news/FeedManager').then(({ FeedManager }) => {
+                FeedManager.initialize(land, city);
+            });
+        }
+    }, []);
 
     // Helper to get item or loading placeholder
     const getItem = (id: number, _idx: number) => {

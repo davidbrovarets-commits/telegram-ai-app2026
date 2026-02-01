@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { sendTelegramMessage } from './utils/telegram-notifier';
+import { VertexAI } from '@google-cloud/vertexai';
 
 // -- CONFIG --
 const __filename = fileURLToPath(import.meta.url);
@@ -99,6 +100,42 @@ function isQuietTime(state: State): boolean {
         return currentMins >= startMins || currentMins < endMins;
     } else {
         return currentMins >= startMins && currentMins < endMins;
+    }
+}
+
+// -- AI HELPER --
+async function parseWithAI(userText: string, nowIso: string): Promise<any> {
+    if (!process.env.GOOGLE_PROJECT_ID) return null;
+    try {
+        const vertexAI = new VertexAI({ project: process.env.GOOGLE_PROJECT_ID, location: process.env.GOOGLE_CLOUD_LOCATION || 'us-central1' });
+        const model = vertexAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' }); // Fast model for commands
+
+        const prompt = `
+        Role: Personal Secretary Command Parser.
+        Current Time: ${nowIso}
+        User Input: "${userText}"
+        
+        Task: Map input to JSON.
+        Allowed Types:
+        - oneoff: { type: 'oneoff', time: 'ISO_TIMESTAMP_FUTURE', text: 'summary' } (Infer date/time relative to now)
+        - interval: { type: 'interval', hours: NUMBER, text: 'summary' }
+        - mute: { type: 'mute', hours: NUMBER }
+        - quiet: { type: 'quiet', start: 'HH:mm', end: 'HH:mm' }
+        - unknown: { type: 'unknown' }
+
+        Rules:
+        - If text is "shut up for 2h", type=mute, hours=2.
+        - If text is "remind me to buy milk tomorrow", type=oneoff, time=tomorrow at 09:00 (default) or specified.
+        - Return ONLY JSON. No markdown.
+        `;
+
+        const res = await model.generateContent(prompt);
+        const jsonStr = res.response.candidates[0].content.parts[0].text;
+        const cleanJson = jsonStr?.replace(/```json|```/g, '').trim();
+        return JSON.parse(cleanJson || '{}');
+    } catch (e) {
+        console.error('AI Parse failed:', e);
+        return null;
     }
 }
 
@@ -320,13 +357,37 @@ async function runSecretary() {
                         }
                     }
                 } else {
-                    // Fallback
-                    // Don't spam error on every mismatch, just ignore or log.
-                    // But user expects feedback.
-                    // responseText = "❓ Arusaamatu käsk."; 
-                    // Better to be silent if unsure? No, explicit inbox.
-                    responseText = "❓";
-                    item.result = "Unknown command";
+                    // FALLBACK: ASK AI
+                    console.log('🤖 Regex failed. Asking Gemini...');
+                    const aiCmd = await parseWithAI(text, nowIso);
+
+                    if (aiCmd && aiCmd.type !== 'unknown') {
+                        if (aiCmd.type === 'oneoff') {
+                            const r: Reminder = {
+                                id: generateId('r'), type: 'oneoff', text: aiCmd.text,
+                                created_at: nowIso, enabled: true, next_run_at: aiCmd.time, priority: 'MEDIUM'
+                            };
+                            reminders.push(r);
+                            responseText = `🧠 AI sai aru: ${r.text} (#${r.id.slice(-4)}) @ ${new Date(r.next_run_at).toLocaleTimeString()}`;
+                        }
+                        else if (aiCmd.type === 'interval') {
+                            const r: Reminder = {
+                                id: generateId('r'), type: 'interval', text: aiCmd.text,
+                                created_at: nowIso, enabled: true, next_run_at: new Date(Date.now() + aiCmd.hours * 3600000).toISOString(),
+                                interval_hours: aiCmd.hours, active_window: { start: '08:00', end: '23:00' }, priority: 'MEDIUM'
+                            };
+                            reminders.push(r);
+                            responseText = `🧠 AI Tsükkel: Iga ${aiCmd.hours}h — ${aiCmd.text}`;
+                        }
+                        else if (aiCmd.type === 'mute') {
+                            const until = new Date(Date.now() + aiCmd.hours * 3600000);
+                            state.mute_until = until.toISOString();
+                            responseText = `🧠 AI Mute ${aiCmd.hours}h (kuni ${until.toLocaleTimeString()})`;
+                        }
+                    } else {
+                        responseText = "❓";
+                        item.result = "Unknown command";
+                    }
                 }
             }
 

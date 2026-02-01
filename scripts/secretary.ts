@@ -222,11 +222,21 @@ async function runSecretary() {
                         const res = await model.generateContent(req);
                         text = res.response.candidates?.[0]?.content?.parts?.[0]?.text || "";
                         isVision = true;
-                        await sendTelegramMessage(`👁️ Tuvastasin: "${text}"`);
+
+                        // NOTIFY USER & SAVE CONTEXT (For Antigravity)
+                        await sendTelegramMessage(`👁️ Pilt analüüsitud. Salvestan info: "${text.substring(0, 50)}..."`);
+
+                        // Save as special context item
+                        inbox.push({
+                            id: generateId('img'),
+                            created_at: new Date().toISOString(),
+                            raw_text: `[IMAGE_CONTEXT] ${text}`, // Antigravity checks this prefix
+                            processed: false
+                        });
                     }
                 }
 
-                if (text) {
+                if (text && !isVision) { // Only push text if not already pushed by Vision logic
                     console.log(`User Input: ${text}`);
                     inbox.push({
                         id: generateId('cmd'),

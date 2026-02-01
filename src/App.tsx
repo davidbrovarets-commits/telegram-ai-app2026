@@ -293,6 +293,7 @@ function App() {
             file={selectedFile}
             onClose={() => setSelectedFile(null)}
             onDelete={deleteUserFile}
+            onSave={addUserFile}
           />
         )}
 

@@ -37,8 +37,8 @@ export const base64ToBlob = async (base64: string): Promise<Blob> => {
 /**
  * Genereerib faili nime kuupäeva põhjal
  */
-export const generateFileName = (prefix: string = 'Dokument'): string => {
+export const generateFileName = (prefix: string = 'Dokument', ext: string = 'jpg'): string => {
     const dateStr = new Date().toISOString().split('T')[0];
     const randomNum = Math.floor(Math.random() * 1000);
-    return `${prefix}_${dateStr}_${randomNum}.jpg`;
+    return `${prefix}_${dateStr}_${randomNum}.${ext}`;
 };

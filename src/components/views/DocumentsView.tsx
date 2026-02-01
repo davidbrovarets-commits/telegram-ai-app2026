@@ -23,6 +23,7 @@ export const DocumentsView = ({
 }: DocumentsViewProps) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [newPersonalTask, setNewPersonalTask] = useState('');
+    const [showAnalyzed, setShowAnalyzed] = useState(false);
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -35,10 +36,95 @@ export const DocumentsView = ({
         setNewPersonalTask('');
     };
 
+    const regularFiles = userFiles.filter(f => !f.file_name.startsWith("Analiz_") && !f.file_name.startsWith("Jobcenter_"));
+    const analyzedFiles = userFiles.filter(f => f.file_name.startsWith("Analiz_") || f.file_name.startsWith("Jobcenter_"));
+
+    if (showAnalyzed) {
+        return (
+            <div className="task-list-container">
+                <div
+                    className="task-card"
+                    style={{
+                        marginBottom: '20px',
+                        background: 'linear-gradient(135deg, #007AFF 0%, #0056b3 100%)',
+                        color: 'white',
+                        padding: '15px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between'
+                    }}
+                >
+                    <button
+                        onClick={() => setShowAnalyzed(false)}
+                        style={{
+                            background: 'rgba(255,255,255,0.2)',
+                            border: 'none',
+                            color: 'white',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '50%',
+                            padding: 0
+                        }}
+                    >
+                        <ChevronRight size={20} style={{ transform: 'rotate(180deg)' }} />
+                    </button>
+
+                    <h4 style={{ fontSize: '16px', fontWeight: '700', color: 'white', margin: 0 }}>📊 АНАЛІЗОВАНІ</h4>
+
+                    <div style={{ width: '32px' }}></div> {/* Spacer for centering */}
+                </div>
+
+                {analyzedFiles.length === 0 && (
+                    <div style={{
+                        textAlign: 'center', color: 'var(--text-sub)',
+                        padding: '40px 20px', background: 'var(--card-bg)',
+                        borderRadius: 'var(--radius-card)', border: '2px dashed var(--border)',
+                        fontSize: '14px'
+                    }}>
+                        <FileText size={48} style={{ opacity: 0.2, marginBottom: '15px' }} />
+                        <p>Зробіть аналіз документа в розділі "Документи"</p>
+                    </div>
+                )}
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {analyzedFiles.map(file => (
+                        <div
+                            key={file.id}
+                            className="task-card"
+                            onClick={() => window.open(file.file_url, '_blank')}
+                            style={{ padding: '12px' }}
+                        >
+                            <div style={{
+                                width: '36px', height: '36px', background: 'var(--primary-light)',
+                                borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                color: 'var(--primary)', flexShrink: 0
+                            }}>
+                                <FileText size={18} />
+                            </div>
+
+                            <div style={{ flex: 1, minWidth: 0, marginLeft: '12px' }}>
+                                <div style={{ fontWeight: '600', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    {file.file_name}
+                                </div>
+                                <div style={{ fontSize: '12px', color: 'var(--text-sub)', marginTop: '2px' }}>
+                                    {new Date(file.created_at).toLocaleDateString()}
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="task-list-container">
             {/* Upload button area */}
-            <div style={{ marginBottom: '24px' }}>
+            <div style={{ marginBottom: '20px' }}>
                 <input
                     type="file"
                     ref={fileInputRef}
@@ -52,10 +138,13 @@ export const DocumentsView = ({
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '10px',
-                        background: 'linear-gradient(135deg, #0071E3, #00C7BE)', /* Apple Blue to Teal */
+                        gap: '8px',
+                        background: 'linear-gradient(135deg, #0071E3, #00C7BE)',
                         border: 'none',
-                        boxShadow: '0 8px 20px -6px rgba(0, 113, 227, 0.4)'
+                        boxShadow: '0 4px 12px -2px rgba(0, 113, 227, 0.3)',
+                        fontSize: '15px',
+                        padding: '12px',
+                        width: '100%'
                     }}
                     onClick={() => fileInputRef.current?.click()}
                 >
@@ -65,51 +154,80 @@ export const DocumentsView = ({
             </div>
 
             <div className="task-card" style={{ justifyContent: 'center', marginBottom: '20px', background: 'linear-gradient(135deg, #007AFF 0%, #0056b3 100%)', color: 'white' }}>
-                <h4 style={{ fontSize: '18px', fontWeight: '700', color: 'white', margin: 0 }}>📂 ВАШІ ДОКУМЕНТИ</h4>
+                <h4 style={{ fontSize: '16px', fontWeight: '700', color: 'white', margin: 0 }}>📂 ДОКУМЕНТИ</h4>
             </div>
 
-            {
-                userFiles.length === 0 && (
-                    <div style={{
-                        textAlign: 'center', color: 'var(--text-sub)',
-                        padding: '40px 20px', background: 'var(--card-bg)',
-                        borderRadius: 'var(--radius-card)', border: '2px dashed var(--border)'
-                    }}>
-                        <FileText size={48} style={{ opacity: 0.2, marginBottom: '10px' }} />
-                        <p>Немає документів. Зробіть фото!</p>
-                    </div>
-                )
-            }
+            {regularFiles.length === 0 && (
+                <div style={{
+                    textAlign: 'center', color: 'var(--text-sub)',
+                    padding: '30px 10px', background: 'var(--card-bg)',
+                    borderRadius: 'var(--radius-card)', border: '2px dashed var(--border)',
+                    fontSize: '13px', marginBottom: '30px'
+                }}>
+                    <FileText size={40} style={{ opacity: 0.2, marginBottom: '10px' }} />
+                    <p>Пусто. Додайте фото!</p>
+                </div>
+            )}
 
-            {/* Files list */}
-            <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '30px' }}>
-                {userFiles.map(file => (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '30px' }}>
+                {regularFiles.map(file => (
                     <div
                         key={file.id}
                         className="task-card"
                         onClick={() => onFileClick(file)}
+                        style={{ padding: '12px' }}
                     >
                         <div style={{
-                            width: '40px', height: '40px', background: 'var(--primary-light)',
+                            width: '36px', height: '36px', background: 'var(--primary-light)',
                             borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center',
                             color: 'var(--primary)', flexShrink: 0
                         }}>
-                            <FileText size={20} />
+                            <FileText size={18} />
                         </div>
 
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: '600', fontSize: '15px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <div style={{ flex: 1, minWidth: 0, marginLeft: '12px' }}>
+                            <div style={{ fontWeight: '600', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                 {file.file_name}
                             </div>
-                            <div style={{ fontSize: '13px', color: 'var(--text-sub)' }}>
+                            <div style={{ fontSize: '12px', color: 'var(--text-sub)', marginTop: '2px' }}>
                                 {new Date(file.created_at).toLocaleDateString()}
                             </div>
                         </div>
-
-                        <ChevronRight size={20} style={{ color: '#C7C7CC' }} />
+                        <ChevronRight size={18} style={{ color: '#C7C7CC' }} />
                     </div>
                 ))}
             </div>
+
+            {/* Analyzed Documents Button */}
+            <button
+                onClick={() => setShowAnalyzed(true)}
+                className="task-card"
+                style={{
+                    width: '100%',
+                    justifyContent: 'space-between',
+                    padding: '15px',
+                    marginBottom: '30px',
+                    background: 'linear-gradient(135deg, #007AFF 0%, #0056b3 100%)',
+                    boxShadow: '0 4px 12px -2px rgba(0, 113, 227, 0.3)',
+                    border: 'none',
+                    color: 'white'
+                }}
+            >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{
+                        width: '32px', height: '32px', background: 'rgba(255,255,255,0.2)',
+                        borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        color: 'white'
+                    }}>
+                        <FileText size={16} />
+                    </div>
+                    <div style={{ textAlign: 'left' }}>
+                        <div style={{ fontWeight: '700', color: 'white', fontSize: '14px' }}>АНАЛІЗОВАНІ</div>
+                        <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.8)' }}>{analyzedFiles.length} файлів</div>
+                    </div>
+                </div>
+                <ChevronRight size={20} style={{ color: 'white' }} />
+            </button>
 
             {/* Personal notes */}
             <h4 className="section-title">ШВИДКІ НОТАТКИ</h4>

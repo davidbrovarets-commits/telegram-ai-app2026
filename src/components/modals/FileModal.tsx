@@ -1,17 +1,19 @@
 import { useState, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
 import type { UserFile } from '../../types';
 import { analyzeDocument } from '../../utils/api';
+import { renderPdf } from '../../services/pdf/pdfRenderer';
+import { printCss } from '../../components/pdf/printCss';
+import { supabase } from '../../supabaseClient';
 
 interface FileModalProps {
     file: UserFile;
     onClose: () => void;
     onDelete: (fileId: number) => void;
+    onSave: (file: UserFile) => void;
 }
 
-export const FileModal = ({ file, onClose, onDelete }: FileModalProps) => {
+export const FileModal = ({ file, onClose, onDelete, onSave }: FileModalProps) => {
     const [analysisResult, setAnalysisResult] = useState<string | null>(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [isSavingPdf, setIsSavingPdf] = useState(false);
@@ -32,31 +34,15 @@ export const FileModal = ({ file, onClose, onDelete }: FileModalProps) => {
         setIsAnalyzing(false);
     };
 
-    const handleSavePdf = async () => {
-        if (!analysisResult || !resultRef.current) return;
+    const handleSaveToCloud = async () => {
+        if (!analysisResult) return;
 
         setIsSavingPdf(true);
 
         try {
-            // 1. Capture the analysis text area as an image
-            const canvas = await html2canvas(resultRef.current, { scale: 2 });
-            const imgData = canvas.toDataURL('image/png');
+            const contentHtml = resultRef.current?.innerHTML || '';
 
-            // 2. Create PDF
-            const pdf = new jsPDF();
-            const pageWidth = pdf.internal.pageSize.getWidth(); // 210mm
-            const imgProps = pdf.getImageProperties(imgData);
-
-            const margin = 15;
-            const pdfImgWidth = pageWidth - (margin * 2);
-            const pdfImgHeight = (imgProps.height * pdfImgWidth) / imgProps.width;
-
-            // Header removed as per request
-
-            // Add the capture image (moved up slightly)
-            pdf.addImage(imgData, 'PNG', margin, 20, pdfImgWidth, pdfImgHeight);
-
-            // Add original image on next page
+            let imageHtml = '';
             try {
                 const response = await fetch(file.file_url);
                 const blob = await response.blob();
@@ -65,22 +51,78 @@ export const FileModal = ({ file, onClose, onDelete }: FileModalProps) => {
                     reader.onloadend = () => resolve(reader.result as string);
                     reader.readAsDataURL(blob);
                 });
-
-                pdf.addPage();
-                pdf.text('Original Document:', margin, 20); // English to avoid encoding issues
-                const xPos = (pageWidth - 180) / 2;
-                pdf.addImage(base64, 'JPEG', xPos, 30, 180, 200, undefined, 'FAST');
+                imageHtml = `<img src="${base64}" class="original-document-img" alt="Original Document" style="max-width: 100%; height: auto; display: block; margin: 20px auto;" />`;
             } catch (e) {
-                console.warn("Original image skip", e);
+                console.warn("Failed to load original image for PDF", e);
             }
 
-            const pdfName = `Analiz_${file.file_name.replace(/\.[^/.]+$/, '')}_${Date.now()}.pdf`;
-            pdf.save(pdfName);
+            const fullHtml = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>${printCss}</style>
+                </head>
+                <body>
+                    <div class="analysis-container">
+                        ${contentHtml}
+                    </div>
+                    ${imageHtml}
+                </body>
+                </html>
+            `;
+
+            const pdfBlob = await renderPdf(fullHtml);
+
+            // New naming convention: Jobcenter_YYYY-MM-DD
+            const dateStr = new Date().toISOString().split('T')[0];
+            const timestamp = new Date().toTimeString().split(' ')[0].replace(/:/g, '-');
+            const fileName = `Jobcenter_${dateStr}_${timestamp}.pdf`;
+            const filePath = `${file.user_id}/${fileName}`;
+
+            // 1. Trigger Download immediately
+            const url = window.URL.createObjectURL(pdfBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
+            // 2. Upload to Cloud
+            const { error: uploadError } = await supabase.storage
+                .from("documents")
+                .upload(filePath, pdfBlob);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage.from("documents").getPublicUrl(filePath);
+
+            const { data: dbData, error: dbError } = await supabase
+                .from("user_files")
+                .insert({
+                    user_id: file.user_id,
+                    file_name: fileName,
+                    file_url: publicUrl,
+                    file_type: "pdf",
+                })
+                .select()
+                .single();
+
+            if (dbError) throw dbError;
+
+            if (dbData) {
+                onSave(dbData);
+                alert("Аналіз збережено та завантажено!");
+                onClose();
+            }
 
         } catch (error: any) {
-            alert('Помилка при створенні PDF: ' + error.message);
+            console.error(error);
+            alert('PDF Save Failed: ' + error.message);
+        } finally {
+            setIsSavingPdf(false);
         }
-        setIsSavingPdf(false);
     };
 
     const handleDelete = () => {
@@ -145,9 +187,14 @@ export const FileModal = ({ file, onClose, onDelete }: FileModalProps) => {
                             color: '#000000'
                         }}
                     >
-                        <h4 style={{ marginTop: 0, color: '#0057B8', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
-                            📄 Результат аналізу
-                        </h4>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #eee', paddingBottom: '10px', marginBottom: '10px' }}>
+                            <h4 style={{ margin: 0, color: '#0057B8' }}>
+                                📄 Результат аналізу
+                            </h4>
+                            <span style={{ fontSize: '12px', color: '#666' }}>
+                                {new Date().toLocaleDateString('uk-UA')}
+                            </span>
+                        </div>
 
                         <div style={{ lineHeight: '1.6', fontSize: '14px', fontFamily: 'Arial, sans-serif' }}>
                             <ReactMarkdown
@@ -168,10 +215,10 @@ export const FileModal = ({ file, onClose, onDelete }: FileModalProps) => {
                     <button
                         className="external-link-btn"
                         style={{ marginTop: '15px' }}
-                        onClick={handleSavePdf}
+                        onClick={handleSaveToCloud}
                         disabled={isSavingPdf}
                     >
-                        {isSavingPdf ? '⏳ Збереження...' : '💾 Зберегти як PDF'}
+                        {isSavingPdf ? '⏳ Збереження...' : '💾 Зберегти в Аналізовані'}
                     </button>
                 )}
 

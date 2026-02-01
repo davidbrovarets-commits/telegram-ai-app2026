@@ -3297,3 +3297,151 @@ async function runOrchestrator() {
 4.  **Idempotency:** By using `upsert` and querying for specific stages, each worker function becomes idempotent. Running `runFilterStage()` twice by accident has no negative side effects; it will simply find no items in the `'COLLECT'` stage on the second run.
 
 This change transforms the orchestrator from a script into a resilient, professional-grade data processing pipeline, using the very tools and patterns you've already established. It's a natural evolution that delivers immediate and lasting architectural value.
+
+## Critique 2026-02-01T13:57:09.131Z
+Excellent. Thank you for providing the code. This is a solid foundation, and the comments detailing the previous refactoring cycle are incredibly helpful. It shows a clear progression in architectural thinking.
+
+As the Lead Architect, my goal is to identify the next evolutionary step for this system. I see a very clear opportunity to enhance its robustness and operational agility by addressing a single, fundamental aspect of its design.
+
+---
+
+### Architectural Review: Decoupling Configuration from Code
+
+#### The "Good": What Works Now
+
+The current implementation has done an excellent job of organizing its business rules into constant arrays (`UKRAINE_KEYWORDS`, `EVENT_KEYWORDS`, `BLOCKLIST`, etc.). This is a clean, readable, and effective starting point. It's self-contained, version-controlled with the code, and requires no external dependencies to run. For a V1 or V2, this is the right approach.
+
+#### The Opportunity for "Great": The Problem with Static Configuration
+
+The current design tightly couples the orchestration *logic* (how to process an item) with its *configuration* (what keywords to look for). As this system matures and scales, this coupling will become a significant bottleneck.
+
+1.  **Lack of Agility:** To add a single new keyword (e.g., a new government term like "Turbo-Einbürgerung") or to remove a keyword that's causing false positives, a developer must make a code change, commit, and redeploy the entire orchestrator. This is slow and inefficient for what should be a simple operational tweak.
+2.  **Scalability Issues:** The current routing is national (`COUNTRY`) or state-level (`STATE`). What happens when you need city-specific event keywords? Do you create `EVENT_KEYWORDS_BERLIN`, `EVENT_KEYWORDS_HAMBURG`, etc.? The file would become unmanageably large and complex.
+3.  **Operational Blindness:** When an article is processed, we know it matched *a* keyword from a list, but we don't know *which one*. This makes debugging and fine-tuning the lists difficult. An operator might ask, "Why are we getting so many irrelevant articles about 'Messe'?" and the answer is currently buried in the code.
+
+---
+
+### Proposal: Introduce a Dynamic Configuration Layer via Supabase
+
+My proposal is to move all keyword and rule definitions from the in-code constant arrays into a dedicated Supabase table. This refactors the orchestrator from a static script into a dynamic, configurable platform.
+
+#### 1. Define the Schema in Supabase
+
+Create a new table, `news_pipeline_config`. This single table can hold all our rules.
+
+```sql
+CREATE TABLE news_pipeline_config (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMPTZ DEFAULT now(),
+    
+    -- The actual rule value
+    value TEXT NOT NULL, 
+    
+    -- What kind of rule is this?
+    type TEXT NOT NULL, -- e.g., 'STRICT_KEYWORD', 'EVENT_KEYWORD', 'BLOCKLIST_KEYWORD'
+    
+    -- Scoping for future scalability
+    scope_layer TEXT NOT NULL DEFAULT 'COUNTRY', -- 'COUNTRY', 'STATE', 'CITY'
+    scope_value TEXT, -- e.g., 'DE', 'BY' (Bayern), 'B' (Berlin)
+    
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    
+    -- For traceability and comments
+    description TEXT 
+);
+
+-- Ensure we don't have duplicate rules for the same scope
+CREATE UNIQUE INDEX idx_unique_rule ON news_pipeline_config(value, type, scope_layer, scope_value);
+
+-- Enable RLS
+ALTER TABLE news_pipeline_config ENABLE ROW LEVEL SECURITY;
+```
+
+#### 2. Refactor the Orchestrator to Load Configuration at Startup
+
+Instead of defining constants, the orchestrator will now fetch its configuration from this table when it starts. This configuration is then held in memory for the duration of the run.
+
+```typescript
+// ===============================
+// NEW: CONFIGURATION LOADER
+// ===============================
+
+interface PipelineRule {
+    value: string;
+    type: 'STRICT_KEYWORD' | 'EVENT_KEYWORD' | 'BLOCKLIST_KEYWORD';
+    scope_layer: 'COUNTRY' | 'STATE' | 'CITY';
+    scope_value?: string;
+}
+
+interface AppConfig {
+    strictKeywords: string[];
+    eventKeywords: string[];
+    blocklistKeywords: string[];
+    // We can add more complex, scoped rules later
+}
+
+let CONFIG: AppConfig | null = null;
+
+async function loadConfiguration(): Promise<AppConfig> {
+    console.log('Loading pipeline configuration from Supabase...');
+    const { data, error } = await supabase
+        .from('news_pipeline_config')
+        .select('value, type, scope_layer, scope_value')
+        .eq('is_active', true);
+
+    if (error) {
+        console.error('FATAL: Could not load configuration. Aborting.', error);
+        throw new Error('Failed to load configuration from Supabase.');
+    }
+
+    const config: AppConfig = {
+        strictKeywords: [],
+        eventKeywords: [],
+        blocklistKeywords: [],
+    };
+
+    for (const rule of data) {
+        // This example keeps it simple, but we could handle scopes here
+        switch (rule.type) {
+            case 'STRICT_KEYWORD':
+                config.strictKeywords.push(rule.value);
+                break;
+            case 'EVENT_KEYWORD':
+                config.eventKeywords.push(rule.value);
+                break;
+            case 'BLOCKLIST_KEYWORD':
+                config.blocklistKeywords.push(rule.value);
+                break;
+        }
+    }
+    
+    console.log(`Configuration loaded: ${config.strictKeywords.length} strict, ${config.eventKeywords.length} event, ${config.blocklistKeywords.length} blocklist keywords.`);
+    return config;
+}
+
+// In your main orchestrator function, you would call this once at the start:
+// async function runOrchestrator() {
+//   if (!CONFIG) {
+//     CONFIG = await loadConfiguration();
+//   }
+//   // ... rest of the logic uses CONFIG.strictKeywords etc.
+// }
+
+// The old constants are now gone.
+// const ALL_STRICT_KEYWORDS = [...]; // REMOVE THIS
+// const EVENT_KEYWORDS = [...];      // REMOVE THIS
+// const BLOCKLIST = [...];           // REMOVE THIS
+
+```
+
+#### 3. Benefits & Synergy (The "Why")
+
+This is a non-breaking refactor that dramatically improves the system.
+
+*   **Harmony:** It uses the existing Supabase client and fits perfectly within the established technology stack.
+*   **Robustness & Agility:** Non-technical operators can now use the Supabase UI to enable/disable keywords, add new ones to respond to breaking news, or remove problematic ones, all without a single line of code change or deployment. The system becomes responsive in minutes, not hours.
+*   **Synergy with Routing:** The `scope_layer` and `scope_value` fields are the key to future scalability. You can now add a keyword that *only* applies to Berlin (`scope_layer: 'CITY', scope_value: 'B'`). The `ROUTE` stage can then use this more granular information to make better decisions. The configuration system and the routing system start to work together.
+*   **Synergy with Classification & Observability:** During the `FILTER` stage, when an article matches a keyword, you can now log the `id` of the `news_pipeline_config` rule that it matched. This creates an invaluable data trail. You can easily run analytics to see which keywords are most effective and which are generating the most noise. This makes the system self-optimizing.
+*   **Synergy with AI:** You could even feed the specific keyword that was matched into the AI prompt (`"Summarize this article, paying close attention to the topic of 'Bürgergeld'"`). This would likely improve the quality and relevance of the AI-generated summaries.
+
+By making this one architectural change, we elevate the orchestrator from a smart script to a manageable, scalable, and observable data processing platform. It's the natural next step in its evolution.

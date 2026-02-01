@@ -198,6 +198,9 @@ export const NewsView = ({ onNewsClick, land, city }: NewsViewProps) => {
             <div style={{ marginTop: '10px', textAlign: 'center', fontSize: '10px', color: '#D1D1D6' }}>
                 Свайп: Вправо = Kustuta (Удалить), Влево = Arhiveeri (Архив)
             </div>
+            <div style={{ marginTop: '5px', textAlign: 'center', fontSize: '8px', color: '#8E8E93', opacity: 0.5 }}>
+                BUILD: 2026-02-01T03:22:00Z
+            </div>
         </div>
     );
 };

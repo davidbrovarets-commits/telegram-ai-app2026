@@ -2995,3 +2995,135 @@ This single change transforms the entire project:
 ### Conclusion
 
 By moving from hardcoded constants to a **Dynamic Configuration Core**, we elevate the orchestrator from a static script to a living, adaptable engine. This is a non-breaking, synergistic change that aligns perfectly with our existing stack and lays the groundwork for a more intelligent and maintainable system. This is how we go from "Good" to "Great."
+
+## Critique 2026-02-01T11:45:39.298Z
+Excellent. I see a well-structured and thoughtful refactoring effort here. The developer has clearly moved the project forward significantly, addressing many common pitfalls. The code is clean, the intent is clear, and the improvements listed are substantial.
+
+My role is to find what can be elevated from "good" to "great." Let's analyze the core architecture.
+
+### Analysis of the Current Architecture
+
+The current flow, as implied by the code, appears to be a linear, in-memory batch process:
+
+1.  **Collect:** Fetch items from multiple RSS feeds.
+2.  **Process (in-memory):** Run each item through a series of transformations (Filter, Classify, Route, AI Enrich, etc.), all within the application's memory.
+3.  **Load:** Perform a final bulk `upsert` into Supabase.
+
+This is a **classic ETL (Extract, Transform, Load) pattern**. It's efficient for self-contained tasks. However, its primary weakness is a lack of resilience. If the process fails at step 2.5 (e.g., the AI provider is down, the server instance is terminated, a network error occurs), the entire batch's progress is lost. The next run will have to start from scratch, re-fetching and re-processing everything.
+
+This is good, but we can make it great.
+
+---
+
+### Architectural Suggestion: The Persistent State Machine
+
+The single most impactful architectural improvement would be to evolve from an in-memory batch script to a **persistent, state-driven pipeline**.
+
+The `ProcessingStage` type is the key. You've already defined the states, but you're not yet using them to persist progress. Let's change that. Instead of holding everything in memory until the end, we will use the database as the "source of truth" for the pipeline itself.
+
+**The Concept:** Each news item becomes a "job" in a queue (your Supabase table). The orchestrator's role shifts from a single monolithic function to a set of workers that advance items from one stage to the next.
+
+#### How It Works:
+
+1.  **Stage 0: Collect & Insert**
+    *   The process starts as it does now: fetch from RSS feeds.
+    *   **Crucial Change:** Immediately after fetching and performing minimal validation (e.g., `isDeepLink`), insert each raw article into a Supabase table (e.g., `articles`).
+    *   The item is inserted with `stage: 'COLLECT'`. The `id` is the stable hash you already generate. We use `insert` with `onConflict('id', 'ignore')` to ensure we don't re-add existing articles.
+
+2.  **Stage 1+: Process by Stage**
+    *   The main orchestrator loop now changes. Instead of processing an in-memory array, it queries the database: `SELECT * FROM articles WHERE stage = 'COLLECT' LIMIT 10;`
+    *   For each of these items, it runs the `FILTER` logic.
+    *   If an item passes, its state is updated: `UPDATE articles SET stage = 'FILTER', ...other_data WHERE id = ...;`
+    *   If it fails, it's updated to a terminal state: `UPDATE articles SET stage = 'REJECTED', meta = '{"reason": "blocklist"}' WHERE id = ...;`
+    *   This pattern repeats for every stage. A worker for the `AI_ENRICH` stage would query for `WHERE stage = 'PUBLISHED_AT'` and update them to `stage = 'AI_ENRICH'`.
+
+#### Concrete Implementation Sketch:
+
+Your main table schema would directly mirror your `ProcessedItem` type.
+
+```sql
+-- In Supabase SQL Editor (example)
+CREATE TABLE articles (
+  id TEXT PRIMARY KEY, -- the sha256 hash
+  stage TEXT NOT NULL DEFAULT 'COLLECT',
+  raw JSONB,
+  classification JSONB,
+  routing JSONB,
+  meta JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create an index for your workers
+CREATE INDEX idx_articles_stage ON articles(stage);
+```
+
+Your orchestrator logic would transform into a series of functions:
+
+```typescript
+// Main orchestrator loop
+async function runPipeline() {
+    await runCollectionStage(); // Fetches RSS and inserts with stage 'COLLECT'
+    await runFilterStage();     // Fetches 'COLLECT', updates to 'FILTER' or 'REJECTED'
+    await runClassifyStage();   // Fetches 'FILTER', updates to 'CLASSIFY'
+    // ... and so on
+    await runAiEnrichStage();   // Fetches 'ROUTED', updates to 'AI_ENRICH'
+}
+
+// Example worker function
+async function runFilterStage() {
+    const { data: items, error } = await supabase
+        .from('articles')
+        .select('*')
+        .eq('stage', 'COLLECT')
+        .limit(50); // Process in batches
+
+    if (error) { /* handle error */ return; }
+
+    const updates = [];
+    for (const item of items) {
+        // ... run your existing filtering logic on item.raw ...
+        const isRelevant = checkRelevance(item.raw.title, item.raw.text);
+
+        if (isRelevant) {
+            updates.push({
+                ...item, // the original item
+                stage: 'FILTER', // Advance the stage
+                updated_at: new Date().toISOString(),
+            });
+        } else {
+            updates.push({
+                ...item,
+                stage: 'REJECTED',
+                meta: { ...item.meta, reasonTag: 'irrelevant' },
+                updated_at: new Date().toISOString(),
+            });
+        }
+    }
+
+    if (updates.length > 0) {
+        // Bulk update the processed items
+        const { error: updateError } = await supabase.from('articles').upsert(updates);
+        if (updateError) { /* handle error */ }
+    }
+}
+```
+
+### The Benefits (Why This is "Great")
+
+1.  **Robustness & Idempotency:** If the `AI_ENRICH` stage fails due to an API outage, the items simply remain in the `PUBLISHED_AT` stage. The next run of the orchestrator will pick them up and retry automatically. No data or work is lost. The system becomes **self-healing** for transient errors.
+
+2.  **Scalability:** This architecture is built to scale. Is AI enrichment the bottleneck? You can run the `runAiEnrichStage` worker on a separate, more powerful serverless function that triggers more frequently. The stages are decoupled.
+
+3.  **Observability:** Your database becomes a real-time dashboard of your pipeline's health. You can run simple SQL queries to see exactly where items are getting stuck:
+    ```sql
+    SELECT stage, COUNT(*) as count
+    FROM articles
+    GROUP BY stage
+    ORDER BY count DESC;
+    ```
+    This is invaluable for debugging and monitoring.
+
+4.  **Synergy with Existing Code:** This proposal builds directly on your `ProcessingStage` enum and `supabase` client. It doesn't require a new library or a fundamental rewrite of your individual processing steps (like filtering or classification), just a change in how they are orchestrated. The `auto-healer` function you've stubbed out now has a clear purpose: it could be a cron job that finds items that have been "stuck" in a stage for too long and either retries them or flags them for manual review.
+
+By making this change, you elevate the orchestrator from a "script" to a resilient, scalable, and observable **data processing pipeline**. This is a hallmark of a mature and robust architectural pattern.

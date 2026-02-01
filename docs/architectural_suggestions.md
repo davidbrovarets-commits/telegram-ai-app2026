@@ -1233,3 +1233,119 @@ This single architectural change creates a cascade of benefits:
 4.  **Enhanced A/B Testing:** The versioned `ai_prompts` table is the first step toward sophisticated A/B testing. We could modify the orchestrator to process a percentage of articles with a new prompt version and compare the quality of the output, all controlled via the database.
 
 By decoupling configuration from the core logic, we are not just cleaning up code. We are fundamentally changing the system's operational model from static and developer-dependent to dynamic and team-empowered. This is the hallmark of a truly **Great** architecture.
+
+## Critique 2026-02-01T02:14:16.144Z
+Excellent. As the Lead Architect, I've reviewed the provided orchestrator logic. This is a significant and well-executed refactor. The move to a server-safe, provider-agnostic, and more robust pipeline is a huge leap forward from a typical v1 implementation.
+
+Here is my constructive critique, focusing on elevating a "Good" solution to a "Great" one.
+
+### High-Level Assessment
+
+The current architecture is **Good**. It demonstrates strong fundamentals:
+*   **Decoupling:** The `AI_PROVIDER` abstraction is clean and essential for future flexibility and cost management.
+*   **Efficiency:** Combining multiple AI tasks into a single JSON-based call is smart. The bulk `upsert` to Supabase is the correct approach for performance.
+*   **Robustness:** The inclusion of a concurrency limiter, retry logic (as implied by comments), and a sophisticated `published_at` extractor shows a commitment to handling real-world data imperfections.
+
+However, the system's overall health is critically dependent on one expensive and potentially volatile component: the AI enrichment step.
+
+### The "Good" to "Great" Opportunity: AI Enrichment Brittleness
+
+**What's Good:** The `AI_ENRICH` stage is designed for the "happy path." It efficiently calls the LLM, expects structured JSON, and processes it. The retry/backoff logic handles transient network flakes or temporary API load issues.
+
+**The Vulnerability:** The current design implies that if an item fails the `AI_ENRICH` step after all retries (e.g., the LLM is down for an extended period, the API contract changes, or the content triggers a safety filter), the entire `ProcessedItem` is likely discarded. This creates a single point of failure where valuable, pre-filtered news items are lost forever simply because the *enrichment* failed, not the *ingestion*.
+
+---
+
+### Architectural Proposal: Graceful Degradation with a Re-Enrichment Loop
+
+I propose we make the system more resilient by introducing a **graceful degradation** path. Instead of discarding an item upon persistent AI failure, we save a "less-than-perfect" version and create a mechanism to heal it later.
+
+This turns `AI_ENRICH` from a blocking, all-or-nothing step into a progressive enhancement.
+
+#### 1. Implementation: Modifying the Orchestrator
+
+When the `limitAI` call for enrichment fails permanently after its retries:
+
+1.  **Don't Throw, Mark as Degraded:** Instead of letting the error halt processing for that item, we'll catch it and update the item's state.
+
+2.  **Introduce a New Stage:** We'll add a new `ProcessingStage` to our type definition.
+
+    ```typescript
+    // In types.ts
+    type ProcessingStage =
+        | 'COLLECT'
+        | 'FILTER'
+        | 'CLASSIFY'
+        | 'ROUTE'
+        | 'DEDUP'
+        | 'PUBLISHED_AT'
+        | 'AI_ENRICH'
+        | 'AI_FAILED' // <-- New stage for items that failed enrichment
+        | 'DONE';
+    ```
+
+3.  **Create a Fallback Enrichment Function:** This function will populate the required fields with sensible, non-AI-generated defaults.
+
+    ```typescript
+    function applyFallbackEnrichment(item: ProcessedItem): ProcessedItem {
+        console.warn(`AI enrichment failed for item ${item.id}. Applying fallback.`);
+
+        // Use keywords that qualified the item to infer its type
+        const matchedEventKeywords = EVENT_KEYWORDS.some(k => wordBoundaryIncludes(item.raw.title.toLowerCase(), k));
+        
+        item.classification.type = matchedEventKeywords ? 'FUN' : 'INFO';
+        item.classification.relevance_score = 0.5; // Neutral score
+        
+        // Generate a basic summary from the raw text
+        item.classification.de_summary = item.raw.text.substring(0, 500).trim() + (item.raw.text.length > 500 ? '...' : '');
+        
+        // We cannot reliably generate these without AI
+        item.classification.uk_summary = '';
+        item.classification.actions = [];
+        item.classification.topics = [];
+
+        item.stage = 'AI_FAILED'; // Mark for the self-healing process
+
+        return item;
+    }
+    ```
+
+4.  **Integrate into the Main Loop:** The orchestrator would wrap the AI call.
+
+    ```typescript
+    // Inside the main processing logic for an item...
+    try {
+        const enrichedData = await limitAI(() => callVertex_JSON(item.raw.text));
+        // ... apply AI data to the item
+        item.stage = 'DONE';
+    } catch (err) {
+        // After retries have failed
+        item = applyFallbackEnrichment(item);
+    }
+    
+    // The item (either 'DONE' or 'AI_FAILED') is then added to the bulk insert list.
+    ```
+
+#### 2. Synergy: The Self-Healing "Re-Enrichment" Worker
+
+This is where the architecture becomes truly robust. The `AI_FAILED` stage is not a dead end; it's a queue for a separate, self-healing process. This fits perfectly with the `runAutoHealer` function mentioned in the code.
+
+We can implement a new, simple worker: `ReEnrichmentWorker`.
+
+*   **Job:** Runs periodically (e.g., every hour via a cron job or Supabase Edge Function).
+*   **Action:**
+    1.  Queries the database: `supabase.from('news').select('*').eq('stage', 'AI_FAILED').limit(20)`
+    2.  For each item, it attempts to re-run *only* the `callVertex_JSON` enrichment.
+    3.  If successful, it updates the row in Supabase with the full enrichment data and sets its `stage` to `'DONE'`.
+    4.  If it fails again, it leaves the item as is, to be retried on the next run.
+
+### Impact Analysis
+
+This change elevates the architecture from "robust" to "antifragile."
+
+1.  **Maximized Uptime & Data Integrity:** The primary ingestion pipeline can now run successfully even if the LLM provider is completely down. We stop losing valuable news items. A basic article is always better than a lost one.
+2.  **Decoupling & Performance:** It decouples the time-critical ingestion from the slow, expensive, and potentially unreliable enrichment. The main orchestrator finishes its batch faster, providing fresh (if basic) news to users more quickly.
+3.  **Cost-Effective Retries:** The `ReEnrichmentWorker` can run on a different schedule, perhaps during off-peak hours. It handles retries offline, preventing a single problematic article from blocking a new batch of articles in the main orchestrator.
+4.  **Enhanced Monitoring:** The `'AI_FAILED'` count in our database becomes a powerful new health metric. A sudden spike in this number immediately alerts us to a problem with our AI provider or our prompts, without impacting the user-facing service.
+
+By implementing this graceful degradation and self-healing loop, we ensure the system delivers value under adverse conditions, making it fundamentally more reliable and professional. This is a natural and non-breaking evolution of the current design.

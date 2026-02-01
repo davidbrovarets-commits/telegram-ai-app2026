@@ -45,6 +45,7 @@ interface State {
     last_run_at: string | null;
     last_sent_hashes: Record<string, string>;
     last_reminder_id: string | null;
+    last_update_id?: number; // For polling Telegram
 }
 
 // -- HELPERS --
@@ -113,11 +114,60 @@ async function runSecretary() {
         mute_until: null,
         last_run_at: null,
         last_sent_hashes: {},
-        last_reminder_id: null
+        last_reminder_id: null,
+        last_update_id: 0
     } as any);
 
     const now = new Date();
     const nowIso = now.toISOString();
+
+    // 0. POLL TELEGRAM (READ USER COMMANDS)
+    console.log('📨 Polling incoming messages...');
+    const offset = (state.last_update_id || 0) + 1;
+    let updates: any[] = [];
+
+    try {
+        // Fetch updates from Telegram using native fetch
+        const token = process.env.TELEGRAM_BOT_TOKEN;
+        if (token) {
+            const res = await fetch(`https://api.telegram.org/bot${token}/getUpdates?offset=${offset}&timeout=1`);
+            const data = await res.json();
+            if (data.ok) {
+                updates = data.result;
+            }
+        }
+    } catch (e) {
+        console.error('Polling error:', e);
+    }
+
+    if (updates.length > 0) {
+        console.log(`📥 Received ${updates.length} new messages.`);
+        for (const u of updates) {
+            state.last_update_id = u.update_id;
+
+            // Allow only from My Chat ID
+            const msg = u.message;
+            if (!msg || String(msg.chat?.id) !== process.env.TELEGRAM_CHAT_ID) continue;
+
+            const text = msg.text;
+
+            // Handle Text Command
+            if (text) {
+                console.log(`User said: ${text}`);
+                // Add to Inbox to be processed BELOW in Step 1
+                inbox.push({
+                    id: generateId('cmd'),
+                    created_at: new Date().toISOString(),
+                    raw_text: text,
+                    processed: false
+                });
+            }
+            // Handle File/Voice (Future)
+            else if (msg.voice || msg.document || msg.photo) {
+                await sendTelegramMessage("🤖 Sain faili/hääle kätte! (Aga mu silmad/kõrvad on veel tarkvara uuendamisel. Tulekul!)");
+            }
+        }
+    }
 
     // 1. PROCESS INBOX (COMMANDS)
     const unprocessed = inbox.filter(i => !i.processed);

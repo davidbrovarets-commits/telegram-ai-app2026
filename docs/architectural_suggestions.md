@@ -2248,3 +2248,173 @@ This proposal directly aligns with the project's constraints and goals:
     *   **Future-Proofing:** This architecture paves the way for more advanced techniques. The triage model could be fine-tuned on articles that are ultimately published vs. discarded, creating a highly accurate, self-improving classification loop.
 
 By implementing this AI Triage stage, we elevate the orchestrator from a static, rule-based system to a dynamic, learning-capable one. We are trading brittle, high-maintenance code for resilient, low-maintenance intelligence, which is a defining characteristic of a truly great architecture.
+
+## Critique 2026-02-01T07:28:51.210Z
+Excellent. This is a significant and well-documented refactor. The code is already good—it's server-safe, abstracts providers, and has a clear (if linear) processing flow. My role is to find what can be made *great*.
+
+The current architecture is that of a highly competent, monolithic **script**. All logic, while sectioned, resides in one file, executing in a top-to-bottom sequence for each source. This works, but it has inherent fragility and scalability limits. As complexity grows, this single file becomes a bottleneck for maintenance, testing, and error recovery.
+
+My primary architectural critique is that the *process* is entangled with the *implementation*. The `stage` property on `ProcessedItem` is a brilliant piece of data, but the code doesn't fully leverage it as an architectural pattern.
+
+Here is my proposal.
+
+### Architectural Proposal: The Stage-Based Pipeline Engine
+
+The core idea is to elevate the `stage` concept from a simple data field into the central driver of the entire orchestration logic. We will transform the monolithic script into a modular, re-entrant pipeline engine.
+
+Instead of a single long function that calls other functions, we'll define each processing step as a distinct, isolated **Stage**. A central **Pipeline Runner** will then execute these stages in order, persisting the state of each `ProcessedItem` as it progresses.
+
+#### 1. Why is this a "Great" solution?
+
+*   **Robustness & Self-Healing:** If the AI enrichment stage fails for 3 out of 100 articles due to a temporary network blip or API rate limit, the current script might drop them or halt. In the new model, these 3 articles are simply left in the `PUBLISHED_AT` stage. The next orchestrator run can query for "items not in DONE stage" and simply resume processing them from their last successful stage. This is a massive leap in self-healing.
+*   **Modularity & Testability:** Each stage becomes a standalone module with a single responsibility. You can write unit tests for the `classify` stage in complete isolation, simply by feeding it an `ProcessedItem` in the `FILTER` stage and asserting that the output is in the `CLASSIFY` stage.
+*   **Clarity & Maintainability:** The orchestrator's main file becomes incredibly simple: it fetches items, creates a pipeline runner, and executes it. The actual business logic is neatly organized into a `stages/` directory. Adding, removing, or reordering a step becomes a one-line change in the pipeline definition.
+*   **Synergy:** This pattern improves everything. Need to add a new `DEDUPE_V2` stage? Create a new stage file and insert it into the pipeline array. Want to debug why an article was filtered? You only need to look at the `filter.stage.ts` file. It makes the system's "bones" stronger.
+
+#### 2. How to Implement (Harmonious & Non-Breaking)
+
+This can be implemented incrementally. We'll start by creating the structure and then migrating the existing logic into it.
+
+**Step A: Define the Directory Structure and Core Interfaces**
+
+First, we break up the monolith.
+
+```
+src/
+├── orchestrator.ts       # The new, lean entry point
+├── pipeline.ts           # The Pipeline Runner engine
+|
+├── stages/
+│   ├── 01-collect.stage.ts
+│   ├── 02-filter.stage.ts
+│   ├── 03-classify.stage.ts
+│   ├── ...and so on
+│   └── index.ts          # Exports the ordered list of stages
+|
+├── services/
+│   ├── ai.service.ts     # All LLM call logic (Vertex, Mock)
+│   ├── db.service.ts     # Supabase client and queries
+│   ├── html.service.ts   # Published-at extractor, etc.
+|
+├── config/
+│   ├── keywords.ts       # ALL_STRICT_KEYWORDS, EVENT_KEYWORDS, etc.
+│   ├── sources.ts        # Re-export of SOURCE_REGISTRY
+|
+└── types/
+    └── news.types.ts     # ProcessedItem, NewsType, etc.
+```
+
+**Step B: Define the `PipelineStage` Interface**
+
+In `pipeline.ts`, we define the contract for every stage.
+
+```typescript
+// src/pipeline.ts (or types/pipeline.types.ts)
+import { ProcessedItem, ProcessingStage } from './types/news.types';
+
+export interface PipelineStage {
+    name: ProcessingStage;
+    execute(item: ProcessedItem): Promise<ProcessedItem>;
+}
+```
+
+**Step C: Refactor a Stage (Example: `filter.stage.ts`)**
+
+Let's migrate the filtering logic. It currently exists as a set of keyword checks inside the main loop. Now, it becomes a self-contained module.
+
+```typescript
+// src/stages/02-filter.stage.ts
+import { PipelineStage } from '../pipeline';
+import { ProcessedItem } from '../types/news.types';
+import { ALL_STRICT_KEYWORDS, EVENT_KEYWORDS, BLOCKLIST } from '../config/keywords';
+import { wordBoundaryIncludes } from '../helpers'; // Helpers would also be moved
+
+export class FilterStage implements PipelineStage {
+    name: 'FILTER' = 'FILTER';
+
+    async execute(item: ProcessedItem): Promise<ProcessedItem> {
+        // Only process items that are at the preceding stage
+        if (item.stage !== 'COLLECT') {
+            return item;
+        }
+
+        const text = `${item.raw.title} ${item.raw.text}`.toLowerCase();
+
+        // 1. Blocklist check
+        if (BLOCKLIST.some(keyword => text.includes(keyword.toLowerCase()))) {
+            return { ...item, stage: 'DONE', meta: { ...item.meta, reasonTag: 'blocked' } };
+        }
+
+        // 2. Strict relevance check
+        const isStrict = ALL_STRICT_KEYWORDS.some(keyword => wordBoundaryIncludes(text, keyword));
+        if (isStrict) {
+            item.classification.type = 'IMPORTANT';
+            item.stage = 'CLASSIFY'; // Move to next stage
+            return item;
+        }
+
+        // 3. Fun/Event check
+        const isFun = EVENT_KEYWORDS.some(keyword => wordBoundaryIncludes(text, keyword));
+        if (isFun) {
+            item.classification.type = 'FUN';
+            item.stage = 'CLASSIFY'; // Move to next stage
+            return item;
+        }
+        
+        // If it matches neither, we're done with it.
+        return { ...item, stage: 'DONE', meta: { ...item.meta, reasonTag: 'filtered_out_irrelevant' } };
+    }
+}
+```
+
+**Step D: Create the Pipeline Runner**
+
+The new `orchestrator.ts` becomes dramatically simpler. It's responsible for setting up and running the pipeline.
+
+```typescript
+// src/orchestrator.ts (simplified)
+import { allStages } from './stages'; // An array of stage instances
+import { getItemsToProcess } from './services/db.service'; // Fetches items from RSS or DB
+
+async function main() {
+    console.log('Orchestrator run started...');
+    // Fetches new items from RSS AND items that failed in a previous run.
+    const items = await getItemsToProcess(); 
+
+    for (const item of items) {
+        let currentItem = item;
+        try {
+            // Find the stage where the item left off
+            const startingStageIndex = allStages.findIndex(s => s.name === currentItem.stage);
+
+            for (let i = startingStageIndex; i < allStages.length; i++) {
+                const stage = allStages[i];
+                currentItem = await stage.execute(currentItem);
+
+                // If a stage marks the item as 'DONE', we can stop processing it.
+                if (currentItem.stage === 'DONE') {
+                    console.log(`Item ${currentItem.id} finished processing at stage ${stage.name}.`);
+                    break;
+                }
+            }
+        } catch (error) {
+            console.error(`ERROR processing item ${currentItem.id} at stage ${currentItem.stage}`, error);
+            // The item's state is preserved. It will be retried on the next run.
+        } finally {
+            // Always save the final state of the item after the run attempt.
+            await supabase.from('news_items').upsert(currentItem);
+        }
+    }
+    console.log('Orchestrator run finished.');
+}
+
+main();
+```
+
+### Summary of Benefits
+
+This architectural refactoring takes your good, functional script and turns it into a great, enterprise-grade processing engine.
+
+*   **Harmony:** It uses existing TypeScript features (classes, interfaces) and fits perfectly within a Node.js/Supabase environment.
+*   **Non-Breaking:** It's a refactor. The core logic (keyword matching, API calls) remains the same, just relocated into a more robust structure. You can migrate one stage at a time.
+*   **Synergy:** A self-healing pipeline makes the entire system more reliable. Better modularity makes debugging the `auto-healer` or `AI_PROVIDER` logic vastly simpler. This structure doesn't just improve the orchestrator; it provides a stable foundation for all future features.

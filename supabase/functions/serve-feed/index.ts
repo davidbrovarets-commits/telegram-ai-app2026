@@ -36,26 +36,52 @@ serve(async (req) => {
             { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
         );
 
-        // 1. Fetch Candidates (City/Land)
-        let feedQuery = supabaseClient
-            .from('news')
-            .select('id, title, created_at, embedding, type, priority, city, land, scope') // Select embedding!
-            .eq('status', 'ACTIVE')
-            .order('created_at', { ascending: false })
-            .range(page * limit, (page + 1) * limit + 50 - 1); // Fetch extra for re-ranking
+        // 1. Fetch Candidates with Cascading Fallback
+        // Try City → Land → DE until we get results
+        let candidates: any[] = [];
+        const scopes = [
+            city ? { field: 'city', value: city } : null,
+            land ? { field: 'land', value: land } : null,
+            { field: 'scope', value: 'DE' } // Always fallback to national
+        ].filter(Boolean);
 
-        if (city) {
-            feedQuery = feedQuery.eq('city', city);
-        } else if (land) {
-            feedQuery = feedQuery.eq('land', land);
-        } else {
-            feedQuery = feedQuery.eq('scope', 'DE'); // Default fallback
+        for (const scope of scopes) {
+            if (candidates.length > 0) break; // Stop if we found items
+
+            let feedQuery = supabaseClient
+                .from('news')
+                .select('id, title, created_at, embedding, type, priority, city, land, scope')
+                .eq('status', 'ACTIVE')
+                .order('created_at', { ascending: false })
+                .range(page * limit, (page + 1) * limit + 50 - 1);
+
+            if (scope) {
+                feedQuery = feedQuery.eq(scope.field, scope.value);
+            }
+
+            const { data, error: feedError } = await feedQuery;
+            if (feedError) throw feedError;
+
+            if (data && data.length > 0) {
+                console.log(`[serve-feed] Found ${data.length} items at scope: ${scope?.field}=${scope?.value}`);
+                candidates = data;
+            }
         }
 
-        const { data: candidates, error: feedError } = await feedQuery;
-        if (feedError) throw feedError;
+        // If STILL empty, fetch ANY active news (last resort)
+        if (candidates.length === 0) {
+            console.log('[serve-feed] All scopes empty. Fetching ANY active news...');
+            const { data: fallbackData } = await supabaseClient
+                .from('news')
+                .select('id, title, created_at, embedding, type, priority, city, land, scope')
+                .eq('status', 'ACTIVE')
+                .order('created_at', { ascending: false })
+                .limit(limit);
 
-        let feed = candidates || [];
+            candidates = fallbackData || [];
+        }
+
+        let feed = candidates;
 
         // 2. Personalization (AI Ranking)
         if (userId && feed.length > 0) {

@@ -2418,3 +2418,131 @@ This architectural refactoring takes your good, functional script and turns it i
 *   **Harmony:** It uses existing TypeScript features (classes, interfaces) and fits perfectly within a Node.js/Supabase environment.
 *   **Non-Breaking:** It's a refactor. The core logic (keyword matching, API calls) remains the same, just relocated into a more robust structure. You can migrate one stage at a time.
 *   **Synergy:** A self-healing pipeline makes the entire system more reliable. Better modularity makes debugging the `auto-healer` or `AI_PROVIDER` logic vastly simpler. This structure doesn't just improve the orchestrator; it provides a stable foundation for all future features.
+
+## Critique 2026-02-01T08:02:39.261Z
+Excellent. As Lead Architect, I've reviewed the provided orchestrator logic. This is a very strong refactor; the team has clearly put a lot of thought into making it more robust and server-safe. The provider abstraction, combined AI call, and concurrency limiting are all significant steps forward.
+
+This is a "Good" system. Let's talk about the one architectural change that will make it "Great."
+
+### Critique: From "Good" to "Great"
+
+The current implementation is solid, but its intelligence is **static and brittle**. The core filtering, classification, and routing logic is governed by hardcoded constant arrays (`ALL_STRICT_KEYWORDS`, `EVENT_KEYWORDS`, `BLOCKLIST`).
+
+*   **The "Good":** Using keyword lists is a fast, transparent, and effective way to establish a baseline for relevance. It's a pragmatic and well-executed V1 of the filtering logic.
+
+*   **The Bottleneck:** Any change to this logic—adding a new keyword for a trending topic, blocking a new irrelevant term, or adjusting which city package handles which keyword—requires a code modification and a full redeployment. This creates a tight coupling between the *operational logic* of the orchestrator and its *business/domain knowledge*. As the system scales, this becomes a significant maintenance burden and slows down our ability to react to new information patterns.
+
+The system can execute its process robustly, but it cannot *learn* or be *tuned* without developer intervention.
+
+---
+
+### Architectural Proposal: Decouple Configuration from Code via Supabase
+
+My proposal is to move all static "knowledge" configuration out of the TypeScript code and into Supabase tables. This turns our static script into a dynamic, data-driven engine.
+
+#### 1. The New Database Schema
+
+We will create two new tables in Supabase to house this configuration.
+
+**`config_keywords`**
+This table will replace the `ALL_STRICT_KEYWORDS`, `EVENT_KEYWORDS`, and `BLOCKLIST` constants.
+
+| Column | Type | Description | Example |
+| :--- | :--- | :--- | :--- |
+| `id` | `uuid` | Primary Key | `gen_random_uuid()` |
+| `term` | `text` | The keyword to match. Indexed for fast lookups. | `bürgergeld` |
+| `type` | `text` | The list it belongs to. | `STRICT` |
+| `category` | `text` | The topic it relates to. | `SOCIAL` |
+| `weight` | `float4` | A scoring multiplier (default `1.0`). | `1.5` |
+| `aliases` | `jsonb` | An array of alternative terms. | `["sozialhilfe", "hartz iv"]` |
+| `is_active` | `boolean`| Enable/disable without deleting. | `true` |
+
+**`config_sources`**
+This table would formalize the existing `SOURCE_REGISTRY` and allow for more dynamic control.
+
+| Column | Type | Description |
+| :--- | :--- | :--- |
+| `id` | `text` | Primary Key (e.g., `TAGESSCHAU`) |
+| `name` | `text` | Human-readable name (e.g., "Tagesschau") |
+| `rss_url` | `text` | The RSS feed URL |
+| `default_geo_layer`| `text` | `CITY`, `STATE`, or `COUNTRY` |
+| `is_active` | `boolean`| Toggle this source on/off globally |
+
+#### 2. The Orchestrator Refactor (Non-Breaking)
+
+The orchestrator's startup process will be modified to fetch this configuration once and cache it in memory for the duration of its run.
+
+**Before:**
+
+```typescript
+// At the top of the file
+const UKRAINE_KEYWORDS = ['Ukraine', 'Ukrainer', ...];
+const SOCIAL_KEYWORDS = ['Jobcenter', 'Bürgergeld', ...];
+// ... and so on
+```
+
+**After:**
+
+```typescript
+// Inside the main orchestrator function or a setup function
+
+interface AppConfig {
+    strictKeywords: Map<string, { weight: number; category: string }>;
+    eventKeywords: Set<string>;
+    blocklist: Set<string>;
+    // ... other config
+}
+
+async function loadConfigFromSupabase(): Promise<AppConfig> {
+    console.log('Loading dynamic configuration from Supabase...');
+    const { data, error } = await supabase.from('config_keywords').select('*').eq('is_active', true);
+
+    if (error) {
+        console.error('FATAL: Could not load config from Supabase. Exiting.', error);
+        throw new Error('Config load failed.');
+    }
+
+    const strictKeywords = new Map();
+    const eventKeywords = new Set<string>();
+    const blocklist = new Set<string>();
+
+    for (const row of data) {
+        const terms = [row.term, ...(row.aliases || [])];
+        for (const term of terms) {
+            const normalizedTerm = safeLower(term);
+            if (row.type === 'STRICT') {
+                strictKeywords.set(normalizedTerm, { weight: row.weight, category: row.category });
+            } else if (row.type === 'EVENT') {
+                eventKeywords.add(normalizedTerm);
+            } else if (row.type === 'BLOCKLIST') {
+                blocklist.add(normalizedTerm);
+            }
+        }
+    }
+    
+    // Similarly load sources, etc.
+
+    return { strictKeywords, eventKeywords, blocklist };
+}
+
+// The main function would then start with:
+// const config = await loadConfigFromSupabase();
+// ...and use config.strictKeywords instead of ALL_STRICT_KEYWORDS
+```
+
+The rest of the pipeline logic (`filter`, `route`) remains the same but now consumes these in-memory Maps and Sets. The change is isolated and non-breaking.
+
+### Justification & Synergistic Benefits
+
+This single change has a cascading positive impact across the entire system.
+
+1.  **Immediate Agility & Maintainability:**
+    *   **Zero-Downtime Tuning:** We can add, remove, or disable keywords instantly by changing a row in the Supabase table. A problematic keyword causing false positives can be deactivated in seconds, without a single line of code change or deployment.
+    *   **Separation of Concerns:** The code becomes pure orchestration logic. The "what to look for" knowledge lives in the database, where it belongs. This empowers non-developers (e.g., a content manager) to fine-tune the system via the Supabase UI.
+
+2.  **Foundation for a Smarter System (Synergy):**
+    *   **Weighted Scoring:** The `weight` column is no longer a hypothetical. We can now evolve the simple boolean `isRelevant` check into a sophisticated scoring model. An article matching `Bürgergeld` (weight: 1.5) and `Gesetz` (weight: 2.0) would score higher than one just matching `Ukraine` (weight: 1.0). This makes the `relevance_score` a truly dynamic and meaningful metric.
+    *   **Smarter Classification:** The `category` column in the DB allows us to directly associate keywords with topics. This provides a much stronger signal for the `CLASSIFY` stage, potentially reducing our reliance on the LLM for basic categorization and saving costs.
+    *   **Enabling True Auto-Healing:** The `runAutoHealer` function, currently a placeholder, gains a clear purpose. It could analyze processed articles and identify keywords that frequently lead to low-value or discarded news. It could then programmatically *lower the weight* or set `is_active = false` for that keyword in the `config_keywords` table, allowing the system to heal and adapt itself over time.
+
+By moving configuration to the database, we are not just cleaning up constants. We are laying the foundation for a more intelligent, adaptable, and self-improving news pipeline that can be managed and scaled effectively. This is the architectural leap from a good, functional script to a great, resilient service.

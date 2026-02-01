@@ -1457,3 +1457,85 @@ This single change elevates the system from a static script to a dynamic, config
 4.  **Cleanup:** Once verified, remove the large constant arrays from the source code, making the file cleaner and more focused on its orchestration task.
 
 By making this change, you are not just cleaning up code; you are fundamentally shifting the architecture to be more data-driven, intelligent, and adaptable—hallmarks of a truly robust and scalable system.
+
+## Critique 2026-02-01T02:24:53.496Z
+Excellent. The current architecture demonstrates a significant leap forward in maturity, especially with the move to server-side logic, provider abstraction, and a unified AI call. This is a solid foundation.
+
+As the Lead Architect, my role is to identify the next evolutionary step. The current implementation is a well-structured script, but it operates as a single, monolithic, in-memory process. Its primary architectural vulnerability is its fragility; if the process fails at any point, all intermediate work is lost.
+
+Let's elevate this from a "good script" to a "great, resilient system."
+
+### Architectural Critique: The Volatile Orchestrator
+
+The current logic operates like this:
+
+1.  Fetch all items from all sources.
+2.  Process them in a series of in-memory loops (`filter`, `map`, `Promise.all`).
+3.  Bulk-insert the final, fully-processed results.
+
+This is efficient for a perfect run, but it's a house of cards. A single unhandled error in a network request, a malformed article, or a temporary AI service outage midway through the `AI_ENRICH` stage could crash the entire run. Upon restart, the orchestrator would re-fetch and re-process everything from scratch, wasting time, bandwidth, and expensive AI credits.
+
+The `ProcessingStage` type is a fantastic piece of foresight, but it's currently just a label on a finished object. We can make it the very engine of our system.
+
+### Proposal: The Stateful, Resilient Pipeline
+
+My proposal is to transform the orchestrator from a volatile, in-memory script into a **stateful, resumable pipeline** using Supabase as the state machine. Instead of processing items from memory, we will treat the database as the single source of truth for the *state* of each item in the pipeline.
+
+This shifts the paradigm from "run a script" to "advance items through a workflow."
+
+#### How It Works
+
+We will introduce a new database table, perhaps `news_pipeline`, which mirrors the `ProcessedItem` interface but adds columns for state management.
+
+**`news_pipeline` table schema:**
+
+*   `id` (text, primary key): The stable hash ID.
+*   `stage` (text): e.g., 'COLLECT', 'FILTER', 'AI_ENRICH', 'DONE'.
+*   `data` (jsonb): The full `ProcessedItem` object.
+*   `created_at` (timestamptz)
+*   `updated_at` (timestamptz)
+*   `error_count` (int, default 0)
+*   `last_error` (text, nullable)
+
+The orchestration logic is then refactored into a series of independent "worker" functions, each responsible for a single stage transition.
+
+**New Orchestration Flow:**
+
+1.  **Collector Worker:**
+    *   Runs, fetches RSS feeds.
+    *   For each new item, it calculates the `id` hash.
+    *   It performs an `upsert` into `news_pipeline`:
+        *   **On conflict (`id`):** `DO NOTHING`. This elegantly handles de-duplication at the earliest possible moment.
+        *   **On new insert:** Set `stage` to `'COLLECT'` and populate the initial `data` with raw RSS content.
+
+2.  **Filter & Route Worker:**
+    *   Queries for items: `SELECT * FROM news_pipeline WHERE stage = 'COLLECT' LIMIT 100;`
+    *   For each item, it runs the filtering and routing logic.
+    *   **If successful:** Updates the item in the DB: `UPDATE news_pipeline SET stage = 'AI_ENRICH', data = '...' WHERE id = '...';`
+    *   **If it should be discarded:** Updates the item: `UPDATE news_pipeline SET stage = 'DISCARDED', data = '...' WHERE id = '...';`
+
+3.  **AI Enrich Worker:**
+    *   Queries for items: `SELECT * FROM news_pipeline WHERE stage = 'AI_ENRICH' LIMIT 10;` (a smaller limit due to cost/time).
+    *   For each item, it calls the AI service.
+    *   **On success:** `UPDATE news_pipeline SET stage = 'DONE', data = '...' WHERE id = '...';`
+    *   **On failure (e.g., API error):** `UPDATE news_pipeline SET error_count = error_count + 1, last_error = '...' WHERE id = '...';` The item remains at the `AI_ENRICH` stage to be retried later. After 3-5 failures, a separate process can move it to a `FAILED` stage.
+
+4.  **Publisher:**
+    *   The final step is no longer a bulk insert. The `news` table that your application reads from can be populated from a `VIEW` on `news_pipeline WHERE stage = 'DONE'`, or a trigger can copy `'DONE'` items into the final table.
+
+#### Architectural Benefits (Synergy & Harmony)
+
+This is more than just adding a table; it fundamentally changes the system's character for the better.
+
+1.  **Robustness & Self-Healing:** A crash is no longer a catastrophe. The orchestrator can be stopped and restarted at any time, and it will simply pick up where it left off by querying for items in their respective stages. Failed AI calls can be retried automatically without reprocessing the entire batch. This fulfills the **non-breaking** and **synergy** goals by making the entire system more reliable.
+
+2.  **Scalability & Efficiency:** Different workers can be scaled independently. The `COLLECT` stage is fast and can process thousands of items. The `AI_ENRICH` stage is slow and expensive. With this model, you could run the AI worker on a separate, more powerful server, or even as a distributed set of functions, all pulling from the same Supabase "queue." You never waste API calls re-summarizing articles that have already been processed.
+
+3.  **Observability:** The `news_pipeline` table becomes an instant, real-time dashboard of your entire operation. You can easily answer questions like:
+    *   "How many articles are currently waiting for AI enrichment?" (`SELECT count(*) WHERE stage = 'AI_ENRICH'`)
+    *   "Which articles are repeatedly failing?" (`SELECT * WHERE error_count > 3`)
+    *   "What is the bottleneck in our pipeline?" (Look for the stage with the most items.)
+
+4.  **Harmony with Existing Code:** This proposal builds directly on what's already there. The `ProcessingStage` enum becomes the central pillar of the new design. The existing logic for filtering, routing, and AI interaction can be lifted and placed into the new worker functions with minimal changes. It uses Supabase, fitting the existing stack perfectly.
+
+By implementing this stateful pipeline, we evolve the orchestrator from a fragile script into a robust, scalable, and observable workflow engine, ready for production workloads.

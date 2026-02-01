@@ -34,26 +34,29 @@ export const SwipeableNewsCard: React.FC<SwipeableNewsCardProps> = ({
     // We'll use absolute positioned divs for backgrounds to avoid complex color interpolation issues
 
     const handleDragEnd = async (_: any, info: PanInfo) => {
-        const threshold = 80; // Drag distance to trigger action (lowered slightly)
+        const threshold = 60; // Lower threshold slightly for easier swipe
+        const velocity = info.velocity.x;
 
-        if (info.offset.x > threshold) {
-            // Swiped Right -> Delete
+        // Check for sufficient distance OR high velocity
+        if (info.offset.x > threshold || (info.offset.x > 30 && velocity > 200)) {
+            // Swiped Right -> Delete/Custom
             setIsPresent(false);
+            // Delay for animation
             setTimeout(() => {
                 onDelete();
-            }, 200);
-        } else if (info.offset.x < -threshold) {
-            // Swiped Left
+            }, 300);
+        } else if (info.offset.x < -threshold || (info.offset.x < -30 && velocity < -200)) {
+            // Swiped Left -> Archive/Custom
             setIsPresent(false);
+            // Delay for animation
             setTimeout(() => {
                 if (mode === 'archive') {
-                    onDelete(); // Both directions delete in archive
+                    onDelete();
                 } else if (onArchive) {
                     onArchive();
                 }
-            }, 200);
+            }, 300);
         }
-        // If not passed threshold, it snaps back automatically due to dragConstraints
     };
 
     return (

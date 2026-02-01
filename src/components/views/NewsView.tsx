@@ -36,21 +36,24 @@ export const NewsView = ({ onNewsClick, land, city }: NewsViewProps) => {
                 });
 
                 // Self-Healing: Detect IDs that don't exist in DB anymore
-                const foundIds = new Set(data.map((item: News) => item.id));
-                const missingIds = idsToFetch.filter(id => !foundIds.has(id));
+                // IMPORTANT: Only run if result is non-empty to distinguish from network error
+                if (data.length > 0) {
+                    const foundIds = new Set(data.map((item: News) => item.id));
+                    const missingIds = idsToFetch.filter(id => !foundIds.has(id));
 
-                if (missingIds.length > 0) {
-                    console.warn('[NewsView] Found dead IDs, removing:', missingIds);
-                    import('../../stores/newsStore').then(({ newsStore }) => {
-                        newsStore.setState(prev => ({
-                            ...prev,
-                            visibleFeed: prev.visibleFeed.map(id => missingIds.includes(id) ? 0 : id)
-                        }));
-                        // Trigger refill
-                        import('../../services/news/FeedManager').then(({ FeedManager }) => {
-                            FeedManager.fillEmptySlots();
+                    if (missingIds.length > 0) {
+                        console.warn('[NewsView] Found dead IDs, removing:', missingIds);
+                        import('../../stores/newsStore').then(({ newsStore }) => {
+                            newsStore.setState(prev => ({
+                                ...prev,
+                                visibleFeed: prev.visibleFeed.map(id => missingIds.includes(id) ? 0 : id)
+                            }));
+                            // Trigger refill
+                            import('../../services/news/FeedManager').then(({ FeedManager }) => {
+                                FeedManager.fillEmptySlots();
+                            });
                         });
-                    });
+                    }
                 }
             }
         };

@@ -1,0 +1,26 @@
+name: Governance Guard
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  governance-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify governance acknowledgement
+        run: |
+          if ! grep -R "Pre-Action Governance Check: OK" .; then
+            echo "❌ Governance Guard failed."
+            echo "Missing explicit 'Pre-Action Governance Check: OK' acknowledgement."
+            echo "All changes must confirm governance compliance."
+            exit 1
+          fi
+
+      - name: Governance Guard passed
+        run: echo "✅ Governance acknowledged."

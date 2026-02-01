@@ -6,7 +6,7 @@
   "mute_until": null,
   "last_run_at": null,
   "last_sent_hashes": {},
-  "last_reminder_id": null,
+  "last_reminder_id": "init-1",
   "nightly_report_file": "project_knowledge.md",
-  "last_update_id": 431592678
+  "last_update_id": 431592679
 }

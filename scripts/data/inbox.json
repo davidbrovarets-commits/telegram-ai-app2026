@@ -46,5 +46,21 @@
     "processed": true,
     "result": "❓",
     "processed_at": "2026-02-01T01:02:11.417Z"
+  },
+  {
+    "id": "cmd_1769951796586_495",
+    "created_at": "2026-02-01T13:16:36.586Z",
+    "raw_text": "kus ma näen seda faili AI architectural suggestions.\n?",
+    "processed": true,
+    "result": "❓",
+    "processed_at": "2026-02-01T13:16:36.589Z"
+  },
+  {
+    "id": "cmd_1769951828989_949",
+    "created_at": "2026-02-01T13:17:08.989Z",
+    "raw_text": "gotovo",
+    "processed": true,
+    "result": "✅ Märkisin tehtuks: 🌅 Good morning! Here are the latest AI architectural suggestions.",
+    "processed_at": "2026-02-01T13:17:08.990Z"
   }
 ]

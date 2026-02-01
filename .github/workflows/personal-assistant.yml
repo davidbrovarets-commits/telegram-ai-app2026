@@ -25,13 +25,13 @@ jobs:
           node-version: '20'
           google-credentials: ${{ secrets.GOOGLE_CREDENTIALS }}
 
-      - name: 🧠 AI Architect Review
-        env:
-          GOOGLE_PROJECT_ID: ${{ secrets.GOOGLE_PROJECT_ID }}
-          GOOGLE_CLOUD_LOCATION: us-central1
-        run: |
-          mkdir -p docs
-          npx tsx scripts/daily_architect.ts
+#       - name: 🧠 AI Architect Review
+#         env:
+#           GOOGLE_PROJECT_ID: ${{ secrets.GOOGLE_PROJECT_ID }}
+#           GOOGLE_CLOUD_LOCATION: us-central1
+#         run: |
+#           mkdir -p docs
+#           npx tsx scripts/daily_architect.ts
 
       - name: 🎩 Secretary Notification
         env:

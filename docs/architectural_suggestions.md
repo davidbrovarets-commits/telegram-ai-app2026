@@ -2684,3 +2684,153 @@ This single change creates a cascade of positive effects, directly addressing ro
 ### Conclusion
 
 Migrating the `SOURCE_REGISTRY` from a static code file to a dynamic Supabase table is a classic architectural improvement that moves your system from a "script" to a "service". It decouples the "what" (the sources) from the "how" (the processing logic). This change is non-breaking in spirit, harmonizes perfectly with your existing Supabase/TypeScript stack, and creates powerful synergistic opportunities for a truly robust and self-healing news pipeline. This is the path from a "Good" solution to a "Great" one.
+
+## Critique 2026-02-01T09:58:31.290Z
+Excellent. The provided code demonstrates a significant and thoughtful refactoring effort. The move to a server-side, provider-agnostic, and more robust pipeline is a huge leap forward. The clear separation of concerns via processing stages, the use of a stable hashing for IDs, and the concurrency limiter are all hallmarks of a maturing, well-architected system.
+
+However, a great system is one that anticipates and mitigates future maintenance burdens. I see one area where the current "good" solution is destined to become a "great" source of future pain.
+
+### Architectural Critique: The Brittle Scraper
+
+The current implementation for extracting the `published_at` date is a series of hardcoded, regex-based functions (`extractMetaContent`, `extractTimeDatetime`, `extractJsonLdDatePublished`).
+
+*   **What's Good:** It recognizes that the RSS `pubDate` is often unreliable and attempts to find a better source of truth directly from the article's HTML. It covers the most common patterns (meta tags, JSON-LD, `<time>` elements).
+*   **Where It Can Be Great:** This approach is inherently fragile and non-scalable. It treats all sources as if they follow the same limited set of HTML patterns. When a news source like `tagesschau.de` changes its website layout, this code will silently fail or extract incorrect data. To fix it, a developer must:
+    1.  Notice the failure.
+    2.  Inspect the new HTML structure.
+    3.  Write a new regex or parsing function.
+    4.  Modify the orchestrator's core logic.
+    5.  Redeploy the entire application.
+
+This cycle is a significant maintenance bottleneck. For every 10 sources you add, the probability of one breaking in any given week approaches certainty. The current architecture couples the *orchestration logic* with source-specific *scraping logic*.
+
+---
+
+### Proposal: The Config-Driven Content Extractor
+
+I propose we decouple scraping logic from the orchestrator by introducing a **configurable content extraction layer**, driven by the `SOURCE_REGISTRY`.
+
+Instead of a fixed chain of generic parsing functions, we will treat content extraction as a source-specific configuration. This turns a code problem into a data problem, which is far easier to manage.
+
+**1. Enhance `SOURCE_REGISTRY`:**
+
+We will extend the schema for each entry in `SOURCE_REGISTRY`. Alongside the `url` and `name`, we add an `extractor` configuration object. This object will define a prioritized list of strategies for finding the necessary content.
+
+```typescript
+// in ./registries/source-registry.ts
+
+interface ExtractionRule {
+    // Strategy: 'css' for CSS selectors, 'meta' for <meta> tags, 'json-ld' for structured data.
+    strategy: 'css' | 'meta' | 'json-ld'; 
+    // The selector/key to find the element/data.
+    selector: string; 
+    // For 'css', which part of the element to get? 'datetime' attr, 'text' content, etc.
+    attribute?: 'datetime' | 'text'; 
+}
+
+interface SourceConfig {
+    id: string; // e.g., 'TAGESSCHAU'
+    name: string;
+    rss_url: string;
+    // NEW: Add extractor configuration
+    extractor: {
+        // Prioritized list of rules to find the publication date
+        published_at: ExtractionRule[];
+        // We can extend this to get better body text for the AI
+        article_body: ExtractionRule[]; 
+    };
+}
+
+export const SOURCE_REGISTRY: Record<string, SourceConfig> = {
+    TAGESSCHAU: {
+        id: 'TAGESSCHAU',
+        name: 'Tagesschau',
+        rss_url: '...',
+        extractor: {
+            published_at: [
+                { strategy: 'meta', selector: 'article:published_time' },
+                { strategy: 'css', selector: 'time.metatext', attribute: 'datetime' },
+            ],
+            article_body: [
+                { strategy: 'css', selector: 'article.story', attribute: 'text' }
+            ]
+        }
+    },
+    // ... other sources
+};
+```
+
+**2. Create a Dedicated `ContentExtractor` Service:**
+
+A new service, perhaps in `services/content-extractor.ts`, will be responsible for executing these rules. It will use a proper HTML parsing library like `cheerio` which is more robust and powerful than regex.
+
+```typescript
+// services/content-extractor.ts
+import * as cheerio from 'cheerio';
+import { ExtractionRule } from '../registries/source-registry';
+
+// This function would replace the multiple `extract...` functions
+export function extractFromHtml(html: string, rules: ExtractionRule[]): string | null {
+    const $ = cheerio.load(html);
+
+    for (const rule of rules) {
+        try {
+            let result: string | null = null;
+            if (rule.strategy === 'css') {
+                const element = $(rule.selector).first();
+                if (rule.attribute === 'datetime') {
+                    result = element.attr('datetime') || null;
+                } else { // default to text
+                    result = element.text() || null;
+                }
+            } 
+            else if (rule.strategy === 'meta') {
+                result = $(`meta[property="${rule.selector}"], meta[name="${rule.selector}"]`).attr('content') || null;
+            }
+            // ... add logic for 'json-ld' strategy
+
+            if (result) {
+                return normalizeDateToIso(result); // Reuse existing normalizer
+            }
+        } catch (e) {
+            console.warn(`Extractor rule failed: ${JSON.stringify(rule)}`, e);
+            continue; // Try the next rule
+        }
+    }
+    return null; // No rule succeeded
+}
+```
+
+**3. Integrate into the Orchestrator:**
+
+The main pipeline logic would be simplified. Instead of calling multiple `extract...` functions, it would fetch the appropriate `extractor` config from the `SOURCE_REGISTRY` and call the new service.
+
+```typescript
+// Inside the main processing loop...
+
+// Get the HTML content of the article...
+const articleHtml = await fetch(item.raw.url).then(res => res.text());
+
+// Get the config for the current source
+const sourceConfig = SOURCE_REGISTRY[item.raw.source_id];
+
+if (sourceConfig?.extractor?.published_at) {
+    const extractedDate = extractFromHtml(articleHtml, sourceConfig.extractor.published_at);
+    if (extractedDate) {
+        item.raw.published_at = extractedDate;
+        item.meta = { ...item.meta, published_at_source: 'html' };
+    }
+}
+```
+
+### Benefits of This Architecture
+
+1.  **HARMONY & NON-BREAKING:** This refactor fits perfectly with the existing `SOURCE_REGISTRY` pattern. It’s an additive change that replaces a brittle internal component without altering the overall data flow or `ProcessingStage` pipeline. The old functions can be kept as a final fallback.
+
+2.  **ROBUSTNESS & MAINTAINABILITY:** When a source layout changes, the fix is no longer a code change. It's a configuration update in `source-registry.ts`. This is faster, safer, and can be done by less experienced developers. It makes the system adaptable by design.
+
+3.  **SYNERGY & FUTURE-PROOFING:**
+    *   **Better AI Input:** This same mechanism can be used to define selectors for the main `article_body` (as shown in the example). This allows us to feed the AI a clean, specific block of text, free from ads, comments, and navigation boilerplate. Cleaner input leads to dramatically better summaries, classifications, and action extraction.
+    *   **Foundation for Self-Healing:** The `auto-healer` (mentioned in the original code) now has a clear target. If `extractFromHtml` fails for a source, the `auto-healer` could be triggered to fetch the page, analyze its structure, and *suggest* a new, working CSS selector, creating a truly self-adapting system.
+
+By implementing a config-driven extractor, we transform a fragile implementation detail into a robust, scalable, and synergistic core component of the architecture.

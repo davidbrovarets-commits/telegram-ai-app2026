@@ -3445,3 +3445,115 @@ This is a non-breaking refactor that dramatically improves the system.
 *   **Synergy with AI:** You could even feed the specific keyword that was matched into the AI prompt (`"Summarize this article, paying close attention to the topic of 'Bürgergeld'"`). This would likely improve the quality and relevance of the AI-generated summaries.
 
 By making this one architectural change, we elevate the orchestrator from a smart script to a manageable, scalable, and observable data processing platform. It's the natural next step in its evolution.
+
+## Critique 2026-02-01T14:57:18.517Z
+Excellent. I see a well-structured, refactored orchestrator that has already incorporated significant improvements. The code is clean, modular, and demonstrates a strong understanding of the problem domain. The move to server-side logic, the provider abstraction, the combined AI call, and the concurrency limiter are all hallmarks of a maturing, robust system.
+
+This is a **Good** foundation. Let's make it **Great**.
+
+My critique focuses on a single, core architectural weakness that, when addressed, will unlock significant gains in robustness, maintainability, and future intelligence.
+
+***
+
+### Architectural Critique: Static Configuration vs. Dynamic Intelligence
+
+The current system's intelligence is bifurcated. It uses a highly sophisticated, dynamic tool (the LLM) for the *enrichment* phase but relies on rigid, static, hardcoded arrays for the critical, upfront *filtering and routing* phases.
+
+-   `ALL_STRICT_KEYWORDS`
+-   `EVENT_KEYWORDS`
+-   `BLOCKLIST`
+-   `city-packages.index.json` (and by extension, the `SOURCE_REGISTRY`)
+
+This approach has several architectural drawbacks:
+
+1.  **Brittleness:** The world changes faster than your deployment schedule. A new law (`"Wachstumschancengesetz"`), a new program, or a new slang term for an event will render your filters blind until a developer manually updates these arrays and redeploys the entire application.
+2.  **Lack of Nuance:** Every keyword is a binary, boolean match. `"Gesetz"` (Law) is treated with the same weight as `"Ukraine"`. `"Konzert"` carries the same significance as `"Tag der offenen Tür"`. This prevents any form of weighted scoring or nuanced relevance calculation in the early filtering stages.
+3.  **Operational Bottleneck:** Only developers can update the core filtering logic. A content manager, a regional expert, or even an automated process cannot easily tweak, add, or disable a keyword.
+4.  **Missed Synergy:** The `auto-healer` is mentioned. A truly powerful auto-healer wouldn't just report issues; it would *act* on them. It could identify that 10 recent, relevant articles all contained the new term `"Turbo-Einbürgerung"`, but it has no mechanism to add this term to the keyword list to improve future runs.
+
+The current design treats its most critical configuration—*what makes an article important*—as static code, when it should be treated as dynamic data.
+
+### The Proposal: Dynamic Configuration via Supabase
+
+Let's elevate the configuration from static code/files into dynamic database tables within your existing Supabase project. This centralizes your system's "brain" and makes it adaptable without requiring code changes.
+
+#### 1. The "How": Introduce Configuration Tables
+
+Create two new tables in Supabase:
+
+**Table 1: `classification_rules`**
+
+This table replaces the hardcoded keyword arrays.
+
+| Column | Type | Description | Example |
+| :--- | :--- | :--- | :--- |
+| `id` | `uuid` | Primary Key | `gen_random_uuid()` |
+| `term` | `text` | The keyword or phrase to match. | `Bürgergeld` |
+| `type` | `enum` | The category of the rule. | `STRICT` |
+| `category` | `text` | A more specific topic grouping. | `SOCIAL` |
+| `weight` | `float4` | A score from -1.0 to 1.0. | `0.8` |
+| `is_enabled` | `boolean` | Allows disabling without deleting. | `true` |
+| `is_regex` | `boolean` | Whether `term` is a regex pattern. | `false` |
+| `notes` | `text` | Why this rule was added. | `Key benefit for newcomers.` |
+
+**Example Rows:**
+
+| term | type | category | weight |
+| :--- | :--- | :--- | :--- |
+| `§24` | `STRICT` | `UKRAINE` | `1.0` |
+| `Bundesregierung` | `STRICT` | `LEGAL` | `0.7` |
+| `Konzert` | `FUN` | `EVENT` | `0.6` |
+| `Horoskop` | `BLOCK` | `GOSSIP` | `-1.0` |
+
+**Table 2: `routing_rules`**
+
+This table replaces `city-packages.index.json` and makes routing dynamic.
+
+| Column | Type | Description | Example |
+| :--- | :--- | :--- | :--- |
+| `id` | `uuid` | Primary Key | `gen_random_uuid()` |
+| `pattern` | `text` | Keyword/city name to match. | `Berlin` |
+| `layer` | `enum` | The geographic scope. | `CITY` |
+| `target_city` | `text` | Foreign key to a `cities` table. | `berlin` |
+| `target_state`| `text` | Foreign key to a `states` table. | `berlin` |
+| `is_enabled` | `boolean` | | `true` |
+
+#### 2. The Refactoring Path (Non-Breaking)
+
+1.  **Seed the Tables:** Write a simple, one-off script to migrate your existing TypeScript arrays and JSON files into these new Supabase tables.
+2.  **Create a Config Service:** In your orchestrator, create a new module, `configService.ts`. This service will be responsible for fetching all rules from Supabase at the start of an orchestration run.
+    ```typescript
+    // in configService.ts
+    let activeConfig: { strict: Rule[], fun: Rule[], block: Rule[] };
+
+    export async function loadConfig() {
+        const { data, error } = await supabase.from('classification_rules').select('*').eq('is_enabled', true);
+        if (error) throw new Error("Could not load classification rules!");
+
+        // Partition rules into categories for easy access
+        activeConfig = {
+            strict: data.filter(r => r.type === 'STRICT'),
+            fun:    data.filter(r => r.type === 'FUN'),
+            block:  data.filter(r => r.type === 'BLOCK'),
+        };
+        console.log(`Loaded ${data.length} active rules from Supabase.`);
+    }
+
+    export function getConfig() {
+        if (!activeConfig) throw new Error("Config not loaded!");
+        return activeConfig;
+    }
+    ```
+3.  **Integrate into Pipeline:** At the start of your main function, call `await loadConfig()`. Then, your `filter` stage will use `getConfig()` instead of the hardcoded constants. The filtering logic can now be upgraded to use weights for a cumulative score rather than a simple boolean flag.
+
+#### 3. The Synergy: Unlocking a Self-Improving System
+
+This single architectural change creates a virtuous cycle and enhances the entire system:
+
+*   **Harmony:** It uses Supabase, your existing DB, as the source of truth. The logic fits perfectly within the TypeScript/Node.js environment.
+*   **Maintainability:** A non-technical team member can now go into the Supabase dashboard (or a simple admin UI you build) and tweak the system's brain. A keyword is causing false positives? Disable it. A new government program is announced? Add it with a high weight. **This is a massive operational win.**
+*   **Auto-Healer Synergy:** The `runAutoHealer` function is no longer just a diagnostics tool. It can become an active agent. If it analyzes a set of manually-approved articles and finds a common, missing keyword, **it can programmatically insert a new rule into the `classification_rules` table**, perhaps with `is_enabled: false` and a note for human review. Your system now learns.
+*   **Advanced Filtering:** You can move beyond `wordBoundaryIncludes`. The `relevance_score` in `ProcessedItem` can now be a sum of the `weight` values from all matching rules, giving you a much more nuanced signal for what is "important" before you even spend money on an LLM call.
+*   **Future-Proofing:** This model is extensible. You can add more rule types, more complex conditions, or even associate rules with specific sources (`SOURCE_REGISTRY`) to fine-tune the filtering per news outlet.
+
+By moving configuration from static code to a dynamic database, you are not just cleaning up constants; you are fundamentally changing the orchestrator from a rigid script into a learning, adaptable, and far more powerful platform. This is the path from "Good" to "Great".

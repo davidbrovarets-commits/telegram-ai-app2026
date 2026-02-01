@@ -2143,3 +2143,108 @@ This isn't just a refactor; it's an investment in the platform's intelligence an
 4.  **Dynamic AI Prompts:** This pattern isn't limited to keywords. We can store AI prompt templates in the same `processing_rules` table (or a new `prompts` table). This allows us to A/B test different prompts or update prompt instructions without a single line of code change or redeployment.
 
 By moving this logic from static code to a dynamic database configuration, we evolve the orchestrator from a fixed script into a living, adaptable system—a truly **Great** architecture.
+
+## Critique 2026-02-01T05:19:59.597Z
+Excellent. The provided code demonstrates a significant level of thought and a solid, refactored foundation. The author has clearly moved the project from a simple script to a more robust pipeline. The separation of concerns, provider abstraction, and improved data handling are all hallmarks of a maturing system.
+
+As the Lead Architect, my role is to identify the next evolutionary step. The current system is "good," but we can make it "great" by addressing its most significant remaining architectural liability.
+
+### Overall Assessment
+
+The orchestrator is well-structured, following a logical flow from collection to enrichment to storage. The use of a `ProcessingStage` enum, a central `ProcessedItem` type, and a concurrency limiter are strong patterns. The biggest opportunity for improvement lies in how the system decides *what* is important in the first place.
+
+### The Core Problem: The Brittleness of Static Keyword Matching
+
+The current `filter` and `classify` logic relies heavily on large, static arrays of keywords (`ALL_STRICT_KEYWORDS`, `EVENT_KEYWORDS`, `BLOCKLIST`).
+
+*   **What's Good:** This approach is fast, deterministic, and easy to understand. It provides a baseline of relevance and successfully filters out obvious noise. It was likely the right choice for the initial versions of the system.
+
+*   **Where It Can Be Great:** This is the most brittle part of the architecture. It suffers from several fundamental limitations:
+    1.  **Context-Blindness:** It cannot understand nuance. An article titled "Benefizkonzert für die Ukraine" contains `Konzert` (an `EVENT_KEYWORDS` member) and `Ukraine` (a `STRICT_KEYWORDS` member). The current logic would likely classify this as `FUN` first, potentially missing its `IMPORTANT` context depending on the exact implementation details of the `classify` function.
+    2.  **Maintenance Overhead:** The keyword lists require constant manual curation. As news topics evolve, a developer must edit these arrays and redeploy the entire application. This creates a tight coupling between editorial policy and code deployment.
+    3.  **Lack of Synonyms:** The lists miss synonyms and related concepts. For example, `Arbeit` is listed, but what about `Job`, `Stelle`, `Karriere`, `Beschäftigung`, or `Jobbörse`? The lists will always be incomplete.
+    4.  **Scalability Issues:** If we want to add a new topic, say "Education," we have to create a new keyword array, import it, and wire it into the classification logic. This pattern doesn't scale gracefully.
+
+This static keyword dependency is a glass jaw. A single, well-written but unconventionally-phrased article can be missed, while a low-value article that happens to contain a keyword gets processed.
+
+---
+
+### Architectural Proposal: Introduce an AI-Powered Triage Stage
+
+Instead of relying solely on static keywords for initial filtering, we will introduce a lightweight, high-speed AI call at the beginning of the pipeline. This "Triage Stage" will act as an intelligent gatekeeper, deciding if an article is worth the cost and effort of full processing.
+
+**The Concept:** Move the intelligence to the very front. Use a cheap and fast AI model (like Gemini Flash or a fine-tuned model in the future) to make a simple `yes/no/maybe` decision, informed by a high-level understanding of the article's content.
+
+#### Implementation Steps:
+
+1.  **Create a New `triageWithAI` Function:** This function will be responsible for the initial classification. It will use a dedicated, simple prompt.
+
+2.  **Design a "Triage Prompt":** This prompt will be much simpler than the main enrichment prompt. Its sole purpose is to get a quick signal on relevance.
+
+    ```typescript
+    // Example Triage Prompt
+    const getTriagePrompt = (title: string, textSnippet: string) => `
+      You are a news triage expert for Ukrainian refugees in Germany.
+      Your task is to quickly determine if an article is potentially relevant.
+      Relevant topics: Official rules, law changes, deadlines, job market, social benefits (Bürgergeld), integration, housing, and local community events for Ukrainians.
+      Irrelevant topics: General politics, celebrity gossip, sports, weather, generic local news without a specific call to action or relevance to the target group.
+
+      Article Title: "${title}"
+      Article Snippet: "${textSnippet.slice(0, 500)}..."
+
+      Based on this, answer with ONLY a single JSON object with two keys:
+      1. "relevance": A score from 0 to 10. (0=irrelevant, 5=maybe, 10=highly relevant)
+      2. "category": One of "IMPORTANT", "FUN", "IGNORE".
+
+      JSON:
+    `;
+    ```
+
+3.  **Integrate into the Pipeline:** Modify the `processSource` function to call this new triage stage immediately after collecting the articles.
+
+    ```typescript
+    // BEFORE:
+    async function processSource(source: Source) {
+        let items = await collect(source);
+        items = items.filter(filter); // Keyword-based
+        items = items.map(classify);   // Keyword-based
+        // ... then dedupeAndEnrich (expensive AI call)
+    }
+
+    // AFTER:
+    async function processSource(source: Source) {
+        let rawItems = await collect(source);
+
+        // NEW: AI Triage Stage
+        const triagePromises = rawItems.map(item => triageWithAI(item));
+        const triagedItems = await Promise.all(triagePromises);
+
+        // Filter based on AI Triage results
+        let relevantItems = triagedItems.filter(item => item.classification.relevance_score >= 4); // Threshold is configurable
+
+        // The old 'classify' is now simpler or gone, as the AI provided the category
+        // ... then dedupeAndEnrich (expensive AI call on a smaller, higher-quality set)
+    }
+    ```
+    The `triageWithAI` function would call the existing `callAI` helper but with the new, simpler prompt. The `relevance_score` and `type` (`category` from the prompt) would be populated on the `ProcessedItem` at this early stage.
+
+4.  **Retain Keywords as Guardrails:** Do not remove the keyword lists entirely. They can serve as a valuable fallback or override mechanism.
+    *   If an AI Triage call fails, we can fall back to the keyword check.
+    *   We can use the `BLOCKLIST` to definitively discard an article, even if the AI rated it as relevant (a safety net against hallucinations).
+    *   We can use the `ALL_STRICT_KEYWORDS` to *boost* the relevance score of an article the AI might have underrated.
+
+### Justification & Synergy
+
+This proposal directly aligns with the project's constraints and goals:
+
+1.  **HARMONY:** It leverages the existing `AI_PROVIDER` abstraction and the `callAI` function. It fits naturally into the pipeline structure by adding a new stage. The `ProcessedItem` type already has fields for `relevance_score` and `type`, which this stage will now populate.
+
+2.  **NON-BREAKING:** This is an additive change. The core logic of `dedupeAndEnrich` remains. The keyword lists can be kept as a fallback, ensuring the system doesn't degrade if the AI triage fails. We are enriching the pipeline, not rewriting it.
+
+3.  **SYNERGY (The "Great" part):**
+    *   **Cost & Performance Efficiency:** While it adds an AI call, it's a *cheap* one. This cheap call acts as a gatekeeper, significantly reducing the number of expensive, full-enrichment `dedupeAndEnrich` calls made on irrelevant articles. The net effect is a **lower overall cost and higher throughput of relevant news**.
+    *   **Increased Robustness:** The system is no longer dependent on a developer's ability to predict every possible keyword. It can now understand context, synonyms, and intent, making it far more adaptable to the natural evolution of language in news reporting.
+    *   **Simplified Logic:** The complex, multi-array `filter` and `classify` functions can be dramatically simplified or even removed, making the code cleaner and easier to maintain. The "business logic" of what is important moves from static code arrays into a version-controllable prompt.
+    *   **Future-Proofing:** This architecture paves the way for more advanced techniques. The triage model could be fine-tuned on articles that are ultimately published vs. discarded, creating a highly accurate, self-improving classification loop.
+
+By implementing this AI Triage stage, we elevate the orchestrator from a static, rule-based system to a dynamic, learning-capable one. We are trading brittle, high-maintenance code for resilient, low-maintenance intelligence, which is a defining characteristic of a truly great architecture.

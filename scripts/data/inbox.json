@@ -14,5 +14,37 @@
     "processed": true,
     "result": "Error: reminders.push is not a function",
     "processed_at": "2026-02-01T00:20:07.292Z"
+  },
+  {
+    "id": "img_1769906686061_47",
+    "created_at": "2026-02-01T00:44:46.061Z",
+    "raw_text": "[IMAGE_CONTEXT] create consolidated project knowledge and sync all local changes",
+    "processed": true,
+    "result": "❓",
+    "processed_at": "2026-02-01T00:44:46.063Z"
+  },
+  {
+    "id": "img_1769907370096_409",
+    "created_at": "2026-02-01T00:56:10.096Z",
+    "raw_text": "[IMAGE_CONTEXT] Enable image-to-context bridge for antigravity.",
+    "processed": true,
+    "result": "❓",
+    "processed_at": "2026-02-01T00:56:10.099Z"
+  },
+  {
+    "id": "img_1769907570276_830",
+    "created_at": "2026-02-01T00:59:30.276Z",
+    "raw_text": "[IMAGE_CONTEXT] Create consolidated project knowledge and sync all local changes.",
+    "processed": true,
+    "result": "❓",
+    "processed_at": "2026-02-01T00:59:30.277Z"
+  },
+  {
+    "id": "img_1769907731415_948",
+    "created_at": "2026-02-01T01:02:11.415Z",
+    "raw_text": "[IMAGE_CONTEXT] enable image-to-context bridge for antigravity",
+    "processed": true,
+    "result": "❓",
+    "processed_at": "2026-02-01T01:02:11.417Z"
   }
 ]

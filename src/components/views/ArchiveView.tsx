@@ -61,7 +61,10 @@ export const ArchiveView = ({ onBack }: ArchiveViewProps) => {
                 padding: '16px'
             }}>
                 <button
-                    onClick={onBack}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onBack();
+                    }}
                     style={{
                         background: 'transparent',
                         border: 'none',
@@ -70,12 +73,14 @@ export const ArchiveView = ({ onBack }: ArchiveViewProps) => {
                         alignItems: 'center',
                         justifyContent: 'center',
                         cursor: 'pointer',
-                        padding: '10px', // Increased hit area
-                        margin: '-10px', // Compensate for padding
-                        touchAction: 'manipulation' // Standardize touch
+                        padding: '12px',
+                        margin: '-12px',
+                        position: 'relative',
+                        zIndex: 100, // Ensure it's on top of everything
+                        touchAction: 'manipulation'
                     }}
                 >
-                    <ArrowLeft size={24} style={{ pointerEvents: 'none' }} /> {/* Pass clicks through */}
+                    <ArrowLeft size={24} style={{ pointerEvents: 'none' }} />
                 </button>
                 <h4 style={{ fontSize: '18px', fontWeight: '700', margin: 0 }}>АРХІВ НОВИН</h4>
                 <div style={{ width: '24px' }}></div> {/* Spacer for centering */}

@@ -63,16 +63,19 @@ export const ArchiveView = ({ onBack }: ArchiveViewProps) => {
                 <button
                     onClick={onBack}
                     style={{
-                        background: 'none',
+                        background: 'transparent',
                         border: 'none',
                         color: 'white',
                         display: 'flex',
                         alignItems: 'center',
+                        justifyContent: 'center',
                         cursor: 'pointer',
-                        padding: 0
+                        padding: '10px', // Increased hit area
+                        margin: '-10px', // Compensate for padding
+                        touchAction: 'manipulation' // Standardize touch
                     }}
                 >
-                    <ArrowLeft size={24} />
+                    <ArrowLeft size={24} style={{ pointerEvents: 'none' }} /> {/* Pass clicks through */}
                 </button>
                 <h4 style={{ fontSize: '18px', fontWeight: '700', margin: 0 }}>АРХІВ НОВИН</h4>
                 <div style={{ width: '24px' }}></div> {/* Spacer for centering */}

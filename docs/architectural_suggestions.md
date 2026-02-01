@@ -3557,3 +3557,171 @@ This single architectural change creates a virtuous cycle and enhances the entir
 *   **Future-Proofing:** This model is extensible. You can add more rule types, more complex conditions, or even associate rules with specific sources (`SOURCE_REGISTRY`) to fine-tune the filtering per news outlet.
 
 By moving configuration from static code to a dynamic database, you are not just cleaning up constants; you are fundamentally changing the orchestrator from a rigid script into a learning, adaptable, and far more powerful platform. This is the path from "Good" to "Great".
+
+## Critique 2026-02-01T15:52:36.340Z
+Excellent. This is a well-structured and thoughtfully refactored piece of code. It demonstrates a clear evolution from a simple script to a more robust pipeline. The separation of concerns, provider abstraction, and improved data handling are all commendable.
+
+As the Lead Architect, my role is to find what's "Good" and chart a path to make it "Great". The current code is very good at *executing* its logic, but its *knowledge* is static.
+
+Here is my analysis and proposal.
+
+---
+
+### Architectural Critique: The Rigidity of Hardcoded Knowledge
+
+The current architecture, while robust in its execution logic, embeds critical business and filtering logic directly into the application code as constants. This creates a "brittle" system where adaptation requires code changes, testing, and redeployment.
+
+**Evidence:**
+*   `UKRAINE_KEYWORDS`, `SOCIAL_KEYWORDS`, `WORK_KEYWORDS`, `LEGAL_KEYWORDS`, `EVENT_KEYWORDS`, `BLOCKLIST` are all static TypeScript arrays.
+*   The (implied) `SOURCE_REGISTRY` is imported from a local file, meaning adding, removing, or tweaking a news source is a developer task.
+
+This approach is fine for a prototype, but it hinders our ability to react quickly. What if the government introduces a new term for a benefit (`Bürgergeld` was a great example of this)? What if a source's RSS feed URL changes? What if we want to A/B test the impact of a new "fun" keyword? Each of these scenarios currently requires a pull request.
+
+### The Proposal: A Database-Driven Configuration Core
+
+My proposal is to **decouple the orchestrator's logic from its configuration**. We will move all this static "knowledge" into our Supabase database. The orchestrator will fetch its configuration at startup, transforming it from a static script into a dynamic, configurable engine.
+
+This is a single, synergistic change that will unlock immense flexibility.
+
+#### 1. The New Supabase Tables
+
+We will introduce two primary tables to start:
+
+**`config_sources`**: This table will replace the `SOURCE_REGISTRY` file.
+
+```sql
+CREATE TABLE config_sources (
+  id TEXT PRIMARY KEY, -- e.g., 'TAGESSCHAU', 'DW_UKRAINE'
+  name TEXT NOT NULL, -- e.g., 'Tagesschau - Inland'
+  rss_url TEXT NOT NULL,
+  is_enabled BOOLEAN DEFAULT TRUE,
+  default_language CHAR(2) DEFAULT 'de',
+  tags JSONB, -- For future use, e.g., ['official', 'national']
+  last_fetched_at TIMESTAMPTZ,
+  error_count INT DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+**`config_keywords`**: This table will hold all our keyword lists, identified by type.
+
+```sql
+CREATE TABLE config_keywords (
+  id SERIAL PRIMARY KEY,
+  list_name TEXT NOT NULL, -- e.g., 'BLOCKLIST', 'STRICT_UKRAINE', 'FUN_EVENT'
+  keyword TEXT NOT NULL,
+  is_enabled BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(list_name, keyword)
+);
+```
+
+#### 2. Implementation: The `ConfigurationService`
+
+We introduce a small, cached service responsible for managing this dynamic configuration.
+
+**Step 1: Create a Configuration Loader**
+A new module, perhaps `services/configService.ts`, will be responsible for fetching and caching this data.
+
+```typescript
+// services/configService.ts
+
+import { supabase } from './supabaseClient';
+
+interface AppConfig {
+    sources: any[]; // Type for your sources from the DB
+    keywords: {
+        strict: string[];
+        fun: string[];
+        blocklist: string[];
+    };
+}
+
+let configCache: AppConfig | null = null;
+let lastFetched: number = 0;
+
+const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes
+
+export async function getConfig(): Promise<AppConfig> {
+    if (configCache && (Date.now() - lastFetched < CACHE_DURATION_MS)) {
+        return configCache;
+    }
+
+    console.log('Refreshing configuration from Supabase...');
+
+    const [sourcesRes, keywordsRes] = await Promise.all([
+        supabase.from('config_sources').select('*').eq('is_enabled', true),
+        supabase.from('config_keywords').select('list_name, keyword').eq('is_enabled', true)
+    ]);
+
+    if (sourcesRes.error) throw sourcesRes.error;
+    if (keywordsRes.error) throw keywordsRes.error;
+
+    const keywords = { strict: [], fun: [], blocklist: [] };
+    for (const item of keywordsRes.data) {
+        if (item.list_name.startsWith('STRICT_')) {
+            keywords.strict.push(item.keyword);
+        } else if (item.list_name.startsWith('FUN_')) {
+            keywords.fun.push(item.keyword);
+        } else if (item.list_name === 'BLOCKLIST') {
+            keywords.blocklist.push(item.keyword);
+        }
+    }
+
+    configCache = {
+        sources: sourcesRes.data,
+        keywords: {
+            strict: [...new Set(keywords.strict)], // Dedupe just in case
+            fun: [...new Set(keywords.fun)],
+            blocklist: [...new Set(keywords.blocklist)],
+        },
+    };
+    lastFetched = Date.now();
+    return configCache;
+}
+```
+
+**Step 2: Refactor The Orchestrator**
+The main execution logic will now be preceded by a call to this service.
+
+**Before:**
+```typescript
+// (in the main orchestrator file)
+import { SOURCE_REGISTRY } from './registries/source-registry';
+import { ALL_STRICT_KEYWORDS, EVENT_KEYWORDS, BLOCKLIST } from './constants';
+
+async function main() {
+    const sources = SOURCE_REGISTRY;
+    // ... use hardcoded keyword constants
+}
+```
+
+**After:**
+```typescript
+// (in the main orchestrator file)
+import { getConfig } from './services/configService';
+
+async function main() {
+    const config = await getConfig();
+    const sources = config.sources;
+
+    // ... loop through items
+    // In the filtering step, use the dynamic keywords:
+    const isStrictMatch = config.keywords.strict.some(kw => wordBoundaryIncludes(textLower, kw));
+    const isFunMatch = config.keywords.fun.some(kw => wordBoundaryIncludes(textLower, kw));
+    const isBlocked = config.keywords.blocklist.some(kw => wordBoundaryIncludes(textLower, kw));
+    // ...
+}
+```
+
+### Justification: Why This is a "Great" Solution
+
+1.  **Harmony:** It leverages Supabase, our existing database, and simple TypeScript functions. The `ConfigurationService` is a clean pattern that fits naturally.
+2.  **Non-Breaking:** This is an additive refactor. We are replacing the *source* of the constants, not the logic that uses them. The core pipeline remains intact.
+3.  **Synergy & Future-Proofing:** This is where the proposal shines.
+    *   **Agility:** A project manager or content specialist can now add a new keyword or disable a problematic source by simply updating a database row. **No deployment needed.** This is a massive operational win.
+    *   **Self-Healing:** The `is_enabled` flag in `config_sources` is a powerful kill switch. If a source starts publishing garbage or their site is down, we can disable it in seconds, preventing pipeline pollution without touching the code. We can even build logic to auto-disable a source if `error_count` exceeds a threshold.
+    *   **Maintainability:** It separates "what to do" (the code) from "what to do it with" (the configuration). This makes the codebase cleaner and easier to reason about.
+    *   **Foundation for a UI:** These tables become the backend for a future admin dashboard. We can now easily build a simple Retool/internal app for managing sources and keywords.
+
+This change elevates the orchestrator from a static script to a dynamic, configurable platform, making it more robust, maintainable, and responsive to the real-world needs of our project.

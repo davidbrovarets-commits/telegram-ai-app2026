@@ -108,7 +108,7 @@ async function parseWithAI(userText: string, nowIso: string): Promise<any> {
     if (!process.env.GOOGLE_PROJECT_ID) return null;
     try {
         const vertexAI = new VertexAI({ project: process.env.GOOGLE_PROJECT_ID, location: process.env.GOOGLE_CLOUD_LOCATION || 'us-central1' });
-        const model = vertexAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' }); // Fast model for commands
+        const model = vertexAI.getGenerativeModel({ model: 'gemini-2.5-pro' }); // Vision-capable model
 
         const prompt = `
         Role: Personal Secretary Command Parser.
@@ -158,52 +158,90 @@ async function runSecretary() {
     const now = new Date();
     const nowIso = now.toISOString();
 
-    // 0. POLL TELEGRAM (READ USER COMMANDS)
-    console.log('📨 Polling incoming messages...');
-    const offset = (state.last_update_id || 0) + 1;
-    let updates: any[] = [];
+    // 0. POLL TELEGRAM (LONG POLLING SIMULATION - 60s)
+    console.log('📨 Polling incoming messages (Live Mode)...');
+    const endTime = Date.now() + 55000; // Run for 55 seconds
 
-    try {
-        // Fetch updates from Telegram using native fetch
-        const token = process.env.TELEGRAM_BOT_TOKEN;
-        if (token) {
-            const res = await fetch(`https://api.telegram.org/bot${token}/getUpdates?offset=${offset}&timeout=1`);
-            const data = await res.json();
-            if (data.ok) {
-                updates = data.result;
+    // We loop to keep checking for new messages rapidly during this 1-minute window
+    while (Date.now() < endTime) {
+        let updates: any[] = [];
+        const offset = (state.last_update_id || 0) + 1;
+
+        try {
+            const token = process.env.TELEGRAM_BOT_TOKEN;
+            if (token) {
+                // Short timeout to return quickly if empty, allowing us to loop
+                const res = await fetch(`https://api.telegram.org/bot${token}/getUpdates?offset=${offset}&timeout=5`);
+                const data = await res.json();
+                if (data.ok) updates = data.result;
             }
+        } catch (e) {
+            console.error('Polling error:', e);
+            await new Promise(r => setTimeout(r, 2000)); // Wait on error
         }
-    } catch (e) {
-        console.error('Polling error:', e);
-    }
 
-    if (updates.length > 0) {
-        console.log(`📥 Received ${updates.length} new messages.`);
-        for (const u of updates) {
-            state.last_update_id = u.update_id;
+        if (updates.length > 0) {
+            console.log(`📥 Received ${updates.length} new messages.`);
+            for (const u of updates) {
+                state.last_update_id = u.update_id;
 
-            // Allow only from My Chat ID
-            const msg = u.message;
-            if (!msg || String(msg.chat?.id) !== process.env.TELEGRAM_CHAT_ID) continue;
+                const msg = u.message;
+                if (!msg || String(msg.chat?.id) !== process.env.TELEGRAM_CHAT_ID) continue;
 
-            const text = msg.text;
+                let text = msg.text;
+                let isVision = false;
 
-            // Handle Text Command
-            if (text) {
-                console.log(`User said: ${text}`);
-                // Add to Inbox to be processed BELOW in Step 1
-                inbox.push({
-                    id: generateId('cmd'),
-                    created_at: new Date().toISOString(),
-                    raw_text: text,
-                    processed: false
-                });
+                // Handle PHOTO (Vision)
+                if (msg.photo) {
+                    const fileId = msg.photo[msg.photo.length - 1].file_id;
+                    const token = process.env.TELEGRAM_BOT_TOKEN;
+
+                    // 1. Get File Path
+                    const fRes = await fetch(`https://api.telegram.org/bot${token}/getFile?file_id=${fileId}`);
+                    const fData = await fRes.json();
+                    if (fData.ok) {
+                        const imgUrl = `https://api.telegram.org/file/bot${token}/${fData.result.file_path}`;
+                        const imgBuf = await (await fetch(imgUrl)).arrayBuffer();
+                        const base64Img = Buffer.from(imgBuf).toString('base64');
+
+                        // Ask Gemini 2.5 Pro
+                        await sendTelegramMessage("👁️ Analüüsin pilti...");
+                        const vertexAI = new VertexAI({ project: process.env.GOOGLE_PROJECT_ID, location: process.env.GOOGLE_CLOUD_LOCATION || 'us-central1' });
+                        const model = vertexAI.getGenerativeModel({ model: 'gemini-2.5-pro' });
+
+                        const req = {
+                            contents: [{
+                                role: 'user',
+                                parts: [
+                                    { text: "Analyze this image. If it contains text or a task, extract it as a command for a personal secretary. Respond ONLY with the command text." },
+                                    { inlineData: { mimeType: 'image/jpeg', data: base64Img } }
+                                ]
+                            }]
+                        };
+
+                        const res = await model.generateContent(req);
+                        text = res.response.candidates?.[0]?.content?.parts?.[0]?.text || "";
+                        isVision = true;
+                        await sendTelegramMessage(`👁️ Tuvastasin: "${text}"`);
+                    }
+                }
+
+                if (text) {
+                    console.log(`User Input: ${text}`);
+                    inbox.push({
+                        id: generateId('cmd'),
+                        created_at: new Date().toISOString(),
+                        raw_text: text,
+                        processed: false
+                    });
+                }
             }
-            // Handle File/Voice (Future)
-            else if (msg.voice || msg.document || msg.photo) {
-                await sendTelegramMessage("🤖 Sain faili/hääle kätte! (Aga mu silmad/kõrvad on veel tarkvara uuendamisel. Tulekul!)");
-            }
+            // Save state immediately after receiving to avoid duplicates if crash
+            saveJSON(STATE_PATH, state);
         }
+
+        // Wait small interval before next poll
+        await new Promise(r => setTimeout(r, 2000));
     }
 
     // 1. PROCESS INBOX (COMMANDS)

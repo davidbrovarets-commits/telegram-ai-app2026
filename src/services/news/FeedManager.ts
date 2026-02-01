@@ -81,6 +81,9 @@ export class FeedManager {
             console.log('Found empty slots, attempting to fill...');
             await this.fillEmptySlots();
         }
+
+        // 4. Verify Integrity (Fix for stuck loading state)
+        await this.verifyFeedIntegrity();
     }
 
     // --- CORE ACTIONS ---
@@ -414,6 +417,40 @@ export class FeedManager {
             visibleFeed: newFeed
         }));
     }
+    static async verifyFeedIntegrity() {
+        const state = newsStore.getState();
+        const idsToCheck = state.visibleFeed.filter(id => id > 0);
+
+        if (idsToCheck.length === 0) return;
+
+        console.log('[FeedManager] Verifying feed integrity for IDs:', idsToCheck);
+
+        const { data } = await supabase
+            .from('news')
+            .select('id')
+            .in('id', idsToCheck);
+
+        if (data) {
+            const foundIds = new Set(data.map(n => n.id));
+            const missingIds = idsToCheck.filter(id => !foundIds.has(id));
+
+            if (missingIds.length > 0) {
+                console.warn('[FeedManager] Found dead IDs in persistent store:', missingIds);
+
+                // Remove dead IDs
+                newsStore.setState(prev => ({
+                    ...prev,
+                    visibleFeed: prev.visibleFeed.map(id => missingIds.includes(id) ? 0 : id)
+                }));
+
+                // Refill immediately
+                await this.fillEmptySlots();
+            } else {
+                console.log('[FeedManager] Feed integrity check passed.');
+            }
+        }
+    }
+
     static async syncPushToken() {
         try {
             if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;

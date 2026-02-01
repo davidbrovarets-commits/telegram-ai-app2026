@@ -454,3 +454,173 @@ This single change creates a cascade of improvements across the system, fulfilli
 4.  **Increased Efficiency:** By persisting state, you eliminate redundant work. A network blip during the AI step no longer requires re-running the entire fetch and filter process for hundreds of articles. The next run simply picks up where the last one left off.
 
 This proposal doesn't rewrite the core logic; it *re-platforms* it. It leverages the existing `stage` property and Supabase infrastructure to create a system that is not only robust in its execution but also resilient in its operation. It's a foundational shift that elevates the project from a "good" script to a "great," production-grade data pipeline.
+
+## Critique 2026-02-01T00:30:58.576Z
+Excellent. This is a well-structured and thoughtfully refactored orchestrator. The comments at the top clearly state the improvements made, which is a hallmark of good engineering discipline. The code demonstrates a clear progression from a simple script to a more robust, server-side process.
+
+This is a **Good** foundation. Let's discuss one architectural change to make it **Great**.
+
+### Critique: Static Logic vs. Dynamic Environment
+
+The current architecture is highly effective for a known, static set of rules. Its primary weakness lies in its rigidity. The core filtering and routing intelligence is compiled into the application binary itself in the form of hardcoded `const` arrays:
+
+*   `UKRAINE_KEYWORDS`
+*   `SOCIAL_KEYWORDS`
+*   `WORK_KEYWORDS`
+*   `LEGAL_KEYWORDS`
+*   `EVENT_KEYWORDS`
+*   `BLOCKLIST`
+
+**The Problem:** If a new, critical term emerges (e.g., a new government program name, a new type of visa), or if a `BLOCKLIST` word proves too aggressive and starts filtering important news, the only way to adapt is to:
+
+1.  Modify the source code.
+2.  Commit the change.
+3.  Run it through a CI/CD pipeline.
+4.  Redeploy the entire orchestrator.
+
+This process is slow, requires developer intervention for what is essentially a configuration change, and makes the system brittle. The world of news and regulations is dynamic; our orchestrator's logic should be as well.
+
+---
+
+### Architectural Improvement: Dynamic, Database-Driven Configuration
+
+To elevate this system, we must decouple the *logic* (the "how") from the *configuration* (the "what"). The most harmonious way to do this within your existing stack is to move this configuration into your Supabase database.
+
+**The Proposal:** Create a new table in Supabase, let's call it `keyword_sets`, to store and manage these lists.
+
+#### 1. The "What": Database Schema
+
+Create a simple table in Supabase:
+
+**Table: `keyword_sets`**
+
+| Column Name | Type | Description |
+| :--- | :--- | :--- |
+| `id` | `uuid` | Primary Key (auto-generated) |
+| `name` | `text` | A unique, human-readable name (e.g., `STRICT_RELEVANCE`, `FUN_EVENTS`, `GLOBAL_BLOCKLIST`). This is the key we'll code against. |
+| `type` | `text` | The category of the list (e.g., `RELEVANCE`, `BLOCKLIST`, `EVENT`). |
+| `keywords` | `jsonb` | A JSON array of strings. `["Jobcenter", "Bürgergeld", "Sozialhilfe", ...]` |
+| `is_active` | `boolean` | A flag to easily enable or disable a set. Defaults to `true`. |
+| `updated_at` | `timestamptz` | Automatically updated timestamp. |
+
+This structure turns your hardcoded constants into dynamic data.
+
+#### 2. The "How": Implementation Strategy
+
+This can be implemented in a non-breaking way.
+
+**Step A: Create a Configuration Service**
+
+Create a new, lightweight module responsible for fetching and caching this configuration at startup.
+
+```typescript
+// src/services/configService.ts
+
+import { supabase } from './supabaseClient';
+
+interface KeywordSet {
+    name: string;
+    keywords: string[];
+}
+
+// In-memory cache to prevent DB calls on every run
+let configCache: Record<string, string[]> | null = null;
+
+export async function loadKeywordsFromDB(): Promise<Record<string, string[]>> {
+    console.log('Loading keyword sets from Supabase...');
+    const { data, error } = await supabase
+        .from('keyword_sets')
+        .select('name, keywords')
+        .eq('is_active', true);
+
+    if (error) {
+        console.error('FATAL: Could not load keyword sets from DB.', error);
+        // Fallback to a safe default or throw an error to stop the process
+        throw new Error('Failed to load keyword configuration.');
+    }
+
+    const keywordMap = data.reduce((acc, set) => {
+        acc[set.name] = set.keywords;
+        return acc;
+    }, {} as Record<string, string[]>);
+
+    configCache = keywordMap;
+    console.log(`Successfully loaded ${Object.keys(keywordMap).length} keyword sets.`);
+    return keywordMap;
+}
+
+export function getKeywords(setName: string): string[] {
+    if (!configCache) {
+        // This should not happen if loadKeywordsFromDB is called at startup
+        throw new Error('Keyword configuration not loaded. Call loadKeywordsFromDB() first.');
+    }
+    return configCache[setName] || []; // Return empty array for safety
+}
+
+// Main orchestrator will call loadKeywordsFromDB() once at the very beginning.
+```
+
+**Step B: Refactor the Orchestrator**
+
+Modify the main orchestrator file to use this new service.
+
+**Before:**
+
+```typescript
+// ... (many const keyword arrays)
+
+const ALL_STRICT_KEYWORDS = [
+    ...UKRAINE_KEYWORDS,
+    ...SOCIAL_KEYWORDS,
+    ...WORK_KEYWORDS,
+    ...LEGAL_KEYWORDS,
+];
+
+// ... logic uses ALL_STRICT_KEYWORDS directly
+```
+
+**After:**
+
+```typescript
+// main.ts
+import { loadKeywordsFromDB, getKeywords } from './services/configService';
+
+// At the very start of your main execution function
+async function runOrchestrator() {
+    // 1. Load config ONCE at startup.
+    await loadKeywordsFromDB();
+
+    // 2. The rest of your processing logic...
+    // ...
+}
+
+// Inside your filtering logic, you'd replace the static arrays
+// with calls to the config service.
+
+// ... inside a processing function
+function filterAndClassify(item: ProcessedItem): ProcessedItem {
+    const textCorpus = `${item.raw.title} ${item.raw.text}`;
+    const textLower = safeLower(textCorpus);
+
+    const strictKeywords = getKeywords('STRICT_RELEVANCE');
+    const eventKeywords = getKeywords('FUN_EVENTS');
+    const blocklistKeywords = getKeywords('GLOBAL_BLOCKLIST');
+
+    const hasStrictKeyword = strictKeywords.some(k => wordBoundaryIncludes(textLower, k));
+    const hasEventKeyword = eventKeywords.some(k => wordBoundaryIncludes(textLower, k));
+    // ... and so on
+}
+
+runOrchestrator();
+```
+
+#### 3. The Synergistic Impact
+
+This single change has a cascading positive effect on the entire project:
+
+1.  **Robustness & Agility:** The system can now adapt to the changing information landscape in *seconds* by updating a database row, not in hours by redeploying code. An operator could even be given a simple Retool/Appsmith interface to manage these keywords without ever touching the codebase.
+2.  **Self-Healing (Assisted):** When you notice the orchestrator is missing important articles, the "healing" process is now to add a keyword to the database. This is a massive improvement in Mean Time To Recovery (MTTR).
+3.  **Synergy with AI:** This creates a perfect foundation for a future "AI-assisted configuration" feature. You could build a separate process that analyzes published articles, identifies *new* relevant keywords, and suggests them for addition to the `keyword_sets` table. The human operator simply approves the suggestion.
+4.  **Decoupling & Scalability:** It properly separates concerns. The orchestrator is the *engine*; the database holds the *fuel*. This is a mature architectural pattern that scales well.
+
+By moving from static constants to dynamic, database-driven configuration, we transform the orchestrator from a smart script into a truly adaptable and resilient service. This is the path from "Good" to "Great."

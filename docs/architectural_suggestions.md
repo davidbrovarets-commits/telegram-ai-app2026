@@ -1805,3 +1805,169 @@ This new function would replace the multiple checks against `ALL_STRICT_KEYWORDS
     *   **Foundation for Self-Healing:** The `auto-healer` now has a target for its suggestions. It could analyze published articles and suggest new keywords or identify rules that consistently lead to low-engagement articles, proposing their `weight` be lowered.
 
 By moving classification logic into the database, we transform a static script into a dynamic, intelligent, and far more maintainable system. This is the single most impactful architectural improvement we can make to elevate this project from "Good" to "Great".
+
+## Critique 2026-02-01T03:15:52.477Z
+Excellent. This is a well-structured and significantly improved version of the orchestrator. The move to a server-side, provider-agnostic, and more robust pipeline is a major step forward. The code demonstrates a clear understanding of the challenges involved, from rate limiting to data extraction.
+
+As the Lead Architect, my goal is to identify what's "Good" and propose a path to make it "Great." The current implementation is very good, but there is one architectural pattern that, if adopted, would fundamentally increase the system's robustness and adaptability.
+
+### Architectural Critique: Configuration is Coupled to Code
+
+The current implementation, while effective, hardcodes its core business logic and configuration directly into the source code.
+
+*   **The "Good" (Current State):** The keyword lists (`UKRAINE_KEYWORDS`, `SOCIAL_KEYWORDS`, `EVENT_KEYWORDS`, `BLOCKLIST`) and the source registry (`SOURCE_REGISTRY`) are defined as constants within the code. This is simple, explicit, and version-controlled with Git. For a small, stable project, this is perfectly adequate.
+
+*   **The Limitation:** This coupling of configuration to code creates rigidity. Every time you need to:
+    *   Add a new keyword to track a new government policy (e.g., "Wohnberechtigungsschein").
+    *   Block an emerging spam or irrelevant topic (e.g., a new celebrity trend).
+    *   Adjust the alias for a city in the router.
+    *   Add a new RSS feed to the `SOURCE_REGISTRY`.
+
+    ...a developer must modify the source code, commit, and redeploy the entire application. This process is slow, error-prone, and requires developer intervention for what are essentially content management tasks. The system cannot "heal" or "adapt" in real-time to the changing information landscape.
+
+---
+
+### The Proposal: Decouple Configuration from Code via the Database
+
+My recommendation is to move all dynamic configuration—keywords, blocklists, and source registries—out of the code and into the Supabase database. The orchestrator would then fetch its configuration on startup.
+
+This turns the orchestrator into a more powerful and generic *engine* that operates on a set of *rules* it loads from the database.
+
+#### The "Great" (Proposed Solution)
+
+1.  **Create Configuration Tables in Supabase:**
+    We introduce a few simple tables to hold the logic that is currently hardcoded.
+
+    ```sql
+    -- To store all RSS/news sources
+    CREATE TABLE "source_registry" (
+        "id" TEXT PRIMARY KEY, -- e.g., "TAGESSCHAU"
+        "url" TEXT NOT NULL,
+        "type" TEXT NOT NULL, -- 'rss'
+        "is_active" BOOLEAN DEFAULT TRUE,
+        "language" TEXT DEFAULT 'de',
+        "created_at" TIMESTAMPTZ DEFAULT NOW()
+    );
+
+    -- To store keyword sets for filtering and classification
+    CREATE TABLE "keyword_sets" (
+        "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        "set_name" TEXT NOT NULL, -- e.g., 'STRICT_FILTER', 'FUN_FILTER', 'BLOCKLIST'
+        "keyword" TEXT NOT NULL,
+        "is_active" BOOLEAN DEFAULT TRUE,
+        "created_at" TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE("set_name", "keyword")
+    );
+
+    -- (Optional but recommended) For advanced routing rules
+    CREATE TABLE "routing_rules" (
+        "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        "keyword" TEXT NOT NULL,
+        "layer" TEXT NOT NULL, -- 'CITY', 'STATE', 'COUNTRY'
+        "target" TEXT, -- e.g., 'berlin', 'bavaria'
+        "is_active" BOOLEAN DEFAULT TRUE
+    );
+    ```
+
+2.  **Create a `ConfigService` Module:**
+    This new module would be responsible for fetching and caching the configuration at the start of the orchestrator's run.
+
+    ```typescript
+    // src/configService.ts
+
+    import { supabase } from './supabaseClient';
+
+    interface AppConfig {
+        sourceRegistry: Array<{ id: string; url: string; /* ... */ }>;
+        strictKeywords: string[];
+        funKeywords: string[];
+        blocklist: string[];
+        // routingRules: Array<{ ... }>;
+    }
+
+    let configCache: AppConfig | null = null;
+
+    export async function getConfig(): Promise<AppConfig> {
+        if (configCache) {
+            return configCache;
+        }
+
+        console.log('Fetching dynamic configuration from Supabase...');
+
+        const [sourcesRes, keywordsRes] = await Promise.all([
+            supabase.from('source_registry').select('*').eq('is_active', true),
+            supabase.from('keyword_sets').select('set_name, keyword').eq('is_active', true)
+        ]);
+
+        if (sourcesRes.error) throw sourcesRes.error;
+        if (keywordsRes.error) throw keywordsRes.error;
+
+        const allKeywords = keywordsRes.data || [];
+
+        configCache = {
+            sourceRegistry: sourcesRes.data || [],
+            strictKeywords: allKeywords.filter(k => k.set_name === 'STRICT_FILTER').map(k => k.keyword),
+            funKeywords: allKeywords.filter(k => k.set_name === 'FUN_FILTER').map(k => k.keyword),
+            blocklist: allKeywords.filter(k => k.set_name === 'BLOCKLIST').map(k => k.keyword),
+        };
+
+        console.log(`Config loaded: ${configCache.sourceRegistry.length} sources, ${configCache.strictKeywords.length} strict keywords.`);
+        return configCache;
+    }
+    ```
+
+3.  **Refactor the Orchestrator to Use the `ConfigService`:**
+    The main logic now becomes much cleaner and is no longer concerned with the actual keyword values.
+
+    **Before:**
+    ```typescript
+    import { SOURCE_REGISTRY } from './registries/source-registry';
+    // ...
+    const ALL_STRICT_KEYWORDS = [ /* ... */ ];
+    const BLOCKLIST = [ /* ... */ ];
+
+    // In the main function...
+    for (const source of SOURCE_REGISTRY) {
+        // ...
+    }
+
+    // In the filter stage...
+    const hasStrictKeyword = ALL_STRICT_KEYWORDS.some(k => wordBoundaryIncludes(text, k));
+    ```
+
+    **After:**
+    ```typescript
+    import { getConfig } from './configService';
+    // ...
+    // No more hardcoded keyword constants!
+
+    // In the main function...
+    const config = await getConfig();
+
+    for (const source of config.sourceRegistry) {
+        // ...
+    }
+
+    // In the filter stage...
+    const hasStrictKeyword = config.strictKeywords.some(k => wordBoundaryIncludes(text, k));
+    ```
+
+### Justification & Synergy
+
+This change elevates the architecture by adhering to the principle of separating data from behavior.
+
+1.  **HARMONY:** This proposal deeply integrates with the existing stack. It leverages **Supabase** not just as a destination for news items, but as a dynamic control plane for the orchestrator itself. The `ConfigService` is a clean, additive **TypeScript** module that fits the existing project structure.
+
+2.  **NON-BREAKING:** The migration path is smooth.
+    *   **Step 1:** Create the Supabase tables.
+    *   **Step 2:** Write a one-time script to populate these tables with the values from the current hardcoded constants (`SOURCE_REGISTRY`, `ALL_STRICT_KEYWORDS`, etc.).
+    *   **Step 3:** Implement the `ConfigService` and refactor the orchestrator to use it.
+    *   The orchestrator's behavior will be identical before and after the change, ensuring no disruption.
+
+3.  **SYNERGY (The Multiplier Effect):**
+    *   **Self-Healing & Real-time Adaptability:** If a source starts publishing irrelevant news, an admin can simply log into Supabase (or a simple admin panel built on it) and set `is_active = false` for that source or add a term to the `BLOCKLIST`. The change takes effect on the next run, no code deployment needed. This is a massive leap in operational robustness.
+    *   **Enables an Admin UI:** This architecture is the necessary foundation for building a simple web interface where non-technical users (e.g., content managers, editors) can manage sources and keywords. This empowers the team and frees up developers.
+    *   **Improved Testability & Experimentation:** You can easily test the impact of a new set of keywords by adding them to the database and running the orchestrator. You could even implement A/B testing by having different `set_name` configurations.
+    *   **Scalability:** As the number of sources and keywords grows, managing them in a database is far more scalable than managing giant constant arrays in a `.ts` file.
+
+By making this one architectural change, we transform the orchestrator from a static script into a dynamic, adaptable engine. This is the hallmark of a mature, production-grade system and is the single most impactful improvement to be made on this already solid foundation.

@@ -3127,3 +3127,173 @@ async function runFilterStage() {
 4.  **Synergy with Existing Code:** This proposal builds directly on your `ProcessingStage` enum and `supabase` client. It doesn't require a new library or a fundamental rewrite of your individual processing steps (like filtering or classification), just a change in how they are orchestrated. The `auto-healer` function you've stubbed out now has a clear purpose: it could be a cron job that finds items that have been "stuck" in a stage for too long and either retries them or flags them for manual review.
 
 By making this change, you elevate the orchestrator from a "script" to a resilient, scalable, and observable **data processing pipeline**. This is a hallmark of a mature and robust architectural pattern.
+
+## Critique 2026-02-01T11:59:12.053Z
+Excellent. I see a well-structured and significantly improved orchestrator here. The move to server-side execution, the provider abstraction, and the combined AI call are all hallmarks of a maturing system. You've successfully moved from a prototype to a production-ready foundation.
+
+My role is to find what's "Good" and architect a path to "Great." Let's get to it.
+
+### Executive Summary
+
+The current logic operates as a single, monolithic batch process. It fetches all items, processes them in memory, and writes them to the database at the end. This is efficient for small batches but lacks resilience and observability for a system designed to run continuously.
+
+My proposal is to introduce a **Stateful, Stage-Based Processing Pipeline**. This architectural shift leverages the existing `ProcessingStage` type and Supabase to make the orchestrator dramatically more robust, recoverable, and scalable without a full rewrite.
+
+---
+
+### The Observation: A Foundation for Statefulness
+
+The current implementation has a brilliant but underutilized feature: the `ProcessingStage` type and the corresponding `stage` field in `ProcessedItem`.
+
+```typescript
+type ProcessingStage =
+    | 'COLLECT'
+    | 'FILTER'
+    | 'CLASSIFY'
+    | 'ROUTE'
+    | 'DEDUP'
+    | 'PUBLISHED_AT'
+    | 'AI_ENRICH'
+    | 'DONE';
+
+interface ProcessedItem {
+    // ...
+    stage: ProcessingStage;
+}
+```
+
+This is **good**. It's a clear declaration of intent, documenting the flow of an item through the system. However, right now, it's just a label that changes in memory during a single, uninterrupted run. The entire process is ephemeral.
+
+### The Bottleneck: The Monolithic "Run"
+
+If the orchestrator script fails for any reason—a network blip during a fetch, an unhandled AI error, a temporary Supabase outage, or even a simple crash—the entire run is lost. All the work done on the items processed so far (fetching, filtering, enriching) vanishes. The next run will start from scratch, wasting API calls and processing time.
+
+This monolithic approach prevents us from:
+1.  **Recovering from failure:** We can't resume a batch from where it left off.
+2.  **Identifying bottlenecks:** It's difficult to see where items are "stuck" in the pipeline. Are they waiting for AI enrichment? Are they failing classification?
+3.  **Scaling selectively:** The slowest stage (`AI_ENRICH`) holds up the entire process. We can't easily run more enrichment workers without also re-running the fast collection and filtering stages.
+
+### The Proposal: Architecting a Stateful Pipeline
+
+Let's elevate the `stage` field from a simple label to the central nervous system of our orchestrator. We will refactor the logic from one large loop into a series of independent "worker" functions, each responsible for a single stage transition. Supabase will become our durable message queue and state machine.
+
+**The Core Idea:** Instead of processing an item from start to finish in memory, we will perform one stage of work and then **immediately persist the item's new state and stage to Supabase**.
+
+#### How It Works:
+
+1.  **`runCollectStage()`:**
+    *   This function is responsible *only* for fetching new items from RSS feeds.
+    *   For each new raw item, it creates a `ProcessedItem` with `stage: 'COLLECT'`.
+    *   It performs an `upsert` into Supabase. The `id` (the URL hash) ensures we don't insert duplicates from the source.
+    *   **Result:** The database now contains a queue of items ready for the next stage.
+
+2.  **`runFilterStage()`:**
+    *   Queries Supabase for a batch of items `where stage = 'COLLECT'`.
+    *   For each item, it applies the keyword filtering logic.
+    *   If an item passes, its `stage` is updated to `'FILTER'`. If it fails, it can be marked as `'REJECTED'` or simply deleted.
+    *   Performs a bulk `upsert` to update the stage of the processed items.
+
+3.  **`runEnrichStage()`:**
+    *   Queries Supabase for a batch of items `where stage = 'ROUTE'` (or whichever stage precedes AI enrichment).
+    *   Sends these items to the AI provider via the rate-limited `limitAI` function.
+    *   On success, it updates the item with the summary, translation, and actions, and sets `stage: 'AI_ENRICH'`.
+    *   **Crucially:** If the AI call fails for a specific item, that item remains in its current stage in the database. The next run of the worker can retry it. This isolates failures and makes retries automatic.
+
+4.  **The Main Orchestrator:**
+    *   The main script becomes a simple dispatcher that calls the stage-specific workers in sequence or in parallel.
+    *   `await runCollectStage();`
+    *   `await runFilterStage();`
+    *   `await runClassifierStage();`
+    *   `// ...and so on`
+    *   `await runEnrichStage();`
+
+#### Pseudo-code Transformation:
+
+**Before (Current Monolithic Logic):**
+
+```typescript
+// main.ts
+async function runOrchestrator() {
+    const allItems = await fetchAllSources(); // In-memory array
+    const filteredItems = [];
+    for (const item of allItems) {
+        // All stages run sequentially in memory
+        item.stage = 'COLLECT';
+        if (!filter(item)) continue;
+        item.stage = 'FILTER';
+        classify(item);
+        item.stage = 'CLASSIFY';
+        // ...
+        await enrichWithAI(item); // A failure here loses progress on this item
+        item.stage = 'AI_ENRICH';
+        filteredItems.push(item);
+    }
+    await supabase.upsert(filteredItems); // One big write at the end
+}
+```
+
+**After (Proposed Stateful Pipeline):**
+
+```typescript
+// workers/collect.ts
+async function runCollectStage() {
+    const rawItems = await fetchAllSources();
+    const itemsToInsert = rawItems.map(raw => createInitialItem(raw, 'COLLECT'));
+    // Use upsert to avoid re-inserting known items
+    await supabase.from('news_items').upsert(itemsToInsert, { onConflict: 'id' });
+}
+
+// workers/filter.ts
+async function runFilterStage() {
+    const { data: items } = await supabase.from('news_items').select('*').eq('stage', 'COLLECT').limit(50);
+    const updates = [];
+    for (const item of items) {
+        if (filter(item)) {
+            updates.push({ ...item, stage: 'FILTER' });
+        } else {
+            updates.push({ ...item, stage: 'REJECTED' }); // Or delete
+        }
+    }
+    await supabase.from('news_items').upsert(updates);
+}
+
+// workers/enrich.ts
+async function runEnrichStage() {
+    const { data: items } = await supabase.from('news_items').select('*').eq('stage', 'CLASSIFY').limit(10); // Smaller batch for slow stage
+    const enrichedItems = await Promise.all(items.map(async item => {
+        try {
+            const enrichedData = await enrichWithAI(item);
+            return { ...item, ...enrichedData, stage: 'AI_ENRICH' };
+        } catch (error) {
+            console.error(`Failed to enrich item ${item.id}`, error);
+            return { ...item, stage: 'ENRICH_FAILED' }; // Mark as failed
+        }
+    }));
+    await supabase.from('news_items').upsert(enrichedItems);
+}
+
+// main.ts
+async function runOrchestrator() {
+    console.log("Running COLLECT stage...");
+    await runCollectStage();
+
+    console.log("Running FILTER stage...");
+    await runFilterStage();
+
+    // ... other stages
+
+    console.log("Running AI_ENRICH stage...");
+    await runEnrichStage();
+
+    console.log("Orchestration cycle complete.");
+}
+```
+
+### Architectural Benefits (Synergy)
+
+1.  **Robustness & Recoverability:** This is the primary win. If the script crashes during the `runEnrichStage`, the items are safely stored in Supabase with `stage: 'CLASSIFY'`. You can simply restart the script, and it will pick up right where it left off. No work is lost.
+2.  **Observability:** You can now run SQL queries against your `news_items` table to monitor the health of the pipeline. `SELECT stage, COUNT(*) FROM news_items GROUP BY stage;` becomes a powerful dashboard, instantly revealing bottlenecks (e.g., a large number of items stuck in `ENRICH_FAILED`).
+3.  **Scalability & Modularity:** Each stage is now a self-contained unit. The `AI_ENRICH` stage, which is slow and sequential, can run independently without blocking the fast `COLLECT` and `FILTER` stages. In the future, you could even run these workers as separate serverless functions, scaling each one based on its specific needs.
+4.  **Idempotency:** By using `upsert` and querying for specific stages, each worker function becomes idempotent. Running `runFilterStage()` twice by accident has no negative side effects; it will simply find no items in the `'COLLECT'` stage on the second run.
+
+This change transforms the orchestrator from a script into a resilient, professional-grade data processing pipeline, using the very tools and patterns you've already established. It's a natural evolution that delivers immediate and lasting architectural value.

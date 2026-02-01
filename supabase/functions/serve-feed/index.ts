@@ -36,52 +36,124 @@ serve(async (req) => {
             { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
         );
 
-        // 1. Fetch Candidates with Cascading Fallback
-        // Try City → Land → DE until we get results
-        let candidates: any[] = [];
-        const scopes = [
-            city ? { field: 'city', value: city } : null,
-            land ? { field: 'land', value: land } : null,
-            { field: 'scope', value: 'DE' } // Always fallback to national
-        ].filter(Boolean);
+        // --- UNIFIED "NAABER VALAB" LOGIC (Same as FeedManager.ts) ---
 
-        for (const scope of scopes) {
-            if (candidates.length > 0) break; // Stop if we found items
+        // City Registry (ported from src/config/cities.ts)
+        const CITY_REGISTRY: Record<string, { name: string; land: string; neighbors: string[] }> = {
+            'leipzig': { name: 'Leipzig', land: 'Sachsen', neighbors: ['Berlin', 'Dresden', 'Halle'] },
+            'dresden': { name: 'Dresden', land: 'Sachsen', neighbors: ['Berlin', 'Leipzig', 'Chemnitz'] },
+            'chemnitz': { name: 'Chemnitz', land: 'Sachsen', neighbors: ['Leipzig', 'Dresden', 'Zwickau'] },
+            'halle': { name: 'Halle (Saale)', land: 'Sachsen-Anhalt', neighbors: ['Leipzig', 'Magdeburg', 'Dessau'] },
+            'magdeburg': { name: 'Magdeburg', land: 'Sachsen-Anhalt', neighbors: ['Berlin', 'Halle', 'Leipzig'] },
+            'erfurt': { name: 'Erfurt', land: 'Thüringen', neighbors: ['Weimar', 'Jena', 'Leipzig'] },
+            'berlin': { name: 'Berlin', land: 'Berlin', neighbors: ['Brandenburg', 'Potsdam'] },
+            'potsdam': { name: 'Potsdam', land: 'Brandenburg', neighbors: ['Berlin', 'Brandenburg'] },
+            'cottbus': { name: 'Cottbus', land: 'Brandenburg', neighbors: ['Berlin', 'Dresden', 'Potsdam'] },
+            'frankfurt_oder': { name: 'Frankfurt (Oder)', land: 'Brandenburg', neighbors: ['Berlin', 'Cottbus', 'Potsdam'] },
+            'rostock': { name: 'Rostock', land: 'Mecklenburg-Vorpommern', neighbors: ['Schwerin', 'Kiel', 'Hamburg'] },
+            'schwerin': { name: 'Schwerin', land: 'Mecklenburg-Vorpommern', neighbors: ['Hamburg', 'Rostock'] },
+            'hamburg': { name: 'Hamburg', land: 'Hamburg', neighbors: ['Schleswig-Holstein', 'Niedersachsen', 'Lübeck'] },
+            'kiel': { name: 'Kiel', land: 'Schleswig-Holstein', neighbors: ['Hamburg', 'Lübeck'] },
+            'luebeck': { name: 'Lübeck', land: 'Schleswig-Holstein', neighbors: ['Hamburg', 'Kiel', 'Rostock'] },
+            'bremen': { name: 'Bremen', land: 'Bremen', neighbors: ['Hamburg', 'Niedersachsen'] },
+            'hannover': { name: 'Hannover', land: 'Niedersachsen', neighbors: ['Braunschweig', 'Hildesheim', 'Wolfsburg'] },
+            'koeln': { name: 'Köln', land: 'Nordrhein-Westfalen', neighbors: ['Düsseldorf', 'Bonn', 'Leverkusen'] },
+            'duesseldorf': { name: 'Düsseldorf', land: 'Nordrhein-Westfalen', neighbors: ['Köln', 'Duisburg', 'Essen'] },
+            'dortmund': { name: 'Dortmund', land: 'Nordrhein-Westfalen', neighbors: ['Bochum', 'Essen', 'Hagen'] },
+            'frankfurt': { name: 'Frankfurt am Main', land: 'Hessen', neighbors: ['Wiesbaden', 'Mainz', 'Darmstadt'] },
+            'stuttgart': { name: 'Stuttgart', land: 'Baden-Württemberg', neighbors: ['Karlsruhe', 'Ulm', 'Heilbronn'] },
+            'muenchen': { name: 'München', land: 'Bayern', neighbors: ['Augsburg', 'Nürnberg', 'Rosenheim'] },
+            'nuernberg': { name: 'Nürnberg', land: 'Bayern', neighbors: ['Fürth', 'Erlangen', 'München'] },
+        };
 
-            let feedQuery = supabaseClient
-                .from('news')
-                .select('id, title, created_at, embedding, type, priority, city, land, scope')
-                .eq('status', 'ACTIVE')
-                .order('created_at', { ascending: false })
-                .range(page * limit, (page + 1) * limit + 50 - 1);
+        const LAND_NEIGHBORS: Record<string, string[]> = {
+            'Sachsen': ['Berlin', 'Brandenburg', 'Sachsen-Anhalt'],
+            'Sachsen-Anhalt': ['Sachsen', 'Niedersachsen', 'Berlin'],
+            'Thüringen': ['Sachsen', 'Hessen', 'Bayern'],
+            'Brandenburg': ['Berlin', 'Sachsen', 'Mecklenburg-Vorpommern'],
+            'Schleswig-Holstein': ['Hamburg', 'Niedersachsen'],
+            'Mecklenburg-Vorpommern': ['Brandenburg', 'Hamburg', 'Berlin'],
+            'Hessen': ['Rheinland-Pfalz', 'Bayern', 'Thüringen'],
+            'Rheinland-Pfalz': ['Hessen', 'Saarland', 'Baden-Württemberg'],
+            'Saarland': ['Rheinland-Pfalz'],
+            'Bayern': ['Baden-Württemberg', 'Thüringen', 'Hessen'],
+            'Baden-Württemberg': ['Bayern', 'Hessen', 'Rheinland-Pfalz'],
+            'Nordrhein-Westfalen': ['Niedersachsen', 'Hessen', 'Rheinland-Pfalz'],
+            'Niedersachsen': ['Hamburg', 'Bremen', 'Nordrhein-Westfalen', 'Schleswig-Holstein'],
+            'Berlin': ['Brandenburg', 'Potsdam'],
+            'Bremen': ['Niedersachsen'],
+            'Hamburg': ['Schleswig-Holstein', 'Niedersachsen']
+        };
 
-            if (scope) {
-                feedQuery = feedQuery.eq(scope.field, scope.value);
-            }
+        // Helper: Get neighbors for a city or land
+        function getNeighbors(place: string): string[] {
+            if (!place) return [];
+            const inputLower = place.toLowerCase();
 
-            const { data, error: feedError } = await feedQuery;
-            if (feedError) throw feedError;
+            // Check city registry
+            if (CITY_REGISTRY[inputLower]) return CITY_REGISTRY[inputLower].neighbors;
 
-            if (data && data.length > 0) {
-                console.log(`[serve-feed] Found ${data.length} items at scope: ${scope?.field}=${scope?.value}`);
-                candidates = data;
-            }
+            // Check land neighbors
+            if (LAND_NEIGHBORS[place]) return LAND_NEIGHBORS[place];
+
+            return [];
         }
 
-        // If STILL empty, fetch ANY active news (last resort)
-        if (candidates.length === 0) {
-            console.log('[serve-feed] All scopes empty. Fetching ANY active news...');
-            const { data: fallbackData } = await supabaseClient
-                .from('news')
-                .select('id, title, created_at, embedding, type, priority, city, land, scope')
-                .eq('status', 'ACTIVE')
-                .order('created_at', { ascending: false })
-                .limit(limit);
+        // Helper: Filter news by geo (same logic as FeedManager.filterByGeo)
+        function filterByGeo(items: any[], userCity?: string, userLand?: string, allowFallback = false): any[] {
+            const neighbors = [
+                ...getNeighbors(userCity || ''),
+                ...getNeighbors(userLand || '')
+            ];
 
-            candidates = fallbackData || [];
+            return items.filter(item => {
+                // 1. Universal Content (DE/COUNTRY)
+                if (!item.scope || item.scope === 'DE' || item.scope === 'COUNTRY') return true;
+
+                // 2. Strict Local Match
+                if (item.scope === 'LAND' && item.land === userLand) return true;
+                if (item.scope === 'CITY' && item.city === userCity) return true;
+
+                // 3. Neighbor Fallback ("Naaber Valab")
+                if (allowFallback) {
+                    if (item.city && neighbors.includes(item.city)) return true;
+                    if (item.land && neighbors.includes(item.land)) return true;
+                }
+
+                return false;
+            });
         }
 
-        let feed = candidates;
+        // 1. Fetch ALL active candidates (broad query)
+        const { data: allCandidates, error: feedError } = await supabaseClient
+            .from('news')
+            .select('id, title, created_at, embedding, type, priority, city, land, scope')
+            .eq('status', 'ACTIVE')
+            .order('created_at', { ascending: false })
+            .range(page * limit, (page + 1) * limit + 100 - 1); // Extra for filtering
+
+        if (feedError) throw feedError;
+
+        let feed: any[] = [];
+
+        if (allCandidates && allCandidates.length > 0) {
+            // 2. Try STRICT local filter first
+            feed = filterByGeo(allCandidates, city, land, false);
+            console.log(`[serve-feed] Strict filter: ${feed.length} items`);
+
+            // 3. If not enough, expand to NEIGHBORS ("Naaber Valab")
+            if (feed.length < limit) {
+                console.log('[serve-feed] Expanding to neighbors (Naaber Valab)...');
+                feed = filterByGeo(allCandidates, city, land, true);
+                console.log(`[serve-feed] With neighbors: ${feed.length} items`);
+            }
+
+            // 4. If STILL not enough, use ALL candidates (last resort)
+            if (feed.length === 0) {
+                console.log('[serve-feed] Using all candidates as fallback');
+                feed = allCandidates;
+            }
+        }
 
         // 2. Personalization (AI Ranking)
         if (userId && feed.length > 0) {

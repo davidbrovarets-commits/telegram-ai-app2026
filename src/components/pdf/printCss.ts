@@ -1,7 +1,10 @@
 export const printCss = `
     @page {
         size: A4;
-        margin: 0; /* Margins are handled by Puppeteer config, but this helps avoid double padding */
+        margin-top: 35mm;
+        margin-bottom: 35mm;
+        margin-left: 25mm;
+        margin-right: 25mm;
     }
     
     body {

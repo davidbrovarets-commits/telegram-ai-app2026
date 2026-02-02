@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
 import { generatePdf } from './pdf';
 
@@ -11,11 +11,11 @@ app.use(cors({
 
 app.use(express.json({ limit: '10mb' }));
 
-app.get('/healthz', (req, res) => {
+app.get('/healthz', (req: Request, res: Response) => {
     res.status(200).send('OK');
 });
 
-app.post('/render-pdf', async (req, res) => {
+app.post('/render-pdf', async (req: Request, res: Response) => {
     try {
         const { html } = req.body;
 
@@ -27,7 +27,7 @@ app.post('/render-pdf', async (req, res) => {
 
         res.set({
             'Content-Type': 'application/pdf',
-            'Content-Length': pdfBuffer.length,
+            'Content-Length': pdfBuffer.length.toString(),
         });
 
         res.send(pdfBuffer);

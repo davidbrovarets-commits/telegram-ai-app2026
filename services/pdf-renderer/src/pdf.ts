@@ -21,10 +21,10 @@ export const generatePdf = async (html: string): Promise<Buffer> => {
             format: 'A4',
             printBackground: true,
             margin: {
-                top: '35mm',
-                bottom: '35mm',
-                left: '25mm',
-                right: '25mm'
+                top: 0,
+                bottom: 0,
+                left: 0,
+                right: 0
             },
             preferCSSPageSize: true
         });

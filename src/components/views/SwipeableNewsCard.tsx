@@ -9,6 +9,7 @@ interface SwipeableNewsCardProps {
     deleteLabel?: string;
     archiveLabel?: string;
     mode?: 'feed' | 'archive';
+    onPress?: () => void;
 }
 
 export const SwipeableNewsCard: React.FC<SwipeableNewsCardProps> = ({
@@ -17,10 +18,12 @@ export const SwipeableNewsCard: React.FC<SwipeableNewsCardProps> = ({
     onArchive,
     deleteLabel = "Kustuta",
     archiveLabel = "Arhiveeri",
-    mode = 'feed'
+    mode = 'feed',
+    onPress
 }) => {
     const x = useMotionValue(0);
     const [isPresent, setIsPresent] = useState(true);
+    const [isDragging, setIsDragging] = useState(false); // New explicit drag state
 
     // Transform background opacity based on drag distance
     const deleteOpacity = useTransform(x, [10, 50], [0, 1]); // Show even earlier
@@ -33,7 +36,21 @@ export const SwipeableNewsCard: React.FC<SwipeableNewsCardProps> = ({
     // Transform background color containers
     // We'll use absolute positioned divs for backgrounds to avoid complex color interpolation issues
 
+    const handleDragStart = () => {
+        setIsDragging(false); // Reset initially, will detect move in onDrag if needed, but framer handles drag start
+    };
+
+    const handleDrag = (_: any, info: PanInfo) => {
+        // If moved more than 10px, consider it a drag intent
+        if (Math.abs(info.offset.x) > 5) {
+            setIsDragging(true);
+        }
+    };
+
     const handleDragEnd = async (_: any, info: PanInfo) => {
+        // Give a moment for any click handlers to realize we were dragging
+        setTimeout(() => setIsDragging(false), 100);
+
         const threshold = 60; // Lower threshold slightly for easier swipe
         const velocity = info.velocity.x;
 
@@ -123,8 +140,13 @@ export const SwipeableNewsCard: React.FC<SwipeableNewsCardProps> = ({
                         drag="x"
                         dragConstraints={{ left: 0, right: 0 }}
                         dragElastic={0.7} // Rubber band effect
+                        onDragStart={handleDragStart}
+                        onDrag={handleDrag}
                         onDragEnd={handleDragEnd}
                         whileTap={{ cursor: 'grabbing' }}
+                        onTap={() => {
+                            if (!isDragging && onPress) onPress();
+                        }}
                     >
                         {children}
                     </motion.div>

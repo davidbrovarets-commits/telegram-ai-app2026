@@ -48,7 +48,7 @@ export class FeedManager {
     static async initialize(land?: string, city?: string) {
         // Store geo if provided
         if (land) {
-            this.setUserGeo(land, city);
+            await this.setUserGeo(land, city);
         }
 
         // 1. User Check (Fix Shared History)
@@ -214,68 +214,87 @@ export class FeedManager {
     }
 
     static async forceRefillFeed() {
-        console.log('[FeedManager] Force refilling feed with geo via Edge Function:', userGeo);
+        console.log('[FeedManager] Force refilling feed (Defensive Mode)', userGeo);
 
         const state = newsStore.getState();
         const userId = state.userId;
 
-        // Call Server-Side Feed Function
-        // This replaces the complex local filtering/sorting logic
-        const { data, error } = await supabase.functions.invoke('serve-feed', {
-            body: {
-                city: userGeo.city,
-                land: userGeo.land,
-                userId: userId,
-                limit: 100
-            }
+        // Use defensiveFetch
+        const { defensiveFetch } = await import('../../lib/net/defensiveFetch');
+
+        // CACHE STRATEGY (Read First)
+        // Note: newsStore already persists to localStorage, so state.visibleFeed IS the cache.
+        // We just need to ensure we don't wipe it on error.
+
+        const fetchAction = async () => {
+            const { data, error } = await supabase.functions.invoke('serve-feed', {
+                body: {
+                    city: userGeo.city,
+                    land: userGeo.land,
+                    userId: userId,
+                    limit: 100
+                }
+            });
+            if (error) throw error;
+            return data;
+        };
+
+        const result = await defensiveFetch<{ feed: News[] }>({
+            key: `feed:${userGeo.city || 'all'}:${userGeo.land || 'all'}`,
+            fn: fetchAction
         });
 
-        if (error) {
-            console.error('Edge Function failed:', error);
-            // Fallback to local logic if needed, or just return
+        if (result.error) {
+            console.error('[FeedManager] Feed Refresh Failed:', result.error);
+
+            // Handle Auth Error (Stop the Line)
+            if (result.error.kind === 'AUTH_REQUIRED') {
+                console.warn('[FeedManager] CRITICAL: Auth Required. Stopping refresh.');
+                // Trigger global auth warning used by UI (optional: emit event or set store)
+                // For MVP: Log out if severe, or show banner.
+                // Assuming simple mitigation: do not reset feed, just stop.
+                return;
+            }
+
+            // Handle Circuit Open / Offline
+            if (result.error.kind === 'CIRCUIT_OPEN' || result.error.kind === 'RETRYABLE') {
+                console.warn('[FeedManager] Offline/Circuit Open. Using existing cache.');
+                return; // Keep existing data
+            }
             return;
         }
 
-        const newsItems = data?.feed || [];
+        const newsItems = result.data?.feed || [];
         console.log(`[FeedManager] Received ${newsItems.length} items from server`);
 
-        // Filter out history (Client-side is fine for this)
-        // Filter out history (Client-side is fine for this)
-        // Fetch fresh state after async call
-        const currentState = newsStore.getState();
+        // Filter and Fill (Standard Logic)
         const usedIds = new Set<number>([
-            ...currentState.history.deleted,
-            ...currentState.history.archived,
-            ...currentState.visibleFeed.filter(id => id > 0)
+            ...state.history.deleted,
+            ...state.history.archived,
+            ...state.visibleFeed.filter(id => id > 0)
         ]);
-
         const validCandidates = newsItems.filter((n: News) => !usedIds.has(n.id));
-
         const filledSlots: number[] = [];
         const newlyUsedIds = new Set<number>();
 
         SLOTS.forEach(targetType => {
             const candidate = validCandidates.find((n: News) =>
-                n.type === targetType &&
-                !newlyUsedIds.has(n.id)
+                n.type === targetType && !newlyUsedIds.has(n.id)
             );
-
             if (candidate) {
                 filledSlots.push(candidate.id);
                 newlyUsedIds.add(candidate.id);
             } else {
-                // FALLBACK: Find any available news not used
                 const fallback = validCandidates.find((n: News) => !newlyUsedIds.has(n.id));
                 if (fallback) {
                     filledSlots.push(fallback.id);
                     newlyUsedIds.add(fallback.id);
                 } else {
-                    filledSlots.push(0); // 0 = Empty/Error
+                    filledSlots.push(0);
                 }
             }
         });
 
-        // Remaining go to Pool
         const poolIds = validCandidates
             .filter((n: News) => !newlyUsedIds.has(n.id))
             .map((n: News) => n.id);
@@ -283,7 +302,9 @@ export class FeedManager {
         newsStore.setState(prev => ({
             ...prev,
             visibleFeed: filledSlots,
-            pool: poolIds
+            pool: poolIds,
+            // Update fetch timestamp for UI status
+            lastFetch: new Date().toISOString()
         }));
     }
 

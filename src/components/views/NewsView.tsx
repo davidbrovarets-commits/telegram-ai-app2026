@@ -100,10 +100,10 @@ export const NewsView = ({ onNewsClick, land, city }: NewsViewProps) => {
                             onArchive={() => handleSwipe(item.id, 'RIGHT')} // Right action in hook is Archive
                             deleteLabel="Видалити"
                             archiveLabel="В архів"
+                            onPress={() => handleCardClick(item)}
                         >
                             <div
                                 className="news-card"
-                                onClick={() => handleCardClick(item)}
                                 style={{
                                     position: 'relative',
                                     display: 'flex',

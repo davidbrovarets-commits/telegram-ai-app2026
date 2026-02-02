@@ -27,6 +27,7 @@ import {
   TaskModal,
   FileModal,
 } from "./components";
+import { NetSimPanel } from "./dev/NetSimPanel";
 
 function App() {
   const {
@@ -307,6 +308,7 @@ function App() {
         )}
 
         <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+        <NetSimPanel />
       </div>
     );
   }

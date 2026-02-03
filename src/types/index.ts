@@ -28,6 +28,8 @@ export interface News {
 
   region: string; // Legacy field
   image_url?: string;
+  image_status?: 'placeholder' | 'generating' | 'generated' | 'failed';
+  image_source_type?: 'reference' | 'imagen';
   image?: string; // Legacy
   content: string;
   link?: string;

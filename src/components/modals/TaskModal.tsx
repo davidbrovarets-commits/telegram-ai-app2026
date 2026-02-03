@@ -1,4 +1,5 @@
 import type { Task, News } from '../../types';
+import { formatTitle7Words, formatSummary200Words } from '../../utils/newsFormat';
 
 interface TaskModalProps {
     task: (Task & { type?: never }) | (News & { type: 'news' });
@@ -26,36 +27,45 @@ export const TaskModal = ({ task, unlockedTasks, onClose, onUnlock }: TaskModalP
                 </div>
 
                 {isNews ? (
-                    <div className="modal-body">
+                    <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', minHeight: '100%' }}>
+                        {/* 1) TITLE */}
+                        <h3 style={{ marginBottom: '15px' }}>
+                            {formatTitle7Words((task as any).title || (task as any).uk_summary || '')}
+                        </h3>
+
+                        {/* 2) IMAGE */}
                         <img
                             src={(task as unknown as News).image_url || (task as unknown as News).image}
-                            style={{ width: '100%', borderRadius: '12px', marginBottom: '15px' }}
+                            style={{ width: '100%', borderRadius: '12px', marginBottom: '15px', objectFit: 'cover', aspectRatio: '16/9' }}
                             alt=""
                         />
-                        <p style={{ fontWeight: 'bold', color: 'var(--primary)' }}>
-                            Джерело: {(task as unknown as News).source}
+
+                        {/* 3) SUMMARY */}
+                        <p className="modal-text">
+                            {formatSummary200Words((task as any).uk_summary || (task as any).content || '')}
                         </p>
-                        <hr className="divider" />
 
-                        {/* Show UK Summary Body if available */}
-                        {isNews && (task as any).uk_summary ? (
-                            <p className="modal-text">
-                                {(task as any).uk_summary.split('\n\n').slice(1).join('\n\n') || (task as any).uk_summary}
+                        {/* 4) SOURCE (Right aligned, immediately after summary) */}
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
+                            <p style={{ fontWeight: 'bold', color: 'var(--primary)', margin: 0 }}>
+                                Джерело: {(task as unknown as News).source}
                             </p>
-                        ) : (
-                            // Fallback to German if no UK summary (should not happen after rescrape)
-                            <p className="modal-text">{task.content}</p>
-                        )}
+                        </div>
 
+                        <hr className="divider" style={{ margin: '15px 0' }} />
+
+                        {/* 5) CTA (Bottom Centered) */}
                         {(task as unknown as News).link && (
-                            <a
-                                href={(task as unknown as News).link}
-                                target="_blank"
-                                className="external-link-btn"
-                                style={{ marginTop: '15px', textDecoration: 'none' }}
-                            >
-                                Читати далі (Оригінал) 🔗
-                            </a>
+                            <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'center', paddingBottom: '20px' }}>
+                                <a
+                                    href={(task as unknown as News).link}
+                                    target="_blank"
+                                    className="external-link-btn"
+                                    style={{ textDecoration: 'none' }}
+                                >
+                                    Читати далі (Оригінал) 🔗
+                                </a>
+                            </div>
                         )}
                     </div>
                 ) : (

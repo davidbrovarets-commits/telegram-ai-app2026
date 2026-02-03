@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNews } from '../../hooks/useNews';
 import type { News } from '../../types';
 import { supabase } from '../../supabaseClient';
-import { SwipeableNewsCard } from './SwipeableNewsCard';
+import { NewsCard } from '../news/NewsCard';
 import { ArrowLeft } from 'lucide-react';
 
 interface ArchiveViewProps {
@@ -115,69 +115,14 @@ export const ArchiveView = ({ onBack }: ArchiveViewProps) => {
                     if (!item) return null; // Still loading or deleted
 
                     return (
-                        <SwipeableNewsCard
+                        <NewsCard
                             key={id}
+                            item={item}
+                            onPress={() => handleCardClick(item)}
                             onDelete={() => handleArchiveDeletion(id)}
                             deleteLabel="Видалити"
-                            mode="archive" // Enables double delete
-                        >
-                            <div
-                                className="news-card"
-                                onClick={() => handleCardClick(item)}
-                                style={{
-                                    position: 'relative',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: '12px',
-                                    padding: '0',
-                                    overflow: 'hidden',
-                                    borderLeft: 'none',
-                                    background: 'var(--card-bg)',
-                                    borderRadius: '18px',
-                                    boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
-                                }}
-                            >
-                                <div style={{ padding: '16px 16px 48px 16px' }}>
-                                    <div style={{
-                                        fontSize: '17px',
-                                        fontWeight: 700,
-                                        lineHeight: '1.3',
-                                        color: 'var(--text-main)',
-                                        marginBottom: '8px',
-                                        fontFamily: 'var(--font-main)'
-                                    }}>
-                                        {item.title}
-                                    </div>
-                                    <div style={{
-                                        fontSize: '15px',
-                                        fontWeight: 400,
-                                        lineHeight: '1.5',
-                                        color: 'var(--text-sub)',
-                                        display: '-webkit-box',
-                                        WebkitLineClamp: 3,
-                                        WebkitBoxOrient: 'vertical',
-                                        overflow: 'hidden'
-                                    }}>
-                                        {item.uk_summary || (item.content ? item.content.split('\n\n')[0] : '')}
-                                    </div>
-                                </div>
-                                <div style={{
-                                    position: 'absolute',
-                                    right: '12px',
-                                    bottom: '12px',
-                                    fontSize: '11px',
-                                    fontWeight: 700,
-                                    color: '#1C1C1E',
-                                    background: 'rgba(0, 0, 0, 0.08)',
-                                    padding: '4px 10px',
-                                    borderRadius: '12px',
-                                    backdropFilter: 'blur(4px)',
-                                    zIndex: 5
-                                }}>
-                                    {item.city || item.land || 'Німеччина'}
-                                </div>
-                            </div>
-                        </SwipeableNewsCard>
+                            variant="archive"
+                        />
                     );
                 })}
             </div>

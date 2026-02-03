@@ -30,10 +30,11 @@ serve(async (req) => {
     try {
         const { city, land, country, page = 0, limit = 20, userId } = await req.json();
 
+        const authHeader = req.headers.get('Authorization') ?? `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`;
         const supabaseClient = createClient(
             Deno.env.get('SUPABASE_URL') ?? '',
             Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-            { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+            { global: { headers: { Authorization: authHeader } } }
         );
 
         // --- UNIFIED "NAABER VALAB" LOGIC (Same as FeedManager.ts) ---

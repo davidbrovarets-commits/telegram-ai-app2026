@@ -37,10 +37,12 @@
     - **Right:** Delete (Hide forever).
 
 ## 3. Technical Rules
-- **Non-Blocking:** Frontend processes `news_items` array. If image is missing, it does NOT fetch it sync. It uses what is in the record.
+- **Non-Blocking:** Frontend processes `news` array. If image is missing, it does NOT fetch it sync. It uses what is in the record.
 - **Dedup:** Frontend logic must ensure `summary` text does not contain the `title` if `title` is used as Pre-Image Line.
+- **Overlay:** NO text overlay allowed on the image (e.g. no city badge on image).
 
 ## 4. Verification
 - Swipe Left -> Item Disappears (Archived).
 - Swipe Right -> Item Disappears (Deleted).
 - Visual check: No double text.
+- Visual check: No text on top of image.

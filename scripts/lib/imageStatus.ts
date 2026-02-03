@@ -111,11 +111,13 @@ export async function markImageFailed(
     errorReason: string,
     attempts: number
 ) {
-    const { error } = await supabase
-        .from('news')
+    const { error } = await (supabase
+        .from('news') as any)
         .update({
             image_status: 'failed',
-            image_error: errorReason.substring(0, 500) // Truncate for safety
+            image_error: errorReason.substring(0, 500),
+            image_last_attempt_at: new Date().toISOString(),
+            ...(attempts > 0 ? { image_generation_attempts: attempts } : {})
         })
         .eq('id', id);
 

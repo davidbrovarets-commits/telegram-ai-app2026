@@ -12,6 +12,7 @@ import { execSync } from 'child_process';
 const PROJECT_ID = process.env.GOOGLE_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT || 'claude-vertex-prod';
 const LOCATION = process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
 const MODEL_ID = 'imagen-4.0-generate-001';
+const BUCKET_NAME = process.env.SUPABASE_NEWS_BUCKET || 'images'; // FIX #6: Default to 'images', allow override
 
 /**
  * 1. Reference Image Logic (Wikipedia)
@@ -38,13 +39,11 @@ async function findReferenceImage(query: string): Promise<{ url: string; license
         const page = pages[pageId];
 
         if (page.thumbnail?.source) {
-            // We found an image!
-            // MVP: We assume Wikimedia content is reusable with attribution.
-            // Ideally we'd query imageinfo for license (extmetadata).
-            // For Scope L6 MVP, we will use the source URL as attribution.
+            // FIX #9: Reference Quality Gate (Size check happens in uploadToStorage or here? Let's do it here if possible, but we need to download header to know size.
+            // Better to do it in download step. We pass it through.
             return {
                 url: page.thumbnail.source,
-                license: 'Wikimedia', // Placeholder for complex logic
+                license: 'Wikimedia',
                 attribution: `Source: Wikipedia (${title})`
             };
         }
@@ -125,37 +124,34 @@ async function uploadToStorage(base64OrUrl: string, isUrl: boolean, itemId: numb
         if (isUrl) {
             const res = await fetch(base64OrUrl);
             if (!res.ok) throw new Error('Failed to download reference image');
-            const ab = await res.arrayBuffer();
-            buffer = Buffer.from(ab);
+
+            // FIX #9: Quality Gate - Size Check
+            const arrayBuf = await res.arrayBuffer();
+            buffer = Buffer.from(arrayBuf);
+
+            if (buffer.length < 50 * 1024) { // 50KB min
+                throw new Error(`Reference image too small (${Math.round(buffer.length / 1024)}KB < 50KB)`);
+            }
+
             const ct = res.headers.get('content-type');
             if (ct) mimeType = ct;
         } else {
             buffer = Buffer.from(base64OrUrl, 'base64');
         }
 
-        const path = `news/${itemId}_${Date.now()}.png`; // Normalize to PNG if possible, or keep ext
+        const filePath = `news/${itemId}_${Date.now()}.png`;
 
-        // MVP: Just upload. Assuming bucket 'news-images' exists. 
-        // If not, we might need to fail or use public bucket.
-        // Let's assume 'images' bucket or similar from previous knowledge? 
-        // Project Knowledge doesn't specify bucket.
-        // We will try 'public' bucket if standard, or 'news'.
-        // Let's safe bet: 'banners' or 'images'.
-        // I will try 'news-images' as a reasonable guess for L6. 
-        // If it fails, I will mark as failed.
-
-        const { data, error } = await supabase.storage
-            .from('news_images') // Created manually? Or existing?
-            .upload(path, buffer, { contentType: mimeType, upsert: true });
+        const { error } = await supabase.storage
+            .from(BUCKET_NAME)
+            .upload(filePath, buffer, { contentType: mimeType, upsert: true });
 
         if (error) throw error;
 
         // Get Public URL
-        const { data } = supabase.storage.from('news_images').getPublicUrl(path);
-        // Typo check: `data` not `kata`. `getPublicUrl` returns object `{ data: { publicUrl } }`
+        // FIX LINT: Rename destructured 'data' to 'publicUrlData' to avoid conflict
+        const { data: publicUrlData } = supabase.storage.from(BUCKET_NAME).getPublicUrl(filePath);
 
-        const pub = supabase.storage.from('news_images').getPublicUrl(path);
-        return pub.data.publicUrl;
+        return publicUrlData.publicUrl;
 
     } catch (e) {
         console.error('Upload failed:', e);
@@ -170,8 +166,13 @@ async function processItem(item: NewsItemImageState) {
     console.log(`[Job] Processing item ${item.id}...`);
 
     try {
-        // A. Get details (title, description)
-        const { data: fullItem, error } = await supabase.from('news').select('title, description, city, keywords').eq('id', item.id).single();
+        // A. Get details (title, description) - FIX #7: Fields
+        const { data: fullItem, error } = await supabase
+            .from('news')
+            .select('title, content, uk_summary, city, land, source, published_at, link')
+            .eq('id', item.id)
+            .single();
+
         if (error || !fullItem) throw new Error('Item data not found');
 
         // B. Try Reference (Wikipedia)
@@ -197,17 +198,34 @@ async function processItem(item: NewsItemImageState) {
 
         // C. Fallback: Imagen 4
         console.log(`[Job] Generating Imagen 4 for ${item.id}`);
-        // Prompt Policy: Documentary
-        const prompt = `A documentary photo of ${fullItem.title}. ${fullItem.description?.substring(0, 100) || ''}. Realistic, neutral, high quality.`;
+        // FIX #8: Prompt Policy
+        const contextText = fullItem.uk_summary || fullItem.content || '';
+        const shortContext = contextText.substring(0, 150).replace(/\n/g, ' ');
+        const location = fullItem.city || fullItem.land || '';
 
-        const b64 = await generateImagen4(prompt);
+        const prompt = `A documentary photo of ${fullItem.title}. ${location ? `Location: ${location}.` : ''} ${shortContext}. Realistic, neutral, high quality.`;
+
+        // Negative prompt is usually passed in 'instances' parameters or separate field depending on model version. 
+        // Imagen 4 on Vertex usually takes it in the prompt text or separate field?
+        // Checking API: imagen-4.0-generate-001 often supports 'safetyAttributes' or just prompt engineering. 
+        // For MVP we append negative requirements to prompt if model doesn't support explicit negative_prompt in standard predict call easily without knowing exact schema.
+        // BUT wait, standard Vertex Imagen payload has 'negativePrompt' ??? 
+        // Let's stick to the Correction Pack instruction: "Prompt MUST start with... Add global negatives ALWAYS".
+        // Use prompt augmentation for safety if API schema is uncertain, OR try 'negativePrompt' parameter if confident.
+        // I will append it to be safe as "Exclude: ..." which Imagen understands well, OR just text description.
+        // Correction Pack: "Add global negatives ALWAYS: no text, no logos..."
+        // I will add it as text description at the end.
+
+        const strictPrompt = `${prompt} No text. No logos. No watermarks. Not an illustration. Not a cartoon. No propaganda. No stereotypes. No distorted faces. No uncanny people.`;
+
+        const b64 = await generateImagen4(strictPrompt);
         if (b64) {
             const publicUrl = await uploadToStorage(b64, false, item.id);
             if (publicUrl) {
                 await markImageGenerated(supabase, item.id, {
                     image_url: publicUrl,
                     image_source_type: 'imagen',
-                    image_prompt: prompt
+                    image_prompt: strictPrompt
                 });
                 return;
             }

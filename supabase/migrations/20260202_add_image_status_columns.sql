@@ -1,7 +1,7 @@
--- Adds deterministic image pipeline state for news_items
+-- Adds deterministic image pipeline state for news items (Table: news)
 -- Safe MVP upgrade: non-breaking defaults
 
-ALTER TABLE public.news_items
+ALTER TABLE public.news
   ADD COLUMN IF NOT EXISTS image_status text NOT NULL DEFAULT 'placeholder',
   ADD COLUMN IF NOT EXISTS image_error text,
   ADD COLUMN IF NOT EXISTS image_generation_attempts integer NOT NULL DEFAULT 0,
@@ -10,14 +10,14 @@ ALTER TABLE public.news_items
   ADD COLUMN IF NOT EXISTS image_prompt text;
 
 -- Reference-first metadata (minimal, non-breaking)
-ALTER TABLE public.news_items
+ALTER TABLE public.news
   ADD COLUMN IF NOT EXISTS image_source_type text,
   ADD COLUMN IF NOT EXISTS image_source_url text,
   ADD COLUMN IF NOT EXISTS image_source_license text,
   ADD COLUMN IF NOT EXISTS image_source_attribution text;
 
 -- Optional: normalize existing rows that already have a real image
-UPDATE public.news_items
+UPDATE public.news
 SET image_status = 'generated',
     image_generated_at = COALESCE(image_generated_at, now())
 WHERE
@@ -27,5 +27,5 @@ WHERE
   AND image_status = 'placeholder';
 
 -- Index for banner job selection performance
-CREATE INDEX IF NOT EXISTS idx_news_items_image_status_created_at
-  ON public.news_items (image_status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_news_image_status_created_at
+  ON public.news (image_status, created_at DESC);

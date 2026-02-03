@@ -151,7 +151,7 @@ async function uploadToStorage(base64OrUrl: string, isUrl: boolean, itemId: numb
         if (error) throw error;
 
         // Get Public URL
-        const { kata } = supabase.storage.from('news_images').getPublicUrl(path);
+        const { data } = supabase.storage.from('news_images').getPublicUrl(path);
         // Typo check: `data` not `kata`. `getPublicUrl` returns object `{ data: { publicUrl } }`
 
         const pub = supabase.storage.from('news_images').getPublicUrl(path);
@@ -171,7 +171,7 @@ async function processItem(item: NewsItemImageState) {
 
     try {
         // A. Get details (title, description)
-        const { data: fullItem, error } = await supabase.from('news_items').select('title, description, city, keywords').eq('id', item.id).single();
+        const { data: fullItem, error } = await supabase.from('news').select('title, description, city, keywords').eq('id', item.id).single();
         if (error || !fullItem) throw new Error('Item data not found');
 
         // B. Try Reference (Wikipedia)

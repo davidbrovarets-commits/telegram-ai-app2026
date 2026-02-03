@@ -26,7 +26,7 @@ export async function claimNewsForGeneration(
 
     // 1. Select candidates
     const { data: candidates, error: selectError } = await supabase
-        .from('news_items')
+        .from('news')
         .select('id, image_status, image_generation_attempts')
         .in('image_status', ['placeholder', 'failed'])
         .lt('image_generation_attempts', options.maxAttempts)
@@ -48,7 +48,7 @@ export async function claimNewsForGeneration(
     // We process sequentially to ensure correct attempt increment and valid locking
     for (const item of candidates) {
         const { data, error } = await supabase
-            .from('news_items')
+            .from('news')
             .update({
                 image_status: 'generating',
                 image_generation_attempts: item.image_generation_attempts + 1,
@@ -83,7 +83,7 @@ export async function markImageGenerated(
     }
 ) {
     const { error } = await supabase
-        .from('news_items')
+        .from('news')
         .update({
             image_status: 'generated',
             image_generated_at: new Date().toISOString(),
@@ -112,7 +112,7 @@ export async function markImageFailed(
     attempts: number
 ) {
     const { error } = await supabase
-        .from('news_items')
+        .from('news')
         .update({
             image_status: 'failed',
             image_error: errorReason.substring(0, 500) // Truncate for safety

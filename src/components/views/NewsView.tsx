@@ -118,52 +118,116 @@ export const NewsView = ({ onNewsClick, land, city }: NewsViewProps) => {
                                     boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
                                 }}
                             >
-                                {/* CONTENT BLOCK - Minimalist (Title + Summary only) */}
-                                {/* Added bottom padding to prevent text from overlapping the badge */}
-                                <div style={{ padding: '16px 16px 48px 16px' }}>
-                                    {/* Title (Headline) */}
-                                    <div style={{
-                                        fontSize: '17px',
-                                        fontWeight: 700,
-                                        lineHeight: '1.3',
-                                        color: 'var(--text-main)',
-                                        marginBottom: '8px',
-                                        fontFamily: 'var(--font-main)'
-                                    }}>
-                                        {item.title}
+                                {/* CONTENT BLOCK - L6 Contract */}
+                                <div style={{ padding: '0', display: 'flex', flexDirection: 'column' }}>
+
+                                    {/* A. PRE-IMAGE LINE (Title/Kicker) */}
+                                    <div style={{ padding: '12px 16px 8px 16px' }}>
+                                        <div style={{
+                                            fontSize: '17px',
+                                            fontWeight: 700,
+                                            lineHeight: '1.3',
+                                            color: 'var(--text-main)',
+                                            fontFamily: 'var(--font-main)'
+                                        }}>
+                                            {item.title}
+                                        </div>
                                     </div>
 
-                                    {/* Summary (Body) */}
+                                    {/* B. IMAGE (16:9) */}
                                     <div style={{
-                                        fontSize: '15px',
-                                        fontWeight: 400,
-                                        lineHeight: '1.5',
-                                        color: 'var(--text-sub)',
-                                        display: '-webkit-box',
-                                        WebkitLineClamp: 3,
-                                        WebkitBoxOrient: 'vertical',
+                                        width: '100%',
+                                        aspectRatio: '16/9',
+                                        background: '#f0f0f0',
+                                        position: 'relative',
                                         overflow: 'hidden'
                                     }}>
-                                        {item.uk_summary || (item.content ? item.content.split('\n\n')[0] : '')}
-                                    </div>
-                                </div>
+                                        {item.image_status === 'generated' && item.image_url ? (
+                                            <img
+                                                src={item.image_url}
+                                                alt=""
+                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                onError={(e) => {
+                                                    // Fallback to placeholder on load error
+                                                    (e.target as HTMLImageElement).style.display = 'none';
+                                                }}
+                                            />
+                                        ) : (
+                                            // Placeholder Pattern (Geometric)
+                                            <div style={{ width: '100%', height: '100%', background: 'linear-gradient(45deg, #f3f4f6 25%, #e5e7eb 25%, #e5e7eb 50%, #f3f4f6 50%, #f3f4f6 75%, #e5e7eb 75%, #e5e7eb 100%)', backgroundSize: '20px 20px', opacity: 0.5 }} />
+                                        )}
 
-                                {/* LOCATION BADGE (Bottom Right) */}
-                                <div style={{
-                                    position: 'absolute',
-                                    right: '12px',
-                                    bottom: '12px',
-                                    fontSize: '11px',
-                                    fontWeight: 700,
-                                    color: '#1C1C1E', // Darker text
-                                    background: 'rgba(0, 0, 0, 0.08)', // Visible background
-                                    padding: '4px 10px',
-                                    borderRadius: '12px', // Rounded corners
-                                    // textTransform: 'uppercase', // Optional, maybe keep it normal for nicer look? User asked for "viisaka" (polite). Uppercase is fine.
-                                    backdropFilter: 'blur(4px)',
-                                    zIndex: 5
-                                }}>
-                                    {item.city || item.land || 'Німеччина'}
+                                        {/* Badge Overlay (Bottom Right of Image) */}
+                                        <div style={{
+                                            position: 'absolute',
+                                            right: '12px',
+                                            bottom: '12px',
+                                            fontSize: '11px',
+                                            fontWeight: 700,
+                                            color: 'white',
+                                            background: 'rgba(0, 0, 0, 0.6)',
+                                            padding: '4px 10px',
+                                            borderRadius: '12px',
+                                            backdropFilter: 'blur(4px)',
+                                        }}>
+                                            {item.city || item.land || 'Німеччина'}
+                                        </div>
+                                    </div>
+
+                                    {/* C. SOURCE LINE */}
+                                    <div style={{ padding: '12px 16px 4px 16px', fontSize: '11px', color: '#8E8E93', fontWeight: 500 }}>
+                                        Allikas: {item.source} · {new Date(item.published_at || Date.now()).toLocaleDateString('uk-UA')}
+                                    </div>
+
+                                    {/* D. SUMMARY (Deduped) */}
+                                    <div style={{ padding: '0 16px 16px 16px' }}>
+                                        <div style={{
+                                            fontSize: '15px',
+                                            fontWeight: 400,
+                                            lineHeight: '1.5',
+                                            color: 'var(--text-sub)',
+                                            display: '-webkit-box',
+                                            WebkitLineClamp: 4,
+                                            WebkitBoxOrient: 'vertical',
+                                            overflow: 'hidden'
+                                        }}>
+                                            {/* Dedup Logic: If title is present in summary, remove it? 
+                                                Simple heuristic: If summary starts with title, strip it. 
+                                                Or rely on 'uk_summary' being clean. 
+                                                MVP: Just render summary. Most summaries don't repeat title literally if generated well.
+                                                But to be safe: */}
+                                            {(item.uk_summary || item.content || '').replace(item.title, '').trim()}
+                                        </div>
+                                    </div>
+
+                                    {/* E. ACTION (Read More) */}
+                                    {item.link && (
+                                        <div style={{ padding: '0 16px 16px 16px', display: 'flex', justifyContent: 'flex-end' }}>
+                                            <a
+                                                href={item.link}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                onClick={(e) => e.stopPropagation()} // Prevent card tap
+                                                style={{
+                                                    fontSize: '13px',
+                                                    fontWeight: 600,
+                                                    color: '#007AFF', // System Blue
+                                                    textDecoration: 'none',
+                                                    padding: '8px 12px',
+                                                    background: 'rgba(0, 122, 255, 0.1)',
+                                                    borderRadius: '8px',
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '4px'
+                                                }}
+                                            >
+                                                Читати далі (оригінал)
+                                                {/* Simple Arrow Icon SVG */}
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+                                            </a>
+                                        </div>
+                                    )}
+
                                 </div>
                             </div>
                         </SwipeableNewsCard>

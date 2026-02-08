@@ -1,6 +1,6 @@
-import React from 'react';
+// import React from 'react';
 import type { News } from '../../types';
-import { formatTitle7Words, formatSummary200Words } from '../../utils/newsFormat';
+import { formatTitle7Words } from '../../utils/newsFormat';
 
 type Props = {
     item: News;
@@ -8,9 +8,9 @@ type Props = {
 };
 
 export function NewsCardContentL6({ item, onPress }: Props) {
-    // L6 Fix: Use shared formatters
+    // L6 Fix: Use shared formatters for Title, but use raw summary for short teaser
     const preLine = formatTitle7Words(item.title || item.uk_summary || item.content || '');
-    const summary = formatSummary200Words(item.uk_summary || item.content || '');
+    const summary = item.uk_summary || item.content || '';
 
     return (
         <div
@@ -32,7 +32,7 @@ export function NewsCardContentL6({ item, onPress }: Props) {
             }}
         >
             <div style={{ padding: '0', display: 'flex', flexDirection: 'column' }}>
-                {/* A. PRE-IMAGE LINE */}
+                {/* 1. TITLE (Pre-Image Line) */}
                 <div style={{ padding: '12px 16px 8px 16px' }}>
                     <div style={{
                         fontSize: '15px',
@@ -45,7 +45,7 @@ export function NewsCardContentL6({ item, onPress }: Props) {
                     </div>
                 </div>
 
-                {/* B. IMAGE (16:9) */}
+                {/* 2. IMAGE (16:9) */}
                 <div style={{
                     width: '100%',
                     aspectRatio: '16/9',
@@ -80,12 +80,18 @@ export function NewsCardContentL6({ item, onPress }: Props) {
                     )}
                 </div>
 
-                {/* C. SOURCE LINE */}
-                <div style={{ padding: '8px 16px 4px 16px', fontSize: '11px', color: '#8E8E93', fontWeight: 500 }}>
-                    Allikas: {item.source} · {new Date(item.published_at || Date.now()).toLocaleDateString('uk-UA')}
+                {/* 3. DATE LINE (Right Aligned, Date Only) */}
+                <div style={{
+                    padding: '8px 16px 0 16px',
+                    fontSize: '11px',
+                    color: '#8E8E93',
+                    fontWeight: 500,
+                    textAlign: 'right'
+                }}>
+                    {new Date(item.published_at || Date.now()).toLocaleDateString('uk-UA')}
                 </div>
 
-                {/* D. SUMMARY */}
+                {/* 4. SUMMARY (Short Teaser) */}
                 <div style={{ padding: '0 16px 16px 16px' }}>
                     <div style={{
                         fontSize: '15px',
@@ -93,40 +99,12 @@ export function NewsCardContentL6({ item, onPress }: Props) {
                         lineHeight: '1.5',
                         color: 'var(--text-sub)',
                         whiteSpace: 'pre-line',
-                        overflow: 'hidden'
+                        overflow: 'hidden',
+                        marginBottom: '16px'
                     }}>
                         {summary}
                     </div>
                 </div>
-
-                {/* E. ACTION */}
-                {item.link && (
-                    <div style={{ padding: '0 16px 16px 16px', display: 'flex', justifyContent: 'flex-end' }}>
-                        <a
-                            href={item.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            style={{
-                                fontSize: '13px',
-                                fontWeight: 600,
-                                color: '#007AFF',
-                                textDecoration: 'none',
-                                padding: '8px 12px',
-                                background: 'rgba(0, 122, 255, 0.1)',
-                                borderRadius: '8px',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px'
-                            }}
-                        >
-                            Читати далі (оригінал)
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M5 12h14M12 5l7 7-7 7" />
-                            </svg>
-                        </a>
-                    </div>
-                )}
             </div>
         </div>
     );

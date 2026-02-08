@@ -27,7 +27,7 @@ async function getAccessToken(): Promise<string | undefined> {
             ? '"C:\\Users\\David\\AppData\\Local\\Google\\Cloud SDK\\google-cloud-sdk\\bin\\gcloud.cmd" auth print-access-token'
             : 'gcloud auth print-access-token';
 
-        const token = execSync(gcloudCmd, { encoding: 'utf-8', shell: true }).trim();
+        const token = execSync(gcloudCmd, { encoding: 'utf-8', shell: 'powershell.exe' }).trim();
         if (token && token.length > 20) {
             return token;
         }
@@ -54,6 +54,7 @@ async function getAccessToken(): Promise<string | undefined> {
 export interface SummaryResult {
     de_summary: string;
     uk_summary: string;
+    uk_content: string;
     action_hint?: string;
     model_used: string;
     cost_estimate: number;
@@ -67,7 +68,7 @@ export async function summarizeAndTranslate(article: {
 
     if (!accessToken) {
         console.error('[Summarizer] No access token available');
-        return { de_summary: '', uk_summary: '', model_used: 'error', cost_estimate: 0 };
+        return { de_summary: '', uk_summary: '', uk_content: '', model_used: 'error', cost_estimate: 0 };
     }
 
     const prompt = `Du bist ein Nachrichten-Assistent für ukrainische Migranten in Deutschland.
@@ -76,10 +77,16 @@ AUFGABE:
 1. Fasse den Artikel in 2-3 Sätzen auf Deutsch zusammen (praktisch, neutral, klar)
 2. Extrahiere wichtige Fristen oder erforderliche Aktionen (falls vorhanden)
 3. Übersetze die Zusammenfassung ins Ukrainische.
-   FORMAT für "uk_summary":
-   Erste Zeile: Eine kurze, aussagekräftige Überschrift (Headline).
-   Dann zwei Zeilenumbrüche (\n\n).
-   Dann der Zusammenfassungstext.
+   FORMAT for "uk_summary":
+   Generiere eine sehr kurze Teaser-Zusammenfassung (Intro) auf Ukrainisch.
+   STRIKTES LIMIT: Maximal 30 Wörter.
+   Muss ein ganzer Satz sein, der mit einem Punkt endet.
+   KEINE "..." am Ende.
+
+   FORMAT for "uk_content":
+   Eine detaillierte Zusammenfassung auf Ukrainisch (250-290 Wörter).
+   Nutze logische Absätze und Aufzählungspunkte (•).
+   Ton: Objektiv, journalistisch.
 
 ARTIKEL:
 Titel: ${article.title}
@@ -88,7 +95,8 @@ Inhalt: ${article.content.substring(0, 2000)}
 ANTWORT im JSON-Format (NUR JSON):
 {
   "de_summary": "Deutsche Zusammenfassung hier",
-  "uk_summary": "Überschrift\n\nText...", 
+  "uk_summary": "Kurzer Teaser (max 30 Wörter)", 
+  "uk_content": "Langer Inhalt (250-290 Wörter)...",
   "action_hint": "Frist oder Aktion (optional, null wenn keine)"
 }`;
 
@@ -136,13 +144,14 @@ ANTWORT im JSON-Format (NUR JSON):
         return {
             de_summary: parsed.de_summary || '',
             uk_summary: parsed.uk_summary || '',
+            uk_content: parsed.uk_content || '',
             action_hint: parsed.action_hint || null,
             model_used: MODEL,
             cost_estimate
         };
     } catch (error: any) {
         console.error('[Summarizer] Error:', error.message);
-        return { de_summary: '', uk_summary: '', model_used: 'error', cost_estimate: 0 };
+        return { de_summary: '', uk_summary: '', uk_content: '', model_used: 'error', cost_estimate: 0 };
     }
 }
 
@@ -152,7 +161,8 @@ export async function summarizeAndTranslateMock(article: {
 }): Promise<SummaryResult> {
     return {
         de_summary: `${article.title}. ${article.content.substring(0, 100)}...`,
-        uk_summary: `[UK] ${article.title}. ${article.content.substring(0, 100)}...`,
+        uk_summary: `[UK Teaser] ${article.title.substring(0, 20)}... (Max 30 words)`,
+        uk_content: `[UK Content] ${article.content.substring(0, 500)}... (Long version with bullets)\n\n• Point 1\n• Point 2`,
         action_hint: undefined,
         model_used: 'mock',
         cost_estimate: 0

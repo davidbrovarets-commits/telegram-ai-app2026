@@ -13,7 +13,7 @@ interface NewsViewProps {
     city?: string;
 }
 
-export const NewsView = ({ onNewsClick, land, city }: NewsViewProps) => {
+export const NewsView = ({ land, city }: Omit<NewsViewProps, 'onNewsClick'>) => {
     const [selectedNews, setSelectedNews] = useState<News | null>(null);
     const {
         visibleFeed,

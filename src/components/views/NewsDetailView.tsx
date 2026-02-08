@@ -36,7 +36,7 @@ export const NewsDetailView: React.FC<NewsDetailViewProps> = ({ item, onBack }) 
             {/* Header / Nav */}
             <div className="news-detail-header">
                 <button onClick={onBack} className="back-button">
-                    ← Tagasi
+                    ← Назад
                 </button>
                 <div className="header-title">{displayTitle}</div>
             </div>
@@ -61,7 +61,7 @@ export const NewsDetailView: React.FC<NewsDetailViewProps> = ({ item, onBack }) 
 
                     {/* Source Link */}
                     <div className="detail-source-line">
-                        Allikas: <a href={item.link} target="_blank" rel="noopener noreferrer">{hostname}</a>
+                        Джерело: <a href={item.link} target="_blank" rel="noopener noreferrer">{hostname}</a>
                     </div>
                 </div>
 
@@ -71,7 +71,7 @@ export const NewsDetailView: React.FC<NewsDetailViewProps> = ({ item, onBack }) 
                         className="read-more-button"
                         onClick={() => window.open(item.link, '_blank')}
                     >
-                        Loe edasi algallikast
+                        Читати в джерелі
                     </button>
                 </div>
             </div>

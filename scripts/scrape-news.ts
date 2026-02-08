@@ -21,6 +21,7 @@ import { passesFilter } from './agents/filter';
 import { classify } from './agents/classifier';
 import { findDuplicate } from './agents/dedup';
 import { summarizeAndTranslate, summarizeAndTranslateMock } from './agents/summarizer';
+import { generateEmbedding } from './agents/vectorizer';
 import { sendAlert } from './utils/telegram-notifier';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
@@ -174,16 +175,13 @@ async function scrape() {
                     console.log(`   ⚠️ Translation incomplete/failed. Siking insert to enforce Ukrainian compliance.`);
                     console.log(`      Res: ${JSON.stringify(summary).substring(0, 100)}...`);
                     stats.errors++;
-                    continue; // SKIP: Do not allow untranslated content
+                    continue;
                 }
 
-                // Parse Headline and Body from UK Summary
-                const [ukHeadline, ...ukBodyParts] = summary.uk_summary.split('\n\n');
-                const ukBody = ukBodyParts.join('\n\n') || summary.uk_summary; // Fallback if no split
-
-                // --- 5. Generate Embedding (Vector Search) ---
+                const ukHeadline = summary.uk_summary;
+                const ukBody = summary.uk_content;
                 let embedding: number[] | null = null;
-                const textToEmbed = `${item.title}\n${summary.uk_summary}`;
+                const textToEmbed = `${item.title}\n${summary.uk_summary}\n${summary.uk_content}`;
 
                 try {
                     embedding = await generateEmbedding(textToEmbed);
@@ -214,10 +212,22 @@ async function scrape() {
                     // Basic fields - OVERWRITTEN WITH UKRAINIAN
                     source: source.source_name,
                     source_id: source.source_id,
-                    title: ukHeadline || summary.uk_summary, // Enforce UK Headline
-                    content: ukBody, // Enforce UK Body
-                    link: item.link,
-                    image_url: 'https://placehold.co/600x400/007AFF/ffffff?text=News',
+                    title: summary.uk_summary, // Fallback if no explicit title field, but summarizer puts headline in summary text? No, now summary is just teaser. 
+                    // WAIT: summarizer.ts prompt says "uk_summary: Kurzer Teaser". 
+                    // Does it imply Title is separate? No, "uk_summary" is the teaser.
+                    // But DB 'title' field needs a Title.
+                    // Old logic split uk_summary into headline/body.
+                    // New Prompt doesn't explicitly ask for Title field in JSON?
+                    // "FORMAT for uk_summary: ... Muss ein ganzer Satz sein..." -> This is a TEASER.
+                    // WHERE IS THE TITLE?
+                    // The old prompt asked: "Erste Zeile: Eine kurze, aussagekräftige Überschrift... Dann Text".
+                    // The NEW prompt removes that.
+                    // Result: We are missing a Title field!
+                    // I must fix the prompt to ask for uk_title as well, OR use uk_summary as content?
+                    // User Request: "1. Title (Max 10 words)... 4. Short Summary (Max 30 words)".
+                    // The Title is rendered separately.
+                    // If DB 'title' field gets the 30-word summary, it's too long for a title.
+                    // I MUST ADD 'uk_title' to summarizer.ts as well.
                     region: source.geo.land || 'all',
 
                     // L6 Fields

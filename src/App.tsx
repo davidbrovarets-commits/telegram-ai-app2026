@@ -30,6 +30,7 @@ import {
 import { NetSimPanel } from "./dev/NetSimPanel";
 
 function App() {
+
   const {
     session,
     userData,
@@ -267,8 +268,6 @@ function App() {
 
           {activeTab === "news" && (
             <NewsView
-              news={news}
-              onNewsClick={(item) => setSelectedTask(item)}
               land={userData.land}
               city={userData.city}
             />

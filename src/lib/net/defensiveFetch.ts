@@ -50,7 +50,7 @@ export async function defensiveFetch<T>(opts: FetchOptions): Promise<{ data?: T;
     }
 
     // Create the promise
-    const promise = (async () => {
+    const promise = (async (): Promise<{ data?: T; error?: FetchError }> => {
         let attempt = 0;
 
         while (attempt < maxAttempts) {
@@ -84,12 +84,12 @@ export async function defensiveFetch<T>(opts: FetchOptions): Promise<{ data?: T;
                 // Classify Error
                 let kind: FetchErrorKind = 'UNKNOWN';
 
-                if (msg === 'TIMEOUT') kind = 'TIMEOUT';
-                else if (status === 401 || status === 403 || msg.includes('Auth')) kind = 'AUTH_REQUIRED';
-                else if (status === 404) kind = 'NOT_FOUND';
-                else if ([400, 422].includes(status)) kind = 'BAD_REQUEST';
-                else if ([408, 429, 500, 502, 503, 504].includes(status) || msg.includes('Network') || msg.includes('fetch') || msg.includes('offline')) kind = 'RETRYABLE';
-                else kind = 'UNKNOWN'; // Treat unknown as retryable? No, usually fatal logic error.
+                if (msg === 'TIMEOUT') kind = 'TIMEOUT' as FetchErrorKind;
+                else if (status === 401 || status === 403 || msg.includes('Auth')) kind = 'AUTH_REQUIRED' as FetchErrorKind;
+                else if (status === 404) kind = 'NOT_FOUND' as FetchErrorKind;
+                else if ([400, 422].includes(status)) kind = 'BAD_REQUEST' as FetchErrorKind;
+                else if ([408, 429, 500, 502, 503, 504].includes(status) || msg.includes('Network') || msg.includes('fetch') || msg.includes('offline')) kind = 'RETRYABLE' as FetchErrorKind;
+                else kind = 'UNKNOWN' as FetchErrorKind; // Treat unknown as retryable? No, usually fatal logic error.
 
                 console.warn(`[net] fail`, { key, attempt, kind, status });
 
@@ -118,8 +118,9 @@ export async function defensiveFetch<T>(opts: FetchOptions): Promise<{ data?: T;
                     continue;
                 }
 
-                // Unknown error
-                return { error: { kind: 'UNKNOWN' as FetchErrorKind, message: msg } };
+                // Unknown error (fallback)
+                const unknownError: FetchError = { kind: 'UNKNOWN', message: msg };
+                return { error: unknownError };
             }
         }
         return { error: { kind: 'UNKNOWN' as FetchErrorKind, message: 'Loop finished unexpectedly' } };

@@ -12,7 +12,10 @@
     "scrape-news": "tsx scripts/scrape-news.ts",
     "test:city": "tsx scripts/tests/city-feed.test.ts",
     "test:analytics": "tsx scripts/tests/push-analytics.test.ts",
-    "test": "vitest run"
+    "test": "vitest run",
+    "preflight": "tsx scripts/preflight.ts",
+    "preflight:lint": "PREFLIGHT_LINT=1 tsx scripts/preflight.ts",
+    "ai:diff-review": "tsx scripts/vertex_diff_review.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.72.1",

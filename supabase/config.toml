@@ -1,0 +1,13 @@
+# Supabase Project Configuration
+project_id = "wbajyysqvkkdqsugupyj"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "auth"]
+extra_search_path = ["public", "extensions"] // Optional: facilitates extension usage
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15

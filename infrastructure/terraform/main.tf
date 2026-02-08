@@ -1,4 +1,8 @@
 terraform {
+  backend "gcs" {
+    bucket  = "claude-vertex-prod-tf-state"
+    prefix  = "terraform/state"
+  }
   required_providers {
     google = {
       source  = "hashicorp/google"

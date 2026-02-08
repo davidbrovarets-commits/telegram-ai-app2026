@@ -9,11 +9,22 @@ on:
       - '.github/workflows/infrastructure.yml'
   workflow_dispatch:
 
+concurrency:
+  group: deploy-firebase-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Pre-flight Check
+        run: npx tsx scripts/ci-preflight.ts --scope=firebase
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
 
       - name: Install Dependencies
         run: npm ci

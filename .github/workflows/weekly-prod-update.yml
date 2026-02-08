@@ -6,6 +6,10 @@ on:
     - cron: '0 7 * * 1'
   workflow_dispatch: # Allow manual trigger
 
+concurrency:
+  group: weekly-prod-update-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   update-banner-and-deploy:
     runs-on: ubuntu-latest

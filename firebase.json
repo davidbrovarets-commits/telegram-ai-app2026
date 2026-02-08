@@ -1,7 +1,4 @@
 {
-    "functions": {
-        "source": "functions/generate-banner"
-    },
     "hosting": {
         "public": "dist",
         "ignore": [

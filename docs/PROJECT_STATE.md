@@ -31,3 +31,12 @@ Proceed блокируется при любой ошибке.
 - On failure: sets `image_status='failed'`.
 
 **Notes:** This is separate from hourly ingestion (`news-orchestrator.yml`) and hourly maintenance (`auto-healer.yml`).
+
+---
+
+## Infrastructure: Unified Service Account (Variant B) (2026-02-08)
+
+**What:** Unification of Google Cloud Service Account for both Firebase Hosting and Vertex AI.
+**Change:** `GITHUB_SECRETS.GOOGLE_CREDENTIALS` now contains the JSON key for `github-deployer@claude-vertex-prod...` which has both `Firebase Hosting Admin` and `Vertex AI User` roles.
+**Impact:** `deploy.yml` (Firebase) and `news-images.yml` (Vertex) now use the same secret.
+**Reason:** Fixes deployment failures caused by secret rotation/mismatch and simplifies key management.

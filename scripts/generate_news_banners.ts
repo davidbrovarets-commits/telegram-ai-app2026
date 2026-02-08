@@ -204,11 +204,10 @@ async function processItem(item: NewsItemImageState) {
         console.log('--- PROMPT END ---');
         console.log(`[Job] Config: Batch=${BATCH_SIZE}, Attempts=${item.image_generation_attempts}, Ref=${!!refImage ? 'Yes' : 'No'}`);
 
-        // DRY RUN CHECK (PATCH 2)
-        if (process.env.NEWS_IMAGES_DRY_RUN_PROMPT === 'true') {
-            console.log('[DryRun] Skipping Imagen call. Releasing item back to placeholder.');
-            // Release lock so it can be picked up again later
-            await supabase.from('news').update({ image_status: 'placeholder' }).eq('id', item.id);
+        // DRY RUN CHECK (PATCH 2.1 - Robust)
+        if (IS_DRY_RUN) {
+            console.log('[DryRun] Skipping Imagen call.');
+            await releaseImageLock(supabase, item.id, 'dry-run');
             return;
         }
 

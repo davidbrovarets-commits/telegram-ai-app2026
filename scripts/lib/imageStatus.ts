@@ -125,3 +125,27 @@ export async function markImageFailed(
         console.error(`Failed to mark image failed for ID ${id}:`, error);
     }
 }
+
+/**
+ * Releases the lock on an image item, setting it back to 'placeholder'.
+ * Useful for dry-runs or graceful cancellations.
+ */
+export async function releaseImageLock(
+    supabase: ReturnType<typeof createClient>,
+    id: number,
+    reason: string = 'lock-release'
+): Promise<void> {
+    const { error } = await supabase
+        .from('news')
+        .update({
+            image_status: 'placeholder',
+            // Do NOT increment attempts here, as we are just yielding the lock
+        })
+        .eq('id', id);
+
+    if (error) {
+        console.error(`[ImageStatus] Failed to release lock for ${id}:`, error);
+        throw error;
+    }
+    console.log(`[ImageStatus] Released lock for ${id} (Reason: ${reason})`);
+}

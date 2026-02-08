@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { NewsDetailView } from './NewsDetailView';
 import { useNews } from '../../hooks/useNews';
 import type { News } from '../../types';
 import { supabase } from '../../supabaseClient'; // Direct fetch for item content
@@ -14,10 +13,7 @@ interface NewsViewProps {
 }
 
 export const NewsView = ({ onNewsClick, land, city }: NewsViewProps) => {
-    const [selectedNews, setSelectedNews] = useState<News | null>(null);
-    const {
-        visibleFeed,
-        handleSwipe } = useNews({ land, city });
+    const { visibleFeed, handleSwipe } = useNews({ land, city });
     const [newsItems, setNewsItems] = useState<Record<number, News>>({});
     const [showArchive, setShowArchive] = useState(false);
 
@@ -67,24 +63,12 @@ export const NewsView = ({ onNewsClick, land, city }: NewsViewProps) => {
         import('../../services/news/SignalProcessor').then(({ SignalProcessor }) => {
             SignalProcessor.trackOpen(item);
         });
-        setSelectedNews(item); // Set selected news to display detail view
-        // onNewsClick({ ...item, type: 'news' } as any); // This prop is for parent component, not needed if detail is shown here
+        onNewsClick({ ...item, type: 'news' } as any);
     }
 
-    if (showArchive) {
-        return <ArchiveView onBack={() => setShowArchive(false)} />;
-    }
-
-    if (selectedNews) {
-        return (
-            <NewsDetailView
-                item={selectedNews}
-                onBack={() => setSelectedNews(null)}
-            />
-        );
-    }
-
-    return (
+    return showArchive ? (
+        <ArchiveView onBack={() => setShowArchive(false)} />
+    ) : (
         <div className="news-view" style={{ maxWidth: '600px', margin: '0 auto', paddingBottom: '40px' }}>
             {/* Header */}
             <div className="task-card" style={{
@@ -113,10 +97,7 @@ export const NewsView = ({ onNewsClick, land, city }: NewsViewProps) => {
                         <NewsCard
                             key={item.id}
                             item={item}
-                            onPress={() => {
-                                handleCardClick(item);
-                                setSelectedNews(item);
-                            }}
+                            onPress={() => handleCardClick(item)}
                             onDelete={() => handleSwipe(item.id, 'RIGHT')} // Right = Delete
                             onArchive={() => handleSwipe(item.id, 'LEFT')} // Left = Archive
                             deleteLabel="Видалити"

@@ -89,7 +89,6 @@ interface ProcessedItem {
         actions: string[]; // UI badges/actions: ['deadline','policy_change','appointment','documents',...]
         de_summary?: string;
         uk_summary?: string;
-        uk_content?: string;
         dedupe_group?: string;
     };
     routing: {
@@ -442,7 +441,6 @@ async function extractPublishedAtFromHtml(url: string): Promise<{ iso: string; s
 type AIEnrichResult = {
     de_summary: string;
     uk_summary: string;
-    uk_content: string; // Long summary (250-290 words)
     uk_title: string;
     action_hint: string;
     actions: string[];
@@ -504,7 +502,6 @@ Task:
 2. Generate a JSON response with the following fields:
    - de_summary: A 1-sentence summary in German.
    - uk_summary: A professional summary in UKRAINIAN language only. NO German words.
-   - uk_content: A detailed summary in UKRAINIAN. Length must be strictly between 250 and 290 words. Use logical paragraphs and bullet points (•) where appropriate. Tone: Objective, journalistic.
    - uk_title: A short, catchy title in UKRAINIAN language only.
    - action_hint: A short warning in UKRAINIAN if there is a deadline or action required (e.g. "Термін до 15.03").
    - actions: Array of tags ["deadline", "money", "documents", "event", "important"] (max 3).
@@ -527,7 +524,6 @@ INPUT TEXT: ${text}
         return {
             de_summary: parsed.de_summary || '',
             uk_summary: parsed.uk_summary || '',
-            uk_content: parsed.uk_content || parsed.uk_summary || '', // Fallback to short summary if missing
             uk_title: parsed.uk_title || '',
             action_hint: parsed.action_hint || '',
             actions: Array.isArray(parsed.actions) ? parsed.actions : [],
@@ -544,7 +540,6 @@ function fallbackMock(text: string, title: string): AIEnrichResult {
     return {
         de_summary: fallbackDe,
         uk_summary: `[UA Mock] ${fallbackDe}`,
-        uk_content: `[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: ${fallbackDe}`,
         uk_title: `[UA Mock] ${title}`,
         action_hint: '',
         actions: [],
@@ -599,7 +594,6 @@ async function aiEnrichOne(item: ProcessedItem): Promise<AIEnrichResult> {
     return {
         de_summary: fallbackDe,
         uk_summary: `[UA Fail] ${fallbackDe}`,
-        uk_content: `[UA Fail] ${fallbackDe}`,
         uk_title: title,
         action_hint: '',
         actions: [],
@@ -908,7 +902,6 @@ async function runAIEnrich(items: ProcessedItem[]): Promise<ProcessedItem[]> {
             const result = await aiEnrichOne(item);
             item.classification.de_summary = result.de_summary;
             item.classification.uk_summary = result.uk_summary;
-            item.classification.uk_content = result.uk_content;
             item.classification.actions = Array.isArray(result.actions) ? result.actions.slice(0, 3) : [];
             item.meta = item.meta || {};
             if (result.reasonTag) item.meta.reasonTag = result.reasonTag;
@@ -962,7 +955,7 @@ async function runInsertion(items: ProcessedItem[]) {
             // UI Title is usually the translated one
             const uiTitle = item.raw.title; // already overwritten by AI
             // Content logic: we prefer AI summary, fall back to raw
-            const content = item.classification.uk_content || item.classification.uk_summary || '';
+            const content = item.classification.uk_summary;
 
             // Generate deterministic priority
             // Generate ID or let DB handle it? We usually insert without ID.

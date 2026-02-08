@@ -25,7 +25,8 @@ Proceed блокируется при любой ошибке.
 **What:** Automated generation of images for individual news items via `scripts/generate_news_banners.ts` (Wikipedia reference first, Vertex AI Imagen 4 fallback).
 **How:** GitHub Actions workflow `.github/workflows/news-images.yml` runs4.  **Schedule:** 15 minutes (Baseline).
 **Patch 0 Hotfix (2026-02-09):** Removed unused imports, switched to native fetch, hardened `NEWS_IMAGES_BATCH_SIZE` parsing, and removed hardcoded Windows gcloud path.
-**Next:** Patch 1 (Testing Cadence).d manually).
+**Patch 1 (2026-02-09):** Schedule updated to `*/4 * * * *` (4 min) for rapid testing.
+**Next:** Patch 2 (Observability).d manually).
 **Inputs / Outputs (DB):**
 - Selects items with `image_status in ('placeholder','failed')` (and < attempt limit).
 - Sets `image_status='generating'` while processing.

@@ -26,7 +26,8 @@ Proceed блокируется при любой ошибке.
 **How:** GitHub Actions workflow `.github/workflows/news-images.yml` runs4.  **Schedule:** 15 minutes (Baseline).
 **Patch 0 Hotfix (2026-02-09):** Removed unused imports, switched to native fetch, hardened `NEWS_IMAGES_BATCH_SIZE` parsing, and removed hardcoded Windows gcloud path.
 **Patch 1 (2026-02-09):** Schedule updated to `*/4 * * * *` (4 min) for rapid testing.
-**Next:** Patch 2 (Observability).d manually).
+**Patch 2 (2026-02-09):** Added Observability logging (prompts printed to console) and `NEWS_IMAGES_DRY_RUN_PROMPT=true` mode.
+**Next:** Patch 3 (Prompt Contract).d manually).
 **Inputs / Outputs (DB):**
 - Selects items with `image_status in ('placeholder','failed')` (and < attempt limit).
 - Sets `image_status='generating'` while processing.

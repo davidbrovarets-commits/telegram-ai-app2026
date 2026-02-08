@@ -195,8 +195,22 @@ async function processItem(item: NewsItemImageState) {
         const shortContext = contextText.substring(0, 150).replace(/\n/g, ' ');
         const location = fullItem.city || fullItem.land || '';
 
-        const prompt = `A documentary photo of ${fullItem.title}. ${location ? `Location: ${location}.` : ''} ${shortContext}. Realistic, neutral, high quality.`;
-        const strictPrompt = `${prompt} No text. No logos. No watermarks. Not an illustration. Not a cartoon. No propaganda. No stereotypes. No distorted faces. No uncanny people.`;
+        const simplePrompt = `A documentary photo of ${fullItem.title}. ${location ? `Location: ${location}.` : ''} ${shortContext}. Realistic, neutral, high quality.`;
+        const strictPrompt = `${simplePrompt} No text. No logos. No watermarks. Not an illustration. Not a cartoon. No propaganda. No stereotypes. No distorted faces. No uncanny people.`;
+
+        // OBSERVABILITY LOGGING (PATCH 2)
+        console.log('--- PROMPT START ---');
+        console.log(strictPrompt);
+        console.log('--- PROMPT END ---');
+        console.log(`[Job] Config: Batch=${BATCH_SIZE}, Attempts=${item.image_generation_attempts}, Ref=${!!refImage ? 'Yes' : 'No'}`);
+
+        // DRY RUN CHECK (PATCH 2)
+        if (process.env.NEWS_IMAGES_DRY_RUN_PROMPT === 'true') {
+            console.log('[DryRun] Skipping Imagen call. Releasing item back to placeholder.');
+            // Release lock so it can be picked up again later
+            await supabase.from('news').update({ image_status: 'placeholder' }).eq('id', item.id);
+            return;
+        }
 
         const b64 = await generateImagen4(strictPrompt);
         if (b64) {

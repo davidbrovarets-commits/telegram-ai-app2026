@@ -3,7 +3,7 @@ import { supabase } from './supabaseClient';
 import { claimNewsForGeneration, markImageGenerated, markImageFailed, NewsItemImageState } from './lib/imageStatus';
 import * as fs from 'fs';
 import * as path from 'path';
-import fetch from 'node-fetch'; // Standard fetch or node-fetch? tsx uses native fetch usually in Node 18+. We'll use globalThis.fetch if available.
+import fetch from 'node-fetch';
 
 // Environment check for Google Auth
 import { GoogleAuth } from 'google-auth-library';
@@ -12,10 +12,13 @@ import { execSync } from 'child_process';
 const PROJECT_ID = process.env.GOOGLE_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT || 'claude-vertex-prod';
 const LOCATION = process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
 const MODEL_ID = 'imagen-4.0-generate-001';
-const BUCKET_NAME = process.env.SUPABASE_NEWS_BUCKET || 'images'; // FIX #6: Default to 'images', allow override
+const BUCKET_NAME = process.env.SUPABASE_NEWS_BUCKET || 'images';
+
+// Configurable Overrides (PATCH 0: Batch Size Control)
+const BATCH_SIZE = parseInt(process.env.NEWS_IMAGES_BATCH_SIZE || '5', 10);
 
 /**
- * 1. Reference Image Logic (Wikipedia)
+ * 1. Reference Image Logic (Wikipedia) - ORIGINAL SIMPLE LOGIC
  */
 async function findReferenceImage(query: string): Promise<{ url: string; license: string; attribution: string } | null> {
     try {
@@ -39,8 +42,6 @@ async function findReferenceImage(query: string): Promise<{ url: string; license
         const page = pages[pageId];
 
         if (page.thumbnail?.source) {
-            // FIX #9: Reference Quality Gate (Size check happens in uploadToStorage or here? Let's do it here if possible, but we need to download header to know size.
-            // Better to do it in download step. We pass it through.
             return {
                 url: page.thumbnail.source,
                 license: 'Wikimedia',
@@ -54,7 +55,7 @@ async function findReferenceImage(query: string): Promise<{ url: string; license
 }
 
 /**
- * 2. Imagen 4 Logic
+ * 2. Imagen 4 Logic - ORIGINAL SIMPLE LOGIC
  */
 async function generateImagen4(prompt: string): Promise<string | null> {
     try {
@@ -93,7 +94,7 @@ async function generateImagen4(prompt: string): Promise<string | null> {
                 instances: [{ prompt: prompt }],
                 parameters: {
                     sampleCount: 1,
-                    aspectRatio: "16:9",
+                    aspectRatio: "16:9", // Keep original 16:9 for Patch 0
                     outputOptions: { mimeType: "image/png" }
                 }
             })
@@ -125,7 +126,7 @@ async function uploadToStorage(base64OrUrl: string, isUrl: boolean, itemId: numb
             const res = await fetch(base64OrUrl);
             if (!res.ok) throw new Error('Failed to download reference image');
 
-            // FIX #9: Quality Gate - Size Check
+            // Quality Gate - Size Check
             const arrayBuf = await res.arrayBuffer();
             buffer = Buffer.from(arrayBuf);
 
@@ -147,10 +148,7 @@ async function uploadToStorage(base64OrUrl: string, isUrl: boolean, itemId: numb
 
         if (error) throw error;
 
-        // Get Public URL
-        // FIX LINT: Rename destructured 'data' to 'publicUrlData' to avoid conflict
         const { data: publicUrlData } = supabase.storage.from(BUCKET_NAME).getPublicUrl(filePath);
-
         return publicUrlData.publicUrl;
 
     } catch (e) {
@@ -166,7 +164,7 @@ async function processItem(item: NewsItemImageState) {
     console.log(`[Job] Processing item ${item.id}...`);
 
     try {
-        // A. Get details (title, description) - FIX #7: Fields
+        // A. Get details
         const { data: fullItem, error } = await supabase
             .from('news')
             .select('title, content, uk_summary, city, land, source, published_at, link')
@@ -176,9 +174,7 @@ async function processItem(item: NewsItemImageState) {
         if (error || !fullItem) throw new Error('Item data not found');
 
         // B. Try Reference (Wikipedia)
-        // Heuristic: Use City + Keywords or just Title entities.
-        // MVP: Search using Title (first 5 words)
-        const searchQuery = fullItem.title.split(' ').slice(0, 5).join(' '); // Simple
+        const searchQuery = fullItem.title.split(' ').slice(0, 5).join(' ');
         const refImage = await findReferenceImage(searchQuery);
 
         if (refImage) {
@@ -196,26 +192,13 @@ async function processItem(item: NewsItemImageState) {
             }
         }
 
-        // C. Fallback: Imagen 4
+        // C. Fallback: Imagen 4 (Simple Original Prompt)
         console.log(`[Job] Generating Imagen 4 for ${item.id}`);
-        // FIX #8: Prompt Policy
         const contextText = fullItem.uk_summary || fullItem.content || '';
         const shortContext = contextText.substring(0, 150).replace(/\n/g, ' ');
         const location = fullItem.city || fullItem.land || '';
 
         const prompt = `A documentary photo of ${fullItem.title}. ${location ? `Location: ${location}.` : ''} ${shortContext}. Realistic, neutral, high quality.`;
-
-        // Negative prompt is usually passed in 'instances' parameters or separate field depending on model version. 
-        // Imagen 4 on Vertex usually takes it in the prompt text or separate field?
-        // Checking API: imagen-4.0-generate-001 often supports 'safetyAttributes' or just prompt engineering. 
-        // For MVP we append negative requirements to prompt if model doesn't support explicit negative_prompt in standard predict call easily without knowing exact schema.
-        // BUT wait, standard Vertex Imagen payload has 'negativePrompt' ??? 
-        // Let's stick to the Correction Pack instruction: "Prompt MUST start with... Add global negatives ALWAYS".
-        // Use prompt augmentation for safety if API schema is uncertain, OR try 'negativePrompt' parameter if confident.
-        // I will append it to be safe as "Exclude: ..." which Imagen understands well, OR just text description.
-        // Correction Pack: "Add global negatives ALWAYS: no text, no logos..."
-        // I will add it as text description at the end.
-
         const strictPrompt = `${prompt} No text. No logos. No watermarks. Not an illustration. Not a cartoon. No propaganda. No stereotypes. No distorted faces. No uncanny people.`;
 
         const b64 = await generateImagen4(strictPrompt);
@@ -244,7 +227,7 @@ async function processItem(item: NewsItemImageState) {
  */
 async function run() {
     console.log('=== Starting News Image Pipeline ===');
-    const items = await claimNewsForGeneration(supabase, 5); // Process 5 at a time
+    const items = await claimNewsForGeneration(supabase, BATCH_SIZE); // PATCH 0: Use Env Var
     console.log(`[Job] Claimed ${items.length} items`);
 
     for (const item of items) {
@@ -254,4 +237,3 @@ async function run() {
 }
 
 run().catch(console.error);
-

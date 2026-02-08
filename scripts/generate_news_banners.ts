@@ -1,6 +1,6 @@
 
 import { supabase } from './supabaseClient';
-import { claimNewsForGeneration, markImageGenerated, markImageFailed, NewsItemImageState } from './lib/imageStatus';
+import { claimNewsForGeneration, markImageGenerated, markImageFailed, releaseImageLock, NewsItemImageState } from './lib/imageStatus';
 
 // Environment check for Google Auth
 import { GoogleAuth } from 'google-auth-library';
@@ -11,9 +11,16 @@ const LOCATION = process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
 const MODEL_ID = 'imagen-4.0-generate-001';
 const BUCKET_NAME = process.env.SUPABASE_NEWS_BUCKET || 'images';
 
-// Configurable Overrides (PATCH 0: Batch Size Control)
-const RAW_BATCH_SIZE = parseInt(process.env.NEWS_IMAGES_BATCH_SIZE || '5', 10);
-const BATCH_SIZE = isNaN(RAW_BATCH_SIZE) || RAW_BATCH_SIZE < 1 || RAW_BATCH_SIZE > 50 ? 5 : RAW_BATCH_SIZE;
+// Configurable Overrides (PATCH 2.1.1: Robust Parsing & Clamping)
+const DEFAULT_BATCH_SIZE = 5;
+const RAW_BATCH_SIZE_STR = (process.env.NEWS_IMAGES_BATCH_SIZE || '').trim();
+const RAW_BATCH_SIZE = Number.parseInt(RAW_BATCH_SIZE_STR || String(DEFAULT_BATCH_SIZE), 10);
+const BATCH_SIZE_UNCLAMPED = Number.isFinite(RAW_BATCH_SIZE) ? RAW_BATCH_SIZE : DEFAULT_BATCH_SIZE;
+const BATCH_SIZE = Math.min(50, Math.max(1, BATCH_SIZE_UNCLAMPED));
+
+// Robust Dry Run Parsing (PATCH 2.1.1)
+const DRY_RUN_RAW = (process.env.NEWS_IMAGES_DRY_RUN_PROMPT || '').trim().toLowerCase();
+const IS_DRY_RUN = ['true', '1', 'yes', 'on'].includes(DRY_RUN_RAW);
 
 /**
  * 1. Reference Image Logic (Wikipedia) - ORIGINAL SIMPLE LOGIC
@@ -237,6 +244,7 @@ async function processItem(item: NewsItemImageState) {
  */
 async function run() {
     console.log('=== Starting News Image Pipeline ===');
+    console.log(`[Job] DryRun = ${IS_DRY_RUN ? 'ON' : 'OFF'} (raw="${process.env.NEWS_IMAGES_DRY_RUN_PROMPT || ''}")`);
     console.log(`[Job] Batch size = ${BATCH_SIZE} (Effective)`);
     const items = await claimNewsForGeneration(supabase, BATCH_SIZE);
     console.log(`[Job] Claimed ${items.length} items`);

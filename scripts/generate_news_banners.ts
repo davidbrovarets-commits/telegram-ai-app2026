@@ -1,9 +1,6 @@
 
 import { supabase } from './supabaseClient';
 import { claimNewsForGeneration, markImageGenerated, markImageFailed, NewsItemImageState } from './lib/imageStatus';
-import * as fs from 'fs';
-import * as path from 'path';
-import fetch from 'node-fetch';
 
 // Environment check for Google Auth
 import { GoogleAuth } from 'google-auth-library';
@@ -15,7 +12,8 @@ const MODEL_ID = 'imagen-4.0-generate-001';
 const BUCKET_NAME = process.env.SUPABASE_NEWS_BUCKET || 'images';
 
 // Configurable Overrides (PATCH 0: Batch Size Control)
-const BATCH_SIZE = parseInt(process.env.NEWS_IMAGES_BATCH_SIZE || '5', 10);
+const RAW_BATCH_SIZE = parseInt(process.env.NEWS_IMAGES_BATCH_SIZE || '5', 10);
+const BATCH_SIZE = isNaN(RAW_BATCH_SIZE) || RAW_BATCH_SIZE < 1 || RAW_BATCH_SIZE > 50 ? 5 : RAW_BATCH_SIZE;
 
 /**
  * 1. Reference Image Logic (Wikipedia) - ORIGINAL SIMPLE LOGIC
@@ -64,9 +62,8 @@ async function generateImagen4(prompt: string): Promise<string | null> {
         // Auth Fallback: gcloud CLI
         if (!accessToken) {
             try {
-                const gcloudCmd = process.platform === 'win32'
-                    ? 'call "C:\\Users\\David\\AppData\\Local\\Google\\Cloud SDK\\google-cloud-sdk\\bin\\gcloud.cmd" auth print-access-token'
-                    : 'gcloud auth print-access-token';
+                // Hotfix: Use portable command, relying on PATH
+                const gcloudCmd = 'gcloud auth print-access-token';
                 accessToken = execSync(gcloudCmd).toString().trim();
             } catch (e) {
                 // Ignore silent fail, try GoogleAuth
@@ -227,7 +224,8 @@ async function processItem(item: NewsItemImageState) {
  */
 async function run() {
     console.log('=== Starting News Image Pipeline ===');
-    const items = await claimNewsForGeneration(supabase, BATCH_SIZE); // PATCH 0: Use Env Var
+    console.log(`[Job] Batch size = ${BATCH_SIZE} (Effective)`);
+    const items = await claimNewsForGeneration(supabase, BATCH_SIZE);
     console.log(`[Job] Claimed ${items.length} items`);
 
     for (const item of items) {

@@ -1,6 +1,7 @@
 
 import { supabase } from './supabaseClient';
 import { claimNewsForGeneration, markImageGenerated, markImageFailed, releaseImageLock, NewsItemImageState } from './lib/imageStatus';
+import { VertexAI, HarmCategory, HarmBlockThreshold } from '@google-cloud/vertexai';
 
 // Environment check for Google Auth
 import { GoogleAuth } from 'google-auth-library';
@@ -22,8 +23,95 @@ const BATCH_SIZE = Math.min(50, Math.max(1, BATCH_SIZE_UNCLAMPED));
 const DRY_RUN_RAW = (process.env.NEWS_IMAGES_DRY_RUN_PROMPT || '').trim().toLowerCase();
 const IS_DRY_RUN = ['true', '1', 'yes', 'on'].includes(DRY_RUN_RAW);
 
+// --- PATCH 3: CONSTANTS & VALIDATION ---
+const MANDATORY_REALISM_TOKENS = [
+    'film grain', 'chromatic aberration', 'dust particles', 'subtle motion blur'
+];
+const MANDATORY_LIGHTING_TOKENS = [
+    'cinematic lighting', 'rim light', 'chiaroscuro', 'natural diffused light'
+];
+const NEGATIVE_PROMPTS = "Blurry. Low quality. Distorted text. Watermark. Oversaturated. Anatomically incorrect. No text. No logos. Not an illustration. No propaganda. No distorted faces. No uncanny people.";
+
 /**
- * 1. Reference Image Logic (Wikipedia) - ORIGINAL SIMPLE LOGIC
+ * 0. Gemini Flash Prompt Builder (PATCH 3: Golden Formula)
+ */
+async function generatePromptWithGemini(context: string, title: string, location: string): Promise<string> {
+    try {
+        const vertexAI = new VertexAI({ project: PROJECT_ID, location: LOCATION });
+        const model = vertexAI.getGenerativeModel({ model: 'gemini-2.0-flash-001' });
+
+        const systemInstruction = `You are an expert Art Director for a serious News Application.
+Your task is to describe a compelling, realistic, documentary-style photograph based on a news story.
+
+CONTRACT:
+1. OUTPUT: Single paragraph (100-200 words).
+2. FORMULA (Golden Rule) - You MUST follow this order:
+   [Subject] -> [Context] -> [Lighting] -> [Style] -> [Technical Parameters]
+
+DETAILS:
+- Subject: Representative, symbolic (e.g. microphones, buildings, silhouettes). IF REAL PERSON IN TITLE: Do NOT depict them directly. Use symbols.
+- Context: Atmospheric setting (${location || 'relevant background'}).
+- Lighting: MUST include ONE of: ${MANDATORY_LIGHTING_TOKENS.join(', ')}.
+- Style: "Documentary photography".
+- Technical: "35mm lens" or "50mm lens", "f/2.8 aperture" or "f/8 aperture".
+- Realism: MUST include exactly 1-2 of these tokens: ${MANDATORY_REALISM_TOKENS.join(', ')}.
+
+SAFETY:
+- Illustrative documentary-style only.
+- NO text generation instructions.
+- NO reconstruction of crimes/accidents.
+- NO new facts. Structural rewrite only.`;
+
+        const userPrompt = `News Title: "${title}"
+News Content: "${context}"
+
+Describe the photo now.`;
+
+        const resp = await model.generateContent({
+            contents: [{ role: 'user', parts: [{ text: systemInstruction + '\n\n' + userPrompt }] }],
+            generationConfig: { maxOutputTokens: 300, temperature: 0.7 }
+        });
+
+        const text = resp.response.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!text) throw new Error('Empty response from Gemini Flash');
+
+        return text.trim();
+
+    } catch (e: any) {
+        console.warn('Gemini Flash prompt generation failed, falling back to simple template.', e.message);
+        // Fallback to simple template if Gemini fails
+        return `A documentary photo of ${title}. ${location ? `Location: ${location}.` : ''} Cinematic lighting. Documentary photography. 35mm lens. Film grain.`;
+    }
+}
+
+/**
+ * Validation Helper (PATCH 3)
+ */
+function validatePrompt(prompt: string): { valid: boolean; reason?: string } {
+    const p = prompt.toLowerCase();
+
+    // 1. Length Check (Loose)
+    const wordCount = prompt.split(/\s+/).length;
+    if (wordCount < 10) return { valid: false, reason: 'Too short (<10 words)' }; // Fallback might be short
+
+    // 2. Lighting Check
+    const hasLighting = MANDATORY_LIGHTING_TOKENS.some(t => p.includes(t));
+    if (!hasLighting) return { valid: false, reason: 'Missing mandatory Lighting token' };
+
+    // 3. Realism Check
+    const realismCount = MANDATORY_REALISM_TOKENS.filter(t => p.includes(t)).length;
+    if (realismCount === 0) return { valid: false, reason: 'Missing mandatory Realism token' };
+    if (realismCount > 3) return { valid: false, reason: 'Too many Realism tokens (>3)' };
+
+    // 4. Text Safety
+    if (p.includes('text saying') || p.includes('written on')) return { valid: false, reason: 'Contains unsafe text instructions' };
+
+    return { valid: true };
+}
+
+
+/**
+ * 1. Reference Image Logic (Wikipedia)
  */
 async function findReferenceImage(query: string): Promise<{ url: string; license: string; attribution: string } | null> {
     try {
@@ -60,7 +148,7 @@ async function findReferenceImage(query: string): Promise<{ url: string; license
 }
 
 /**
- * 2. Imagen 4 Logic - ORIGINAL SIMPLE LOGIC
+ * 2. Imagen 4 Logic
  */
 async function generateImagen4(prompt: string): Promise<string | null> {
     try {
@@ -161,6 +249,7 @@ async function uploadToStorage(base64OrUrl: string, isUrl: boolean, itemId: numb
     }
 }
 
+
 /**
  * MAIN: Process Single Item
  */
@@ -196,36 +285,48 @@ async function processItem(item: NewsItemImageState) {
             }
         }
 
-        // C. Fallback: Imagen 4 (Simple Original Prompt)
-        console.log(`[Job] Generating Imagen 4 for ${item.id}`);
+        // C. Fallback: Imagen 4 + Gemini Flash (PATCH 3)
+        console.log(`[Job] Generating Imagen 4 for ${item.id} (Prompting via Gemini)...`);
+
+        // Context Selection: uk_summary > content
         const contextText = fullItem.uk_summary || fullItem.content || '';
-        const shortContext = contextText.substring(0, 150).replace(/\n/g, ' ');
+        const contextSafe = contextText.substring(0, 3000);
         const location = fullItem.city || fullItem.land || '';
 
-        const simplePrompt = `A documentary photo of ${fullItem.title}. ${location ? `Location: ${location}.` : ''} ${shortContext}. Realistic, neutral, high quality.`;
-        const strictPrompt = `${simplePrompt} No text. No logos. No watermarks. Not an illustration. Not a cartoon. No propaganda. No stereotypes. No distorted faces. No uncanny people.`;
+        // 1. Build Prompt
+        let richPrompt = await generatePromptWithGemini(contextSafe, fullItem.title, location);
 
-        // OBSERVABILITY LOGGING (PATCH 2)
+        // 2. Validate
+        const val = validatePrompt(richPrompt);
+        if (!val.valid) {
+            console.warn(`[Prompt] Validation Failed: ${val.reason}. Falling back.`);
+            richPrompt = `A documentary photo of ${fullItem.title}. ${location}. Cinematic lighting. Documentary photography. 35mm lens. Film grain.`; // Safe fallback
+        }
+
+        // 3. Add Negatives
+        const finalPrompt = `${richPrompt} Exclude: ${NEGATIVE_PROMPTS}`;
+
+        // OBSERVABILITY LOGGING
         console.log('--- PROMPT START ---');
-        console.log(strictPrompt);
+        console.log(finalPrompt);
         console.log('--- PROMPT END ---');
         console.log(`[Job] Config: Batch=${BATCH_SIZE}, Attempts=${item.image_generation_attempts}, Ref=${!!refImage ? 'Yes' : 'No'}`);
 
-        // DRY RUN CHECK (PATCH 2.1 - Robust)
+        // DRY RUN CHECK
         if (IS_DRY_RUN) {
             console.log('[DryRun] Skipping Imagen call.');
             await releaseImageLock(supabase, item.id, 'dry-run');
             return;
         }
 
-        const b64 = await generateImagen4(strictPrompt);
+        const b64 = await generateImagen4(finalPrompt);
         if (b64) {
             const publicUrl = await uploadToStorage(b64, false, item.id);
             if (publicUrl) {
                 await markImageGenerated(supabase, item.id, {
                     image_url: publicUrl,
                     image_source_type: 'imagen',
-                    image_prompt: strictPrompt
+                    image_prompt: richPrompt // Store the rich narrative part
                 });
                 return;
             }
@@ -238,6 +339,7 @@ async function processItem(item: NewsItemImageState) {
         await markImageFailed(supabase, item.id, e.message, item.image_generation_attempts);
     }
 }
+
 
 /**
  * LOOP

@@ -29,7 +29,7 @@ export const NewsDetailView: React.FC<NewsDetailViewProps> = ({ item, onBack }) 
     }
 
     // 3. Image Logic
-    const imageUrl = item.image_status === 'generated' ? item.image_url : '/placeholder-image.svg';
+    const imageUrl = (item.image_url && item.image_status !== 'failed') ? item.image_url : '/placeholder-image.svg';
 
     return (
         <div className="news-detail-view">

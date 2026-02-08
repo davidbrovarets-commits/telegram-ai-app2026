@@ -313,3 +313,30 @@ This project is a Telegram AI-powered assistant and news orchestrator designed f
 - **Language**: TypeScript (Strict mode).
 - **Environment**: ESM, Node.js 20+.
 - **Security**: Service accounts for GCP, Supabase RLS, Environment variables for all secrets.
+
+---
+
+### Frontend Image Rendering Rule (Factual)
+
+As of 2026-02-08, the News UI renders images based on `image_url` presence rather than requiring `image_status='generated'`.
+
+- If `image_url` is non-empty and `image_status !== 'failed'`, the UI displays the image.
+- If `image_url` is empty OR `image_status='failed'`, the UI displays a placeholder.
+
+Rationale (MVP): backend image generation may be disconnected; `image_url` may still contain a usable scraped/default URL.
+
+---
+
+### Per-item News Images (Imagen 4) — Automation (Factual)
+
+As of 2026-02-08, per-item news images are generated automatically by GitHub Actions:
+- Workflow: `.github/workflows/news-images.yml` (every 15 minutes)
+- Script: `scripts/generate_news_banners.ts`
+- Strategy:
+  1) Try Wikipedia thumbnail as reference image.
+  2) If no reference found, generate with Vertex AI Imagen 4 using a prompt derived from (title + uk_summary + location) plus strict negative constraints (no text/logos/watermarks).
+- Persistence:
+  - Upload image to Supabase Storage and write the public URL into `news.image_url`.
+  - Update lifecycle fields: `image_status`, `image_prompt` (Imagen only), `image_source_type`.
+
+This automation is intentionally decoupled from hourly ingestion to avoid slowing down news collection.

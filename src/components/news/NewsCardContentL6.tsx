@@ -53,7 +53,7 @@ export function NewsCardContentL6({ item, onPress }: Props) {
                     position: 'relative',
                     overflow: 'hidden'
                 }}>
-                    {item.image_status === 'generated' && item.image_url ? (
+                    {item.image_url && item.image_status !== 'failed' ? (
                         <img
                             src={item.image_url}
                             alt=""

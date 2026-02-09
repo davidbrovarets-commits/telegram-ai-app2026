@@ -1,22 +1,21 @@
 name: Deploy Supabase Functions
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'supabase/functions/**'
-      - '.github/workflows/deploy-supabase.yml'
   workflow_dispatch:
     inputs:
+      environment:
+        description: 'GitHub Environment (optional). Set this if your secrets are scoped to an environment (e.g. "production").'
+        required: false
+        type: string
+        default: ''
       project_ref_override:
-        description: 'Optional: Supabase project ref override (subdomain in https://<REF>.supabase.co).'
+        description: 'Supabase Project Ref Override (subdomain only). Use if secrets are missing.'
         required: false
         type: string
       dry_run:
-        description: 'If true, do NOT deploy. Only verify access by listing functions.'
+        description: 'Dry Run: List functions instead of deploying. Safe for testing auth/config.'
         required: true
-        default: false
+        default: true
         type: boolean
 
 concurrency:
@@ -26,6 +25,7 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
 
     steps:
       - uses: actions/checkout@v4
@@ -40,36 +40,47 @@ jobs:
         with:
           version: latest
 
-      - name: Validate SUPABASE_PROJECT_REF
+      - name: Validate Configuration
         shell: bash
         env:
-          # Preferred keys
+          # Standard Keys
           REF_SECRET: ${{ secrets.SUPABASE_PROJECT_REF }}
           REF_VAR: ${{ vars.SUPABASE_PROJECT_REF }}
-          # Compatibility keys (in case the repo was configured differently)
+          # Compatibility Keys
           REF_SECRET_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
           REF_VAR_ID: ${{ vars.SUPABASE_PROJECT_ID }}
           REF_SECRET_REF: ${{ secrets.SUPABASE_PROJECT_REFERENCE }}
           REF_VAR_REF: ${{ vars.SUPABASE_PROJECT_REFERENCE }}
-          # Manual override
+          # Inputs
           REF_OVERRIDE: ${{ inputs.project_ref_override }}
+          ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
           set -euo pipefail
 
+          echo "=== Configuration Validation ==="
+
+          # 1. Check Access Token
+          if [ -z "$ACCESS_TOKEN" ]; then
+            echo "❌ CRITICAL: SUPABASE_ACCESS_TOKEN is missing."
+            echo "   Action: Add 'SUPABASE_ACCESS_TOKEN' to Secrets."
+            exit 1
+          else
+            echo "✅ SUPABASE_ACCESS_TOKEN found (masked)."
+          fi
+
+          # 2. Resolve Project Ref
+          REF=""
           SOURCE=""
 
-          # 1) Prefer manual override (workflow_dispatch) if provided
           if [ -n "${REF_OVERRIDE:-}" ]; then
             REF="$REF_OVERRIDE"
-            SOURCE="override"
-          # 2) Then Secrets/Vars with expected name
+            SOURCE="input:project_ref_override"
           elif [ -n "${REF_SECRET:-}" ]; then
             REF="$REF_SECRET"
             SOURCE="secret:SUPABASE_PROJECT_REF"
           elif [ -n "${REF_VAR:-}" ]; then
             REF="$REF_VAR"
             SOURCE="var:SUPABASE_PROJECT_REF"
-          # 3) Compatibility fallbacks
           elif [ -n "${REF_SECRET_ID:-}" ]; then
             REF="$REF_SECRET_ID"
             SOURCE="secret:SUPABASE_PROJECT_ID"
@@ -82,47 +93,50 @@ jobs:
           elif [ -n "${REF_VAR_REF:-}" ]; then
             REF="$REF_VAR_REF"
             SOURCE="var:SUPABASE_PROJECT_REFERENCE"
-          else
-            echo "❌ Missing Supabase project ref."
-            echo "   Action: set one of these in GitHub:"
-            echo "   - Settings → Secrets and variables → Actions → Secrets (recommended): SUPABASE_PROJECT_REF"
-            echo "   - or Variables: SUPABASE_PROJECT_REF"
-            echo "   Value must be ONLY the project ref (subdomain): https://<REF>.supabase.co"
-            echo "   Alternative accepted keys: SUPABASE_PROJECT_ID, SUPABASE_PROJECT_REFERENCE"
-            echo "   Or run workflow_dispatch with input project_ref_override."
+          fi
+
+          if [ -z "$REF" ]; then
+            echo "❌ CRITICAL: Supabase Project Ref is missing."
+            echo "   Hypothesis H1: Secret name mismatch. Checked: SUPABASE_PROJECT_REF, SUPABASE_PROJECT_ID, SUPABASE_PROJECT_REFERENCE."
+            echo "   Hypothesis H3: Secrets are Environment-scoped. Did you provide the 'environment' input?"
+            echo "   Action: Set SUPABASE_PROJECT_REF in Secrets or Variables, or provide 'project_ref_override'."
             exit 1
           fi
 
-          # Trim whitespace/newlines defensively
-          REF_CLEAN="$(echo -n "$REF" | tr -d '\r\n' | xargs)"
+          # 3. Clean & Validate Ref
+          # Remove whitespace, newlines, quotes
+          REF_CLEAN="$(echo -n "$REF" | tr -d '[:space:]\"'"'"' )"
+          
+          echo "ℹ️  Ref Source: $SOURCE"
+          echo "ℹ️  Ref Length: ${#REF_CLEAN}"
 
-          # Diagnostics (non-sensitive)
-          LEN="${#REF_CLEAN}"
-          echo "ℹ️  Project ref source: $SOURCE"
-          echo "ℹ️  Project ref length: $LEN"
-
-          # Validate format (keep reasonably permissive but safe)
           if ! echo "$REF_CLEAN" | grep -Eq '^[a-z0-9]{5,60}$'; then
-            echo "❌ Invalid Supabase project ref format."
-            echo "   Expected: lowercase letters+digits only (subdomain in https://<REF>.supabase.co)."
-            echo "   Note: Do NOT paste the full URL, only the <REF> part."
+            echo "❌ INVALID FORMAT: Project Ref must be lowercase letters and digits (subdomain only)."
+            echo "   Hypothesis H2: Value contains full URL or special characters."
+            echo "   Value Preview (safe): $(echo "$REF_CLEAN" | cut -c1-3)..."
             exit 1
           fi
 
-          echo "✅ SUPABASE_PROJECT_REF validated."
+          echo "✅ Project Ref validated: ${REF_CLEAN:0:4}***"
           echo "SUPABASE_PROJECT_REF=$REF_CLEAN" >> "$GITHUB_ENV"
 
-      - name: Deploy All Edge Functions (or Dry Run)
+      - name: Execute Supabase Command
         shell: bash
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           DRY_RUN: ${{ inputs.dry_run }}
         run: |
           set -euo pipefail
+          
+          # Ref is available from GITHUB_ENV as $SUPABASE_PROJECT_REF
+          
           if [ "${DRY_RUN}" = "true" ]; then
-            echo "🟢 DRY RUN enabled: listing functions only (no deploy)."
+            echo "🟢 DRY RUN: Listing functions for project $SUPABASE_PROJECT_REF..."
+            # 'functions list' validates auth and ref existence without deploying
             supabase functions list --project-ref "$SUPABASE_PROJECT_REF"
+            echo "✅ Dry run successful. Connection established."
           else
-            echo "🔴 Deploying functions..."
+            echo "� DEPLOYING functions to project $SUPABASE_PROJECT_REF..."
             supabase functions deploy --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
+            echo "✅ Deployment successful."
           fi

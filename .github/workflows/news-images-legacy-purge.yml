@@ -27,12 +27,28 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      - name: Preflight Check
+        env:
+          BUCKET_SECRET: ${{ secrets.SUPABASE_NEWS_BUCKET }}
+          BUCKET_VAR: ${{ vars.SUPABASE_NEWS_BUCKET }}
+        run: |
+          if [ -n "$BUCKET_SECRET" ]; then
+            echo "✅ SUPABASE_NEWS_BUCKET found in Secrets."
+          elif [ -n "$BUCKET_VAR" ]; then
+            echo "✅ SUPABASE_NEWS_BUCKET found in Vars."
+          else
+            echo "❌ CRITICAL: SUPABASE_NEWS_BUCKET not found in Secrets or Vars."
+            exit 1
+          fi
+
       - name: Run Purge Tool
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          SUPABASE_NEWS_BUCKET: ${{ secrets.SUPABASE_NEWS_BUCKET }}
-          LEGACY_PURGE_APPROVE: ${{ inputs.approve_delete }}
+          # Fallback: Prefer Secret, then Variable
+          SUPABASE_NEWS_BUCKET: ${{ secrets.SUPABASE_NEWS_BUCKET || vars.SUPABASE_NEWS_BUCKET }}
+          # Convert boolean input to string 'true'/'false' explicitly
+          LEGACY_PURGE_APPROVE: ${{ inputs.approve_delete && 'true' || 'false' }}
         run: npx tsx scripts/cleanup/legacy_image_purge.ts
 
       - name: Upload Delete List

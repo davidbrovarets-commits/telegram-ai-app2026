@@ -1,5 +1,9 @@
 [
   {
+    "name": "news",
+    "reason": "Not referenced in DB"
+  },
+  {
     "name": "news_banners",
     "reason": "Not referenced in DB"
   }

@@ -110,7 +110,7 @@ async function main() {
 
         let isReferenced = false;
         for (const urlPath of validUrls) {
-            if (urlPath && (urlPath.endsWith('/' + fileName) || urlPath === fileName)) {
+            if (urlPath && (urlPath.endsWith('/' + fileName) || urlPath.endsWith(fileName) || urlPath === fileName)) {
                 isReferenced = true;
                 break;
             }

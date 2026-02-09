@@ -23,7 +23,7 @@ Proceed блокируется при любой ошибке.
 ## Automation: Per-item News Image Generator (Imagen 4) (2026-02-08)
 
 **What:** Automated generation of images for individual news items via `scripts/generate_news_banners.ts` (Wikipedia reference first, Vertex AI Imagen 4 fallback).
-**How:** GitHub Actions workflow `.github/workflows/news-images.yml` runs4.  **Schedule:** 15 minutes (Baseline).
+**How:** GitHub Actions workflow `.github/workflows/news-images.yml` runs.
 **Patch 0 Hotfix (2026-02-09):** Removed unused imports, switched to native fetch, hardened `NEWS_IMAGES_BATCH_SIZE` parsing, and removed hardcoded Windows gcloud path.
 **Patch 1 (2026-02-09):** Schedule updated to `*/4 * * * *` (4 min) for rapid testing.
 **Patch 2 (2026-02-09):** Added Observability logging (prompts printed to console) and `NEWS_IMAGES_DRY_RUN_PROMPT=true` mode.
@@ -34,7 +34,7 @@ Proceed блокируется при любой ошибке.
 **Patch 3.1.1 (2026-02-09):** Prompt contract compliance: strict 100–200 words, aperture token fix ("f/8 aperture"), fallback expanded to full compliant paragraph.
 **Patch 4 (2026-02-09):** Render Settings: Updated aspect ratio to 4:3.
 **Patch 5 (2026-02-09):** Image Pipeline: Smart Retry Logic (Stop retries on Safety/Policy/400 errors).
-**Next:** Verification & Final Handoff.d manually).
+**Next:** Verification & Final Handoff.
 **Inputs / Outputs (DB):**
 - Selects items with `image_status in ('placeholder','failed')` (and < attempt limit).
 - Sets `image_status='generating'` while processing.
@@ -57,6 +57,5 @@ Proceed блокируется при любой ошибке.
 ## 48h Production Monitor (Read-Only)
 - Implemented as `scripts/monitor-news-images.ts` + `.github/workflows/news-images-monitor.yml`
 - Scope: READ-ONLY verification (no Imagen calls, no storage uploads)
-- Uses deterministic pipeline fields on `news_items` (mapped to `news` table in implementation if view/alias exists, using `news` table directly logic as per script):
-  - `image_status`, `image_last_attempt_at`, `image_generation_attempts`, `image_prompt`, `image_source_type`
+- Uses deterministic image fields on the `news` table: image_status, image_last_attempt_at, image_generation_attempts, image_prompt, image_source_type.
 - Stuck detection uses `image_last_attempt_at` (NOT `created_at`)

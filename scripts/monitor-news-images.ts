@@ -6,6 +6,7 @@ import path from "path";
 // --- CONFIGURATION (READ-ONLY monitor) ---
 const TABLE = "news"; // Reverted to known working table
 const MAX_GENERATION_ATTEMPTS = 3; // Keep in sync with lib/imageStatus.ts
+const EXCLUDE_LEGACY_ID = (process.env.MONITOR_EXCLUDE_LEGACY_ID || "").trim();
 
 // Thresholds
 const THRESHOLD_FAIL_STUCK = 3;
@@ -189,13 +190,18 @@ async function main() {
 
         // 5) Prompt Contract Sanity (Latest 25 generated Imagen items)
         log("\n--- 5. Prompt Contract Sanity (Latest 25) ---");
-        const { data: recentPrompts, error: promptErr } = await supabase
+        let q = supabase
             .from(TABLE)
             .select("id, image_prompt, created_at")
             .eq("image_status", "generated")
             .eq("image_source_type", "imagen")
-            .not("image_prompt", "is", null)
-            .neq("id", "1817") // Exclude legacy test item
+            .not("image_prompt", "is", null);
+
+        if (EXCLUDE_LEGACY_ID) {
+            q = q.neq("id", EXCLUDE_LEGACY_ID);
+        }
+
+        const { data: recentPrompts, error: promptErr } = await q
             .order("created_at", { ascending: false })
             .limit(25);
 

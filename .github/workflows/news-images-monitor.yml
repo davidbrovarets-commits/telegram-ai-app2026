@@ -31,4 +31,5 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          MONITOR_EXCLUDE_LEGACY_ID: ""   # empty by default; set to "1817" only if needed
         run: npx tsx scripts/monitor-news-images.ts

@@ -95,9 +95,20 @@ jobs:
             SOURCE="var:SUPABASE_PROJECT_REFERENCE"
           fi
 
+          # 3. Fallback: Parse supabase/config.toml
+          if [ -z "${REF:-}" ] && [ -f "supabase/config.toml" ]; then
+             echo "ℹ️  Attempting to read project_id from supabase/config.toml..."
+             REF_TOML=$(grep -E '^project_id\s*=' supabase/config.toml | sed -E 's/^project_id\s*=\s*"([^"]+)".*/\1/')
+             if [ -n "$REF_TOML" ]; then
+               REF="$REF_TOML"
+               SOURCE="file:supabase/config.toml"
+             fi
+          fi
+
           if [ -z "${REF:-}" ]; then
             echo "❌ CRITICAL: Supabase Project Ref is missing."
             echo "   H1: Secret/Var name mismatch (checked SUPABASE_PROJECT_REF / _ID / _REFERENCE)."
+            echo "   H6: supabase/config.toml missing or invalid."
             echo "   Action: Add SUPABASE_PROJECT_REF (recommended) as Secret or Variable."
             echo "   Or run workflow with project_ref_override."
             exit 1

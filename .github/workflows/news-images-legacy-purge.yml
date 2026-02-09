@@ -1,0 +1,43 @@
+name: Legacy Image Purge
+
+on:
+  workflow_dispatch:
+    inputs:
+      approve_delete:
+        description: 'Set to "true" to perform ACTUAL DELETE'
+        required: true
+        default: 'false'
+        type: boolean
+
+jobs:
+  purge:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Purge Tool
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_NEWS_BUCKET: ${{ secrets.SUPABASE_NEWS_BUCKET }}
+          LEGACY_PURGE_APPROVE: ${{ inputs.approve_delete }}
+        run: npx tsx scripts/cleanup/legacy_image_purge.ts
+
+      - name: Upload Delete List
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: legacy-delete-list
+          path: legacy-delete-list.json

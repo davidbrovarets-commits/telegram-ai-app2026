@@ -6,7 +6,7 @@ on:
       approve_delete:
         description: 'Set to "true" to perform ACTUAL DELETE'
         required: true
-        default: 'false'
+        default: false
         type: boolean
 
 jobs:

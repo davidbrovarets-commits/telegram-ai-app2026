@@ -155,6 +155,9 @@ async function main() {
     } else if (orphans.length > 0) {
         console.log('\n⚠️  To DELETE, set env LEGACY_PURGE_APPROVE=true');
     }
+
+    // Explicit success exit to prevent CI failure
+    process.exit(0);
 }
 
 main().catch((e) => {

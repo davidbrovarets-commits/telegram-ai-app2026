@@ -64,9 +64,7 @@ jobs:
           echo "SUPABASE_PROJECT_REF=$REF_CLEAN" >> $GITHUB_ENV
 
       - name: Deploy All Edge Functions
-        # Fix: --all is not a valid flag. We deploy by project ref.
-        run: supabase functions deploy --project-ref $SUPABASE_PROJECT_REF --no-verify-jwt
+        # Uses validated + trimmed SUPABASE_PROJECT_REF from $GITHUB_ENV (set in previous step)
+        run: supabase functions deploy --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          # Prefer Secret, fallback to Vars
-          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF || vars.SUPABASE_PROJECT_REF }}

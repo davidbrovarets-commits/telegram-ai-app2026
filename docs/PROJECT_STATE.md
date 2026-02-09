@@ -51,3 +51,12 @@ Proceed блокируется при любой ошибке.
 **Change:** `GITHUB_SECRETS.GOOGLE_CREDENTIALS` now contains the JSON key for `github-deployer@claude-vertex-prod...` which has both `Firebase Hosting Admin` and `Vertex AI User` roles.
 **Impact:** `deploy.yml` (Firebase) and `news-images.yml` (Vertex) now use the same secret.
 **Reason:** Fixes deployment failures caused by secret rotation/mismatch and simplifies key management.
+
+---
+
+## 48h Production Monitor (Read-Only)
+- Implemented as `scripts/monitor-news-images.ts` + `.github/workflows/news-images-monitor.yml`
+- Scope: READ-ONLY verification (no Imagen calls, no storage uploads)
+- Uses deterministic pipeline fields on `news_items` (mapped to `news` table in implementation if view/alias exists, using `news` table directly logic as per script):
+  - `image_status`, `image_last_attempt_at`, `image_generation_attempts`, `image_prompt`, `image_source_type`
+- Stuck detection uses `image_last_attempt_at` (NOT `created_at`)

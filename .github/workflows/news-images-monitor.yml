@@ -1,26 +1,33 @@
-name: News Images Monitor
+name: News Images Monitor (Read-Only)
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 * * * *' # Hourly
+    - cron: "0 * * * *" # Hourly
+
+concurrency:
+  group: news-images-monitor
+  cancel-in-progress: true
 
 jobs:
   monitor:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
 
       - name: Install Dependencies
         run: npm ci
 
-      - name: Run Monitor
+      - name: Run Monitor (Read-Only)
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

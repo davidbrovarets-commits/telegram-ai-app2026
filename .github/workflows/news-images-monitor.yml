@@ -2,8 +2,8 @@ name: News Images Monitor (Read-Only)
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "0 * * * *" # Hourly
+  # schedule: # TEMPORARILY DISABLED FOR STABILIZATION
+  #   - cron: "0 * * * *" # Hourly
 
 concurrency:
   group: news-images-monitor

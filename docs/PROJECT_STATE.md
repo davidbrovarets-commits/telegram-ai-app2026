@@ -30,6 +30,7 @@ Proceed блокируется при любой ошибке.
 **Patch 2.1 (2026-02-09):** Hardened Dry Run logic (robust parsing + centralized lock release).
 **Patch 2.1.1 (2026-02-09):** Fix: restored batch clamp (1..50) + added missing IS_DRY_RUN definition + imported releaseImageLock (compile safety).
 **Patch 3 (2026-02-09):** Implemented Gemini Flash prompt engineering with Golden Formula, mandatory Realism/Lighting tokens, and Strict Validation. 
+**Patch 3.1 (2026-02-09):** Prompt contract hardening: strict realism 1–2, mandatory lens/aperture, fallback made compliant; removed unused imports; (optional) store final prompt.
 **Next:** Patch 4 (Render Settings - 4:3 Aspect Ratio).d manually).
 **Inputs / Outputs (DB):**
 - Selects items with `image_status in ('placeholder','failed')` (and < attempt limit).

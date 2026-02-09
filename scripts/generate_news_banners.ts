@@ -1,7 +1,7 @@
 
 import { supabase } from './supabaseClient';
 import { claimNewsForGeneration, markImageGenerated, markImageFailed, releaseImageLock, NewsItemImageState } from './lib/imageStatus';
-import { VertexAI, HarmCategory, HarmBlockThreshold } from '@google-cloud/vertexai';
+import { VertexAI } from '@google-cloud/vertexai'; // PATCH 3.1: Removed unused imports
 
 // Environment check for Google Auth
 import { GoogleAuth } from 'google-auth-library';
@@ -30,6 +30,10 @@ const MANDATORY_REALISM_TOKENS = [
 const MANDATORY_LIGHTING_TOKENS = [
     'cinematic lighting', 'rim light', 'chiaroscuro', 'natural diffused light'
 ];
+// PATCH 3.1: Technical Tokens
+const MANDATORY_LENS_TOKENS = ['35mm lens', '50mm lens'];
+const MANDATORY_APERTURE_TOKENS = ['f/2.8', 'f/8'];
+
 const NEGATIVE_PROMPTS = "Blurry. Low quality. Distorted text. Watermark. Oversaturated. Anatomically incorrect. No text. No logos. Not an illustration. No propaganda. No distorted faces. No uncanny people.";
 
 /**
@@ -79,31 +83,39 @@ Describe the photo now.`;
 
     } catch (e: any) {
         console.warn('Gemini Flash prompt generation failed, falling back to simple template.', e.message);
-        // Fallback to simple template if Gemini fails
-        return `A documentary photo of ${title}. ${location ? `Location: ${location}.` : ''} Cinematic lighting. Documentary photography. 35mm lens. Film grain.`;
+        // Fallback to strict contract (PATCH 3.1)
+        return `A realistic documentary photograph of ${title}. ${location ? `Location: ${location}.` : ''} Cinematic lighting. Documentary photography. 35mm lens. f/8 aperture. Film grain.`;
     }
 }
 
 /**
- * Validation Helper (PATCH 3)
+ * Validation Helper (PATCH 3.1: Strict Hardening)
  */
 function validatePrompt(prompt: string): { valid: boolean; reason?: string } {
     const p = prompt.toLowerCase();
 
     // 1. Length Check (Loose)
     const wordCount = prompt.split(/\s+/).length;
-    if (wordCount < 10) return { valid: false, reason: 'Too short (<10 words)' }; // Fallback might be short
+    if (wordCount < 10) return { valid: false, reason: 'Too short (<10 words)' };
+    if (wordCount > 300) return { valid: false, reason: 'Too long (>300 words)' }; // Upper bound safety
 
     // 2. Lighting Check
     const hasLighting = MANDATORY_LIGHTING_TOKENS.some(t => p.includes(t));
     if (!hasLighting) return { valid: false, reason: 'Missing mandatory Lighting token' };
 
-    // 3. Realism Check
+    // 3. Realism Check (Strict 1-2)
     const realismCount = MANDATORY_REALISM_TOKENS.filter(t => p.includes(t)).length;
-    if (realismCount === 0) return { valid: false, reason: 'Missing mandatory Realism token' };
-    if (realismCount > 3) return { valid: false, reason: 'Too many Realism tokens (>3)' };
+    if (realismCount < 1) return { valid: false, reason: 'Missing mandatory Realism token' };
+    if (realismCount > 2) return { valid: false, reason: 'Too many Realism tokens (>2)' };
 
-    // 4. Text Safety
+    // 4. Technical Check (Lens/Aperture)
+    const hasLens = MANDATORY_LENS_TOKENS.some(t => p.includes(t));
+    if (!hasLens) return { valid: false, reason: 'Missing mandatory Lens token' };
+
+    const hasAperture = MANDATORY_APERTURE_TOKENS.some(t => p.includes(t.toLowerCase()));
+    if (!hasAperture) return { valid: false, reason: 'Missing mandatory Aperture token' };
+
+    // 5. Text Safety
     if (p.includes('text saying') || p.includes('written on')) return { valid: false, reason: 'Contains unsafe text instructions' };
 
     return { valid: true };
@@ -300,7 +312,7 @@ async function processItem(item: NewsItemImageState) {
         const val = validatePrompt(richPrompt);
         if (!val.valid) {
             console.warn(`[Prompt] Validation Failed: ${val.reason}. Falling back.`);
-            richPrompt = `A documentary photo of ${fullItem.title}. ${location}. Cinematic lighting. Documentary photography. 35mm lens. Film grain.`; // Safe fallback
+            richPrompt = `A realistic documentary photograph of ${fullItem.title}. ${location ? `Location: ${location}.` : ''} Cinematic lighting. Documentary photography. 35mm lens. f/8 aperture. Film grain.`; // Safe fallback
         }
 
         // 3. Add Negatives
@@ -326,7 +338,7 @@ async function processItem(item: NewsItemImageState) {
                 await markImageGenerated(supabase, item.id, {
                     image_url: publicUrl,
                     image_source_type: 'imagen',
-                    image_prompt: richPrompt // Store the rich narrative part
+                    image_prompt: finalPrompt // PATCH 3.1: Store final prompt used for generation
                 });
                 return;
             }

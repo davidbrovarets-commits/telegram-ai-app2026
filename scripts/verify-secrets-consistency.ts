@@ -42,8 +42,9 @@ async function auditSecrets() {
                 log(RED, '  ❌ Invalid Service Account JSON structure.');
                 errors++;
             }
-        } catch (e) {
-            log(RED, `  ❌ Error reading SA file: ${e.message}`);
+        } catch (e: unknown) {
+            const msg = e instanceof Error ? e.message : String(e);
+            log(RED, `  ❌ Error reading SA file: ${msg}`);
             errors++;
         }
     } else {

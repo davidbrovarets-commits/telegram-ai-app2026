@@ -91,8 +91,9 @@ Describe the photo now.`;
 
         return text.trim();
 
-    } catch (e: any) {
-        console.warn('Gemini Flash prompt generation failed, falling back to compliant template.', e.message);
+    } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        console.warn('Gemini Flash prompt generation failed, falling back to compliant template.', msg);
         // Fallback to compliant contract (PATCH 3.1.1)
         return buildFallbackPrompt(title, location);
     }
@@ -140,7 +141,7 @@ async function findReferenceImage(query: string): Promise<{ url: string; license
         // Search Wikipedia API for page
         const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&format=json&origin=*`;
         const searchRes = await fetch(searchUrl);
-        const searchData: any = await searchRes.json();
+        const searchData = await searchRes.json() as { query?: { search?: { title: string }[] } };
 
         if (!searchData.query?.search?.length) return null;
 
@@ -149,7 +150,7 @@ async function findReferenceImage(query: string): Promise<{ url: string; license
         // Get Page Images
         const imgUrl = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=pageimages|pageterms&pithumbsize=1000&format=json&origin=*`;
         const imgRes = await fetch(imgUrl);
-        const imgData: any = await imgRes.json();
+        const imgData = await imgRes.json() as { query?: { pages?: Record<string, { thumbnail?: { source: string } }> } };
 
         const pages = imgData.query?.pages;
         if (!pages) return null;
@@ -181,7 +182,7 @@ async function generateImagen4(prompt: string): Promise<string> {
             // Hotfix: Use portable command, relying on PATH
             const gcloudCmd = 'gcloud auth print-access-token';
             accessToken = execSync(gcloudCmd).toString().trim();
-        } catch (e) {
+        } catch {
             // Ignore silent fail, try GoogleAuth
         }
     }
@@ -218,7 +219,7 @@ async function generateImagen4(prompt: string): Promise<string> {
         throw new Error(`Vertex AI Error ${response.status}: ${txt}`);
     }
 
-    const data: any = await response.json();
+    const data = await response.json() as { predictions?: { bytesBase64Encoded: string }[] };
     const b64 = data.predictions?.[0]?.bytesBase64Encoded;
 
     if (!b64) throw new Error('No image data in Vertex response');
@@ -330,7 +331,7 @@ async function processItem(item: NewsItemImageState) {
         console.log('--- PROMPT START ---');
         console.log(finalPrompt);
         console.log('--- PROMPT END ---');
-        console.log(`[Job] Config: Batch=${BATCH_SIZE}, Attempts=${item.image_generation_attempts}, Ref=${!!refImage ? 'Yes' : 'No'}`);
+        console.log(`[Job] Config: Batch=${BATCH_SIZE}, Attempts=${item.image_generation_attempts}, Ref=${refImage ? 'Yes' : 'No'}`);
 
         // DRY RUN CHECK
         if (IS_DRY_RUN) {
@@ -355,8 +356,8 @@ async function processItem(item: NewsItemImageState) {
 
         throw new Error('Upload failed (no public URL returned)');
 
-    } catch (e: any) {
-        const msg = e.message || 'Unknown error';
+    } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
         console.error(`[Job] Failed item ${item.id}:`, msg);
 
         // Patch 5: Smart Retry Logic

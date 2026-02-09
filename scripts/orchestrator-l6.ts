@@ -35,8 +35,8 @@ type AIProviderName = 'vertex' | 'mock';
 const AI_PROVIDER = (process.env.AI_PROVIDER || 'vertex').toLowerCase() as AIProviderName;
 
 const VERTEX_API_KEY = process.env.VERTEX_API_KEY || process.env.VITE_FIREBASE_API_KEY || '';
-const VERTEX_ENDPOINT = process.env.VERTEX_ENDPOINT || ''; // optional if you implement Vertex REST
-const VERTEX_MODEL = process.env.VERTEX_MODEL || 'gemini-2.5-pro';
+// const _VERTEX_ENDPOINT = process.env.VERTEX_ENDPOINT || ''; // unused
+// const VERTEX_MODEL = process.env.VERTEX_MODEL || 'gemini-2.5-pro'; // unused
 
 const USE_AI = AI_PROVIDER === 'vertex' || !!VERTEX_API_KEY;
 
@@ -423,7 +423,7 @@ async function extractPublishedAtFromHtml(url: string): Promise<{ iso: string; s
         }
 
         // very light visible fallback (e.g., "Stand: 31.01.2026")
-        const vis = html.match(/(Stand|Veröffentlicht|Published|Datum|Aktualisiert)\s*[:\-]?\s*([0-9]{1,2}\.[0-9]{1,2}\.[0-9]{2,4})/i);
+        const vis = html.match(/(Stand|Veröffentlicht|Published|Datum|Aktualisiert)\s*[:-]?\s*([0-9]{1,2}\.[0-9]{1,2}\.[0-9]{2,4})/i);
         if (vis?.[2]) {
             const iso = normalizeDateToIso(vis[2]);
             if (iso) return { iso, source: 'html' };
@@ -450,7 +450,7 @@ type AIEnrichResult = {
 };
 
 import { initializeApp } from "firebase/app";
-import { getAI, VertexAIBackend, getGenerativeModel } from "firebase/ai";
+// import { getAI } from "firebase/ai"; // unused
 
 // ... imports
 
@@ -474,7 +474,7 @@ const firebaseConfig = {
 
 // Initialize Firebase (if not already)
 // We designate a unique name for this app instance in the script to avoid conflicts with other imports if any.
-const firebaseApp = initializeApp(firebaseConfig, 'orchestratorApp');
+initializeApp(firebaseConfig, 'orchestratorApp');
 
 
 /**
@@ -561,7 +561,7 @@ async function aiEnrichOne(item: ProcessedItem): Promise<AIEnrichResult> {
     // retry/backoff for AI calls
     const maxAttempts = 3;
     let attempt = 0;
-    let lastErr: any = null;
+    let lastErr: unknown = null;
 
     while (attempt < maxAttempts) {
         attempt++;
@@ -586,7 +586,7 @@ async function aiEnrichOne(item: ProcessedItem): Promise<AIEnrichResult> {
             // default safe
             if (DRY_RUN) return fallbackMock(text, title); // Hard guard for AI call
             return await callVertex_JSON(text, title);
-        } catch (e: any) {
+        } catch (e: unknown) {
             lastErr = e;
             const backoff = 500 * attempt + Math.floor(Math.random() * 250);
             await sleep(backoff);
@@ -777,7 +777,7 @@ async function runClassifier(items: ProcessedItem[]): Promise<ProcessedItem[]> {
 
 function runRouter(items: ProcessedItem[]): ProcessedItem[] {
     console.log(`🤖 [AGENT 3] Geo Router: Routing to layers...`);
-    const activeCities = cityPackages.packages.filter((p: any) => p.status === 'active');
+    const activeCities = cityPackages.packages.filter((p: { status: string; city?: string; land?: string }) => p.status === 'active');
 
     // Basic aliases (extend as needed)
     const cityAliases: Record<string, string[]> = {
@@ -787,13 +787,13 @@ function runRouter(items: ProcessedItem[]): ProcessedItem[] {
     return items.map((item) => {
         const textLower = safeLower(`${item.raw.title} ${item.raw.text}`);
 
-        const cityMatch = activeCities.find((c: any) => {
+        const cityMatch = activeCities.find((c: { city?: string }) => {
             const city = String(c.city || '').toLowerCase();
             const aliases = cityAliases[city] || [city];
             return aliases.some((a) => wordBoundaryIncludes(textLower, a));
         });
 
-        const landMatch = activeCities.find((c: any) => {
+        const landMatch = activeCities.find((c: { land?: string }) => {
             const land = String(c.land || '').toLowerCase();
             return land ? wordBoundaryIncludes(textLower, land) : false;
         });
@@ -1013,7 +1013,8 @@ async function runInsertion(items: ProcessedItem[]) {
     }
 
     // Client-side dedup just in case
-    const byLink = new Map<string, any>();
+    // Client-side dedup just in case
+    const byLink = new Map<string, typeof rows[0]>();
     for (const r of rows) if (!byLink.has(r.link)) byLink.set(r.link, r);
 
     const uniqueRows = Array.from(byLink.values());

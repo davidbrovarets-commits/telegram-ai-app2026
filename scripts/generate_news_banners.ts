@@ -1,6 +1,6 @@
 
 import { supabase } from './supabaseClient';
-import { claimNewsForGeneration, markImageGenerated, markImageFailed, releaseImageLock, NewsItemImageState } from './lib/imageStatus';
+import { claimNewsForGeneration, markImageGenerated, markImageFailed, releaseImageLock, NewsItemImageState, MAX_GENERATION_ATTEMPTS } from './lib/imageStatus';
 import { VertexAI } from '@google-cloud/vertexai'; // PATCH 3.1: Removed unused imports
 
 // Environment check for Google Auth
@@ -172,60 +172,58 @@ async function findReferenceImage(query: string): Promise<{ url: string; license
 /**
  * 2. Imagen 4 Logic
  */
-async function generateImagen4(prompt: string): Promise<string | null> {
-    try {
-        let accessToken = process.env.GOOGLE_ACCESS_TOKEN;
+async function generateImagen4(prompt: string): Promise<string> {
+    let accessToken = process.env.GOOGLE_ACCESS_TOKEN;
 
-        // Auth Fallback: gcloud CLI
-        if (!accessToken) {
-            try {
-                // Hotfix: Use portable command, relying on PATH
-                const gcloudCmd = 'gcloud auth print-access-token';
-                accessToken = execSync(gcloudCmd).toString().trim();
-            } catch (e) {
-                // Ignore silent fail, try GoogleAuth
-            }
+    // Auth Fallback: gcloud CLI
+    if (!accessToken) {
+        try {
+            // Hotfix: Use portable command, relying on PATH
+            const gcloudCmd = 'gcloud auth print-access-token';
+            accessToken = execSync(gcloudCmd).toString().trim();
+        } catch (e) {
+            // Ignore silent fail, try GoogleAuth
         }
-
-        // Auth Fallback: Application Default Credentials
-        if (!accessToken) {
-            const auth = new GoogleAuth({ scopes: ['https://www.googleapis.com/auth/cloud-platform'] });
-            const client = await auth.getClient();
-            accessToken = (await client.getAccessToken()).token || undefined;
-        }
-
-        if (!accessToken) throw new Error('No Google Access Token found.');
-
-        const endpoint = `https://${LOCATION}-aiplatform.googleapis.com/v1beta1/projects/${PROJECT_ID}/locations/${LOCATION}/publishers/google/models/${MODEL_ID}:predict`;
-
-        const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                instances: [{ prompt: prompt }],
-                parameters: {
-                    sampleCount: 1,
-                    aspectRatio: "4:3", // Patch 4: Changed to 4:3
-                    outputOptions: { mimeType: "image/png" }
-                }
-            })
-        });
-
-        if (!response.ok) {
-            const txt = await response.text();
-            throw new Error(`Vertex AI Error ${response.status}: ${txt}`);
-        }
-
-        const data: any = await response.json();
-        return data.predictions?.[0]?.bytesBase64Encoded || null;
-
-    } catch (e: any) {
-        console.error('Imagen generation failed:', e.message);
-        return null;
     }
+
+    // Auth Fallback: Application Default Credentials
+    if (!accessToken) {
+        const auth = new GoogleAuth({ scopes: ['https://www.googleapis.com/auth/cloud-platform'] });
+        const client = await auth.getClient();
+        accessToken = (await client.getAccessToken()).token || undefined;
+    }
+
+    if (!accessToken) throw new Error('No Google Access Token found.');
+
+    const endpoint = `https://${LOCATION}-aiplatform.googleapis.com/v1beta1/projects/${PROJECT_ID}/locations/${LOCATION}/publishers/google/models/${MODEL_ID}:predict`;
+
+    const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            instances: [{ prompt: prompt }],
+            parameters: {
+                sampleCount: 1,
+                aspectRatio: "4:3", // Patch 4: Changed to 4:3
+                outputOptions: { mimeType: "image/png" }
+            }
+        })
+    });
+
+    if (!response.ok) {
+        const txt = await response.text();
+        throw new Error(`Vertex AI Error ${response.status}: ${txt}`);
+    }
+
+    const data: any = await response.json();
+    const b64 = data.predictions?.[0]?.bytesBase64Encoded;
+
+    if (!b64) throw new Error('No image data in Vertex response');
+
+    return b64;
 }
 
 /**
@@ -341,24 +339,38 @@ async function processItem(item: NewsItemImageState) {
             return;
         }
 
+        // 4. Generate & Upload
         const b64 = await generateImagen4(finalPrompt);
-        if (b64) {
-            const publicUrl = await uploadToStorage(b64, false, item.id);
-            if (publicUrl) {
-                await markImageGenerated(supabase, item.id, {
-                    image_url: publicUrl,
-                    image_source_type: 'imagen',
-                    image_prompt: finalPrompt // PATCH 3.1: Store final prompt used for generation
-                });
-                return;
-            }
+        // generateImagen4 now throws on error, so we don't need to check for null
+
+        const publicUrl = await uploadToStorage(b64, false, item.id);
+        if (publicUrl) {
+            await markImageGenerated(supabase, item.id, {
+                image_url: publicUrl,
+                image_source_type: 'imagen',
+                image_prompt: finalPrompt
+            });
+            return;
         }
 
-        throw new Error('All generation methods failed');
+        throw new Error('Upload failed (no public URL returned)');
 
     } catch (e: any) {
-        console.error(`[Job] Failed item ${item.id}:`, e.message);
-        await markImageFailed(supabase, item.id, e.message, item.image_generation_attempts);
+        const msg = e.message || 'Unknown error';
+        console.error(`[Job] Failed item ${item.id}:`, msg);
+
+        // Patch 5: Smart Retry Logic
+        // If error is related to Safety, Policy, or 400 Bad Request (likely invalid prompt),
+        // we should NOT retry to avoid burning attempts/quota or getting banned.
+        const isBlockingError = /safety|blocked|policy|content/i.test(msg) || msg.includes('400');
+
+        let attemptsToSet = item.image_generation_attempts;
+        if (isBlockingError) {
+            console.warn(`[Job] Blocking error detected for ${item.id}. Disabling further retries.`);
+            attemptsToSet = MAX_GENERATION_ATTEMPTS; // Max out attempts to stop retry
+        }
+
+        await markImageFailed(supabase, item.id, msg, attemptsToSet);
     }
 }
 

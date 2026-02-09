@@ -53,22 +53,27 @@ async function listAllFiles(bucket: string): Promise<any[]> {
 }
 
 async function main() {
+    console.log('DEBUG: Starting Legacy Purge Tool');
     console.log('=== LEGACY IMAGE PURGE TOOL ===');
     console.log(`Bucket: ${BUCKET_NAME}`);
     console.log(`Mode: ${APPROVE_DELETE ? '🔴 DELETE (APPROVED)' : '🟢 DRY RUN (LIST ONLY)'}`);
 
     // 1. List all files in bucket
     console.log('\n--- Scanning Storage ---');
+    console.log('DEBUG: calling listAllFiles');
     let files: any[] = [];
     try {
         files = await listAllFiles(BUCKET_NAME);
+        console.log(`DEBUG: listAllFiles returned ${files.length} items`);
     } catch (e: any) {
         console.error('Failed to list files:', e.message);
+        console.log('DEBUG: Exiting 1 due to list failure');
         process.exit(1);
     }
 
     if (!files || files.length === 0) {
         console.log('No files found in bucket.');
+        console.log('DEBUG: Exiting 0 (no files)');
         return;
     }
 
@@ -76,6 +81,7 @@ async function main() {
 
     // 2. Get all valid image URLs from DB
     console.log('\n--- Scanning Database ---');
+    console.log('DEBUG: Querying DB for image_url');
     const { data: items, error: dbError } = await supabase
         .from('news')
         .select('image_url')
@@ -83,8 +89,10 @@ async function main() {
 
     if (dbError) {
         console.error('Failed to query DB:', dbError);
+        console.log('DEBUG: Exiting 1 due to DB error');
         process.exit(1);
     }
+    console.log(`DEBUG: DB returned ${items?.length} items`);
 
     // Clean URLs for strict matching
     const validUrls = new Set(items?.map(i => {
@@ -102,6 +110,7 @@ async function main() {
     console.log(`Found ${validUrls.size} valid referenced URLs in DB.`);
 
     // 3. Identify Orphans
+    console.log('DEBUG: Identifying orphans');
     const orphans: OrphanFile[] = [];
 
     for (const file of files) {
@@ -125,15 +134,19 @@ async function main() {
 
     // Output List
     if (orphans.length > 0) {
+        console.log('DEBUG: Writing legacy-delete-list.json');
         fs.writeFileSync('legacy-delete-list.json', JSON.stringify(orphans, null, 2));
         console.log('Saved list to legacy-delete-list.json');
 
         // Log sample
         orphans.slice(0, 10).forEach(o => console.log(` - ${o.name} (${o.reason})`));
         if (orphans.length > 10) console.log(`... and ${orphans.length - 10} more.`);
+    } else {
+        console.log('DEBUG: No orphans found, skipping write');
     }
 
     // 4. Delete if Approved
+    console.log(`DEBUG: Checking delete approval. APPROVE_DELETE=${APPROVE_DELETE}`);
     if (APPROVE_DELETE) {
         if (orphans.length > 0) {
             console.log('\n--- DELETING FILES ---');
@@ -157,10 +170,12 @@ async function main() {
     }
 
     // Explicit success exit to prevent CI failure
+    console.log('DEBUG: Exiting 0 (Success explicit)');
     process.exit(0);
 }
 
 main().catch((e) => {
     console.error('Fatal error:', e);
+    console.log('DEBUG: Exiting 1 due to fatal catch');
     process.exit(1);
 });

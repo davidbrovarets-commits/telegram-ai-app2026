@@ -8,6 +8,16 @@ on:
       - 'supabase/functions/**'
       - '.github/workflows/deploy-supabase.yml'
   workflow_dispatch:
+    inputs:
+      project_ref_override:
+        description: 'Optional: Supabase project ref override (subdomain in https://<REF>.supabase.co).'
+        required: false
+        type: string
+      dry_run:
+        description: 'If true, do NOT deploy. Only verify access by listing functions.'
+        required: true
+        default: false
+        type: boolean
 
 concurrency:
   group: supabase-functions-${{ github.ref }}
@@ -16,7 +26,7 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v4
 
@@ -33,38 +43,86 @@ jobs:
       - name: Validate SUPABASE_PROJECT_REF
         shell: bash
         env:
+          # Preferred keys
           REF_SECRET: ${{ secrets.SUPABASE_PROJECT_REF }}
           REF_VAR: ${{ vars.SUPABASE_PROJECT_REF }}
+          # Compatibility keys (in case the repo was configured differently)
+          REF_SECRET_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+          REF_VAR_ID: ${{ vars.SUPABASE_PROJECT_ID }}
+          REF_SECRET_REF: ${{ secrets.SUPABASE_PROJECT_REFERENCE }}
+          REF_VAR_REF: ${{ vars.SUPABASE_PROJECT_REFERENCE }}
+          # Manual override
+          REF_OVERRIDE: ${{ inputs.project_ref_override }}
         run: |
-          # Select ref (Secret first, then Var)
-          REF="${REF_SECRET:-$REF_VAR}"
+          set -euo pipefail
 
-          if [ -z "$REF" ]; then
-            echo "❌ Missing SUPABASE_PROJECT_REF (set it in Secrets or Variables)."
-            echo "   Expected: your Supabase project ref (the subdomain in https://<REF>.supabase.co)."
+          SOURCE=""
+
+          # 1) Prefer manual override (workflow_dispatch) if provided
+          if [ -n "${REF_OVERRIDE:-}" ]; then
+            REF="$REF_OVERRIDE"
+            SOURCE="override"
+          # 2) Then Secrets/Vars with expected name
+          elif [ -n "${REF_SECRET:-}" ]; then
+            REF="$REF_SECRET"
+            SOURCE="secret:SUPABASE_PROJECT_REF"
+          elif [ -n "${REF_VAR:-}" ]; then
+            REF="$REF_VAR"
+            SOURCE="var:SUPABASE_PROJECT_REF"
+          # 3) Compatibility fallbacks
+          elif [ -n "${REF_SECRET_ID:-}" ]; then
+            REF="$REF_SECRET_ID"
+            SOURCE="secret:SUPABASE_PROJECT_ID"
+          elif [ -n "${REF_VAR_ID:-}" ]; then
+            REF="$REF_VAR_ID"
+            SOURCE="var:SUPABASE_PROJECT_ID"
+          elif [ -n "${REF_SECRET_REF:-}" ]; then
+            REF="$REF_SECRET_REF"
+            SOURCE="secret:SUPABASE_PROJECT_REFERENCE"
+          elif [ -n "${REF_VAR_REF:-}" ]; then
+            REF="$REF_VAR_REF"
+            SOURCE="var:SUPABASE_PROJECT_REFERENCE"
+          else
+            echo "❌ Missing Supabase project ref."
+            echo "   Action: set one of these in GitHub:"
+            echo "   - Settings → Secrets and variables → Actions → Secrets (recommended): SUPABASE_PROJECT_REF"
+            echo "   - or Variables: SUPABASE_PROJECT_REF"
+            echo "   Value must be ONLY the project ref (subdomain): https://<REF>.supabase.co"
+            echo "   Alternative accepted keys: SUPABASE_PROJECT_ID, SUPABASE_PROJECT_REFERENCE"
+            echo "   Or run workflow_dispatch with input project_ref_override."
             exit 1
           fi
 
           # Trim whitespace/newlines defensively
           REF_CLEAN="$(echo -n "$REF" | tr -d '\r\n' | xargs)"
-          if [ "$REF_CLEAN" != "$REF" ]; then
-            echo "⚠️ SUPABASE_PROJECT_REF contained whitespace/newlines. Using cleaned value."
-          fi
 
-          # Supabase project ref is typically lowercase alnum, short (often ~20 chars). Keep regex permissive but strict enough.
-          if ! echo "$REF_CLEAN" | grep -Eq '^[a-z0-9]{10,40}$'; then
-            echo "❌ Invalid SUPABASE_PROJECT_REF format: '$REF_CLEAN'"
+          # Diagnostics (non-sensitive)
+          LEN="${#REF_CLEAN}"
+          echo "ℹ️  Project ref source: $SOURCE"
+          echo "ℹ️  Project ref length: $LEN"
+
+          # Validate format (keep reasonably permissive but safe)
+          if ! echo "$REF_CLEAN" | grep -Eq '^[a-z0-9]{5,60}$'; then
+            echo "❌ Invalid Supabase project ref format."
             echo "   Expected: lowercase letters+digits only (subdomain in https://<REF>.supabase.co)."
-            echo "   Fix: update SUPABASE_PROJECT_REF in GitHub Secrets/Vars."
+            echo "   Note: Do NOT paste the full URL, only the <REF> part."
             exit 1
           fi
 
-          echo "✅ SUPABASE_PROJECT_REF looks valid (masked)."
-          # export cleaned ref for next steps
-          echo "SUPABASE_PROJECT_REF=$REF_CLEAN" >> $GITHUB_ENV
+          echo "✅ SUPABASE_PROJECT_REF validated."
+          echo "SUPABASE_PROJECT_REF=$REF_CLEAN" >> "$GITHUB_ENV"
 
-      - name: Deploy All Edge Functions
-        # Uses validated + trimmed SUPABASE_PROJECT_REF from $GITHUB_ENV (set in previous step)
-        run: supabase functions deploy --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
+      - name: Deploy All Edge Functions (or Dry Run)
+        shell: bash
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          if [ "${DRY_RUN}" = "true" ]; then
+            echo "🟢 DRY RUN enabled: listing functions only (no deploy)."
+            supabase functions list --project-ref "$SUPABASE_PROJECT_REF"
+          else
+            echo "🔴 Deploying functions..."
+            supabase functions deploy --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
+          fi

@@ -32,7 +32,8 @@ Proceed блокируется при любой ошибке.
 **Patch 3 (2026-02-09):** Implemented Gemini Flash prompt engineering with Golden Formula, mandatory Realism/Lighting tokens, and Strict Validation. 
 **Patch 3.1 (2026-02-09):** Prompt contract hardening: strict realism 1–2, mandatory lens/aperture, fallback made compliant; removed unused imports; (optional) store final prompt.
 **Patch 3.1.1 (2026-02-09):** Prompt contract compliance: strict 100–200 words, aperture token fix ("f/8 aperture"), fallback expanded to full compliant paragraph.
-**Next:** Patch 4 (Render Settings - 4:3 Aspect Ratio).d manually).
+**Patch 4 (2026-02-09):** Render Settings: Updated aspect ratio to 4:3.
+**Next:** Patch 5 (Image Pipeline - Retry Logic).d manually).
 **Inputs / Outputs (DB):**
 - Selects items with `image_status in ('placeholder','failed')` (and < attempt limit).
 - Sets `image_status='generating'` while processing.

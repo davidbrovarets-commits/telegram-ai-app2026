@@ -208,7 +208,7 @@ async function generateImagen4(prompt: string): Promise<string | null> {
                 instances: [{ prompt: prompt }],
                 parameters: {
                     sampleCount: 1,
-                    aspectRatio: "16:9", // Keep original 16:9 for Patch 0
+                    aspectRatio: "4:3", // Patch 4: Changed to 4:3
                     outputOptions: { mimeType: "image/png" }
                 }
             })

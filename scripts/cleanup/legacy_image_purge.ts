@@ -156,3 +156,8 @@ async function main() {
         console.log('\n⚠️  To DELETE, set env LEGACY_PURGE_APPROVE=true');
     }
 }
+
+main().catch((e) => {
+    console.error('Fatal error:', e);
+    process.exit(1);
+});

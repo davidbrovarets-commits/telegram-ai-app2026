@@ -147,10 +147,11 @@ async function collectMetrics24h() {
         // Let's assume 'created_at' for NEW items generated in last 24h as a proxy for "throughput check".
         .gte('created_at', twentyFourHoursAgo);
 
-    if (genCount && genCount > 0) {
-        // Add info note about proxy usage
-        REPORT.incidents.push({ severity: 'P3', message: 'generated_24h metrics use created_at proxy', fix_action: 'Verify image_generated_at column existence' });
-    }
+    REPORT.incidents.push({
+        severity: 'P3',
+        message: 'generated_24h metric uses created_at proxy (not image_generated_at)',
+        fix_action: 'If image_generated_at exists, switch filter to that column for true throughput.'
+    });
 
     REPORT.metrics.generated_24h = genCount || 0;
 
@@ -205,6 +206,11 @@ async function main() {
 
     try {
         await checkStatusCounts();
+        if (REPORT.status === 'FAIL') {
+            console.log(JSON.stringify(REPORT, null, 2));
+            console.log('INSPECTOR_REPORT_END');
+            process.exit(1);
+        }
         await checkAndFixStuckItems();
         await collectMetrics24h();
         runGeneratorDryRun();

@@ -30,9 +30,43 @@ jobs:
         with:
           version: latest
 
+      - name: Validate SUPABASE_PROJECT_REF
+        shell: bash
+        env:
+          REF_SECRET: ${{ secrets.SUPABASE_PROJECT_REF }}
+          REF_VAR: ${{ vars.SUPABASE_PROJECT_REF }}
+        run: |
+          # Select ref (Secret first, then Var)
+          REF="${REF_SECRET:-$REF_VAR}"
+
+          if [ -z "$REF" ]; then
+            echo "❌ Missing SUPABASE_PROJECT_REF (set it in Secrets or Variables)."
+            echo "   Expected: your Supabase project ref (the subdomain in https://<REF>.supabase.co)."
+            exit 1
+          fi
+
+          # Trim whitespace/newlines defensively
+          REF_CLEAN="$(echo -n "$REF" | tr -d '\r\n' | xargs)"
+          if [ "$REF_CLEAN" != "$REF" ]; then
+            echo "⚠️ SUPABASE_PROJECT_REF contained whitespace/newlines. Using cleaned value."
+          fi
+
+          # Supabase project ref is typically lowercase alnum, short (often ~20 chars). Keep regex permissive but strict enough.
+          if ! echo "$REF_CLEAN" | grep -Eq '^[a-z0-9]{10,40}$'; then
+            echo "❌ Invalid SUPABASE_PROJECT_REF format: '$REF_CLEAN'"
+            echo "   Expected: lowercase letters+digits only (subdomain in https://<REF>.supabase.co)."
+            echo "   Fix: update SUPABASE_PROJECT_REF in GitHub Secrets/Vars."
+            exit 1
+          fi
+
+          echo "✅ SUPABASE_PROJECT_REF looks valid (masked)."
+          # export cleaned ref for next steps
+          echo "SUPABASE_PROJECT_REF=$REF_CLEAN" >> $GITHUB_ENV
+
       - name: Deploy All Edge Functions
         # Fix: --all is not a valid flag. We deploy by project ref.
         run: supabase functions deploy --project-ref $SUPABASE_PROJECT_REF --no-verify-jwt
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          # Prefer Secret, fallback to Vars
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF || vars.SUPABASE_PROJECT_REF }}

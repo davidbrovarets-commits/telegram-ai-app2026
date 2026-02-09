@@ -32,9 +32,19 @@ const MANDATORY_LIGHTING_TOKENS = [
 ];
 // PATCH 3.1: Technical Tokens
 const MANDATORY_LENS_TOKENS = ['35mm lens', '50mm lens'];
-const MANDATORY_APERTURE_TOKENS = ['f/2.8', 'f/8'];
+const MANDATORY_APERTURE_TOKENS = ['f/2.8 aperture', 'f/8 aperture']; // PATCH 3.1.1: Fixed tokens
 
 const NEGATIVE_PROMPTS = "Blurry. Low quality. Distorted text. Watermark. Oversaturated. Anatomically incorrect. No text. No logos. Not an illustration. No propaganda. No distorted faces. No uncanny people.";
+
+/**
+ * Helper: Build Contract-Compliant Fallback Prompt (PATCH 3.1.1)
+ * Returns a paragraph of ~100-140 words satisfying all constraints.
+ */
+function buildFallbackPrompt(title: string, location: string): string {
+    const locStr = location ? `The scene is set in ${location}, providing a grounded and authentic atmosphere.` : 'The setting is atmospheric and grounded.';
+
+    return `A realistic documentary photograph capturing the essence of "${title}". ${locStr} The image focuses on symbolic elements representing the core news story, avoiding specific real-world individuals in favor of representative figures or objects. The composition is balanced and professional, typical of high-end photojournalism. Lighting plays a key role, with cinematic lighting casting dramatic shadows and highlighting the central subject matter. The aesthetic is strictly documentary, with no artificial or illustrative elements. Shot with a 35mm lens, the field of view feels natural and immersive. An f/8 aperture ensures a sharp depth of field, keeping the context visible. Subtle film grain adds a layer of texture and realism to the final image. This photograph aims to convey the gravity and significance of the event through visual storytelling, maintaining a neutral and objective observer perspectives.`;
+}
 
 /**
  * 0. Gemini Flash Prompt Builder (PATCH 3: Golden Formula)
@@ -82,9 +92,9 @@ Describe the photo now.`;
         return text.trim();
 
     } catch (e: any) {
-        console.warn('Gemini Flash prompt generation failed, falling back to simple template.', e.message);
-        // Fallback to strict contract (PATCH 3.1)
-        return `A realistic documentary photograph of ${title}. ${location ? `Location: ${location}.` : ''} Cinematic lighting. Documentary photography. 35mm lens. f/8 aperture. Film grain.`;
+        console.warn('Gemini Flash prompt generation failed, falling back to compliant template.', e.message);
+        // Fallback to compliant contract (PATCH 3.1.1)
+        return buildFallbackPrompt(title, location);
     }
 }
 
@@ -94,10 +104,10 @@ Describe the photo now.`;
 function validatePrompt(prompt: string): { valid: boolean; reason?: string } {
     const p = prompt.toLowerCase();
 
-    // 1. Length Check (Loose)
+    // 1. Length Check (Strict 100-200)
     const wordCount = prompt.split(/\s+/).length;
-    if (wordCount < 10) return { valid: false, reason: 'Too short (<10 words)' };
-    if (wordCount > 300) return { valid: false, reason: 'Too long (>300 words)' }; // Upper bound safety
+    if (wordCount < 100) return { valid: false, reason: `Too short (${wordCount} < 100 words)` };
+    if (wordCount > 200) return { valid: false, reason: `Too long (${wordCount} > 200 words)` };
 
     // 2. Lighting Check
     const hasLighting = MANDATORY_LIGHTING_TOKENS.some(t => p.includes(t));
@@ -112,7 +122,7 @@ function validatePrompt(prompt: string): { valid: boolean; reason?: string } {
     const hasLens = MANDATORY_LENS_TOKENS.some(t => p.includes(t));
     if (!hasLens) return { valid: false, reason: 'Missing mandatory Lens token' };
 
-    const hasAperture = MANDATORY_APERTURE_TOKENS.some(t => p.includes(t.toLowerCase()));
+    const hasAperture = MANDATORY_APERTURE_TOKENS.some(t => p.includes(t)); // PATCH 3.1.1: Removed toLowerCase as tokens are strict
     if (!hasAperture) return { valid: false, reason: 'Missing mandatory Aperture token' };
 
     // 5. Text Safety
@@ -312,7 +322,7 @@ async function processItem(item: NewsItemImageState) {
         const val = validatePrompt(richPrompt);
         if (!val.valid) {
             console.warn(`[Prompt] Validation Failed: ${val.reason}. Falling back.`);
-            richPrompt = `A realistic documentary photograph of ${fullItem.title}. ${location ? `Location: ${location}.` : ''} Cinematic lighting. Documentary photography. 35mm lens. f/8 aperture. Film grain.`; // Safe fallback
+            richPrompt = buildFallbackPrompt(fullItem.title, location); // Patch 3.1.1: Compliant fallback
         }
 
         // 3. Add Negatives

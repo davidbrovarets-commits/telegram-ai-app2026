@@ -6,7 +6,7 @@ on:
     - cron: '*/15 * * * *'
 
 concurrency:
-  group: ai-inspector
+  group: ai-inspector-news-images
   cancel-in-progress: true
 
 jobs:
@@ -33,6 +33,4 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           INSPECTOR_ALLOW_LOCK_RELEASE: "false" # Default OFF for safety
           INSPECTOR_LOCK_STUCK_MINUTES: "45"
-          # Google Auth required for Dry Run (even if no calls, script might init deps)
-          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }} 
         run: npx tsx scripts/inspector/run_inspection.ts

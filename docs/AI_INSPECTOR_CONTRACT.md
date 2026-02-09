@@ -14,13 +14,13 @@ The AI Inspector serves as a **read-only watchdog** and **safe automated maintai
 3.  **Execute** Generator script in **DRY RUN** mode (`NEWS_IMAGES_DRY_RUN_PROMPT=true`).
 4.  **Write** to `GITHUB_STEP_SUMMARY` (formatted report).
 5.  **Write** to DB: **Release Locks Only** (Reset `image_status='generating'` -> `'placeholder'` for stuck items).
-    - Condition: `image_last_attempt_at` > `INSPECTOR_LOCK_STUCK_MINUTES`.
+    - Condition: `image_last_attempt_at` is older than (now - `INSPECTOR_LOCK_STUCK_MINUTES` minutes).
     - Flag: `INSPECTOR_ALLOW_LOCK_RELEASE=true`.
 
 ## Forbidden Actions (Hard)
 1.  **No Imagen Calls**: Inspector must NEVER call Vertex AI / Imagen.
 2.  **No Storage Uploads**: Inspector must NEVER upload files.
-3.  **No Content Mutation**: Inspector must NEVER change `title`, `content`, or `image_prompt` (except clearing invalid state if strictly defined).
+3.  **No Content Mutation**: Inspector must NEVER change `title`, `content`, or `image_prompt`.
 4.  **No Infinite Loops**: Inspector allows strict timeout and concurrency limits.
 5.  **No Recursive Triggers**: Inspector ignores its own failures.
 

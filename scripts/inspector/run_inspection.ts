@@ -1,7 +1,6 @@
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
-import path from 'path';
 import { execSync } from 'child_process';
 import { releaseImageLock } from '../lib/imageStatus';
 
@@ -11,6 +10,7 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const INSPECTOR_ALLOW_LOCK_RELEASE = process.env.INSPECTOR_ALLOW_LOCK_RELEASE === 'true';
 const INSPECTOR_LOCK_STUCK_MINUTES = parseInt(process.env.INSPECTOR_LOCK_STUCK_MINUTES || '45', 10);
+const CRITICAL_STUCK_COUNT = 3;
 
 if (!SUPABASE_URL || !SUPABASE_KEY) {
     console.error('❌ Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
@@ -59,7 +59,15 @@ async function checkStatusCounts() {
     console.log('--- Checking Status Counts ---');
     const statuses = ['placeholder', 'generating', 'generated', 'failed'];
     for (const s of statuses) {
-        const { count } = await supabase.from(TABLE).select('id', { count: 'exact', head: true }).eq('image_status', s);
+        const { count, error } = await supabase.from(TABLE).select('id', { count: 'exact', head: true }).eq('image_status', s);
+
+        if (error) {
+            console.error(`DB Error counting status ${s}:`, error);
+            REPORT.checks['status_counts'] = false;
+            REPORT.incidents.push({ severity: 'P0', message: `DB Error counting status ${s}`, evidence: error });
+            REPORT.status = 'FAIL';
+            return;
+        }
         console.log(`   ${s}: ${count}`);
     }
     REPORT.checks['status_counts'] = true;
@@ -113,7 +121,7 @@ async function checkAndFixStuckItems() {
                 fix_action: 'Enable INSPECTOR_ALLOW_LOCK_RELEASE=true to autofix'
             });
             // Mark as potential failure if critical mass
-            if (stuckItems.length > 5) REPORT.status = 'FAIL'; // Elevate status
+            if (stuckItems.length >= CRITICAL_STUCK_COUNT) REPORT.status = 'FAIL'; // Elevate status
         }
     } else {
         console.log('No stuck items found.');
@@ -138,6 +146,11 @@ async function collectMetrics24h() {
         // imageStatus.ts updates 'image_generated_at'. Let's use that if available, else skip time filter for now or use updated_at (risky).
         // Let's assume 'created_at' for NEW items generated in last 24h as a proxy for "throughput check".
         .gte('created_at', twentyFourHoursAgo);
+
+    if (genCount && genCount > 0) {
+        // Add info note about proxy usage
+        REPORT.incidents.push({ severity: 'P3', message: 'generated_24h metrics use created_at proxy', fix_action: 'Verify image_generated_at column existence' });
+    }
 
     REPORT.metrics.generated_24h = genCount || 0;
 
@@ -201,8 +214,8 @@ async function main() {
         REPORT.incidents.push({ severity: 'P0', message: 'Inspector Fatal Error', evidence: e.message });
     }
 
-    console.log('INSPECTOR_REPORT_END');
     console.log(JSON.stringify(REPORT, null, 2));
+    console.log('INSPECTOR_REPORT_END');
 
     // GitHub Job Summary
     if (process.env.GITHUB_STEP_SUMMARY) {

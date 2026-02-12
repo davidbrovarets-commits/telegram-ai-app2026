@@ -171,6 +171,8 @@ serve(async (req) => {
             .from('news')
             .select('id, title, created_at, embedding, type, priority, city, land, scope')
             .eq('status', 'ACTIVE')
+            .eq('image_status', 'generated')
+            .not('image_url', 'is', null)
             .order('created_at', { ascending: false })
             .range(page * limit, (page + 1) * limit + 100 - 1); // Extra for filtering
 

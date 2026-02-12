@@ -339,6 +339,8 @@ export class FeedManager {
             .from('news')
             .select('*')
             .in('status', ['POOL', 'ACTIVE'])
+            .eq('image_status', 'generated')
+            .not('image_url', 'is', null)
             .not('type', 'is', null);
 
         // Filter out used IDs if any exist
@@ -359,6 +361,8 @@ export class FeedManager {
                 .from('news')
                 .select('*')
                 .in('status', ['POOL', 'ACTIVE'])
+                .eq('image_status', 'generated')
+                .not('image_url', 'is', null)
                 .not('type', 'is', null)
                 .order('priority', { ascending: false })
                 .limit(50);

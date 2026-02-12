@@ -21,6 +21,7 @@ import cityPackages from './city-packages.index.json' assert { type: 'json' };
 import { SOURCE_REGISTRY } from './registries/source-registry';
 import { isRecentNews, isDeepLink, validateUrlHealth } from './helpers';
 import { runAutoHealer } from './auto-healer';
+import { vertexClient } from './utils/vertex-client';
 import * as dotenv from 'dotenv';
 import crypto from 'crypto';
 
@@ -293,41 +294,7 @@ function clamp(n: number, min: number, max: number) {
     return Math.max(min, Math.min(max, n));
 }
 
-/* -----------------------------
-   SIMPLE CONCURRENCY LIMITER
------------------------------- */
-
-function createLimiter(concurrency: number) {
-    let active = 0;
-    const queue: Array<() => void> = [];
-
-    const next = () => {
-        if (active >= concurrency) return;
-        const job = queue.shift();
-        if (!job) return;
-        active++;
-        job();
-    };
-
-    return async function limit<T>(fn: () => Promise<T>): Promise<T> {
-        return new Promise<T>((resolve, reject) => {
-            queue.push(async () => {
-                try {
-                    const res = await fn();
-                    resolve(res);
-                } catch (e) {
-                    reject(e);
-                } finally {
-                    active--;
-                    next();
-                }
-            });
-            next();
-        });
-    };
-}
-
-const limitAI = createLimiter(1); // Force sequential to avoid 429 on free tier
+// limitAI removed - replaced by VertexClient internal queue
 
 /* -----------------------------
    HTTP FETCH WITH TIMEOUT
@@ -481,22 +448,9 @@ initializeApp(firebaseConfig, 'orchestratorApp');
  * Real Vertex/Gemini Implementation (Firebase SDK)
  */
 /**
- * Real Vertex/Gemini Implementation (Server-Side SDK)
- * Uses the same robust auth as Secretary Bot
+ * Real Vertex/Gemini Implementation (Server-Side SDK via VertexClient)
  */
 async function callVertex_JSON(text: string, title: string): Promise<AIEnrichResult> {
-    // Lazy import to avoid startup overhead if mocked
-    const { VertexAI } = await import('@google-cloud/vertexai');
-
-    const project = process.env.GOOGLE_PROJECT_ID || 'claude-vertex-prod';
-    const location = process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
-
-    const vertexAI = new VertexAI({ project, location });
-    const model = vertexAI.getGenerativeModel({
-        model: process.env.VERTEX_MODEL || 'gemini-2.5-pro',
-        generationConfig: { responseMimeType: "application/json" }
-    });
-
     const prompt = `
 You are a professional news translator and analyst for Ukrainians in Germany.
 Task:
@@ -515,14 +469,8 @@ INPUT TEXT: ${text}
 `;
 
     try {
-        const result = await model.generateContent(prompt);
-        // Handle various response structures
-        const candidate = result.response.candidates?.[0];
-        const responseText = candidate?.content?.parts?.[0]?.text || "";
-
-        if (!responseText) throw new Error('Empty response from Vertex');
-
-        const parsed = JSON.parse(responseText);
+        // VertexClient handles auth, retries, and rate limiting
+        const parsed = await vertexClient.generateJSON<any>(prompt, 0.3);
 
         return {
             de_summary: parsed.de_summary || '',
@@ -534,7 +482,7 @@ INPUT TEXT: ${text}
             reasonTag: parsed.reasonTag
         };
     } catch (error) {
-        console.error('❌ Vertex (Server) Generation Failed:', error);
+        console.error('❌ Vertex (Client) Generation Failed:', error);
         return fallbackMock(text, title);
     }
 }
@@ -558,52 +506,41 @@ async function aiEnrichOne(item: ProcessedItem): Promise<AIEnrichResult> {
     const text = item.raw.text;
     const title = item.raw.title;
 
-    // retry/backoff for AI calls
-    const maxAttempts = 3;
-    let attempt = 0;
-    let lastErr: unknown = null;
-
-    while (attempt < maxAttempts) {
-        attempt++;
-        try {
-            if (!USE_AI || AI_PROVIDER === 'mock') {
-                const sentences = text.split(/[.!?]+/).map((s) => s.trim()).filter((s) => s.length > 20);
-                const de = sentences.slice(0, 2).join('. ') + (sentences.length ? '.' : '');
-                return {
-                    de_summary: de,
-                    uk_summary: `[UA Mock] ${de}`,
-                    uk_title: `[UA Mock] ${title}`,
-                    action_hint: text.toLowerCase().includes('frist') ? '⚠️ Увага: є строк/дія' : '',
-                    actions: text.toLowerCase().includes('frist') ? ['deadline'] : [],
-                    reasonTag: item.classification.type === 'FUN' ? 'EVENT_NEAR_YOU' : 'IMPORTANT_LOCAL',
-                };
-            }
-
-            if (AI_PROVIDER === 'vertex') {
-                return await callVertex_JSON(text, title);
-            }
-
-            // default safe
-            if (DRY_RUN) return fallbackMock(text, title); // Hard guard for AI call
-            return await callVertex_JSON(text, title);
-        } catch (e: unknown) {
-            lastErr = e;
-            const backoff = 500 * attempt + Math.floor(Math.random() * 250);
-            await sleep(backoff);
+    // Retry logic is now handled by VertexClient
+    try {
+        if (!USE_AI || AI_PROVIDER === 'mock') {
+            const sentences = text.split(/[.!?]+/).map((s) => s.trim()).filter((s) => s.length > 20);
+            const de = sentences.slice(0, 2).join('. ') + (sentences.length ? '.' : '');
+            return {
+                de_summary: de,
+                uk_summary: `[UA Mock] ${de}`,
+                uk_title: `[UA Mock] ${title}`,
+                action_hint: text.toLowerCase().includes('frist') ? '⚠️ Увага: є строк/дія' : '',
+                actions: text.toLowerCase().includes('frist') ? ['deadline'] : [],
+                reasonTag: item.classification.type === 'FUN' ? 'EVENT_NEAR_YOU' : 'IMPORTANT_LOCAL',
+            };
         }
-    }
 
-    // final fallback
-    const fallbackDe = normalizeSpace(text).slice(0, 240) + (text.length > 240 ? '...' : '');
-    console.error('AI enrich failed after retries:', lastErr);
-    return {
-        de_summary: fallbackDe,
-        uk_summary: `[UA Fail] ${fallbackDe}`,
-        uk_content: `[UA Fail] ${fallbackDe}`,
-        uk_title: title,
-        action_hint: '',
-        actions: [],
-    };
+        if (AI_PROVIDER === 'vertex') {
+            return await callVertex_JSON(text, title);
+        }
+
+        // default safe
+        if (DRY_RUN) return fallbackMock(text, title); // Hard guard for AI call
+        return await callVertex_JSON(text, title);
+    } catch (e: unknown) {
+        console.error('AI enrich failed:', e);
+        // final fallback
+        const fallbackDe = normalizeSpace(text).slice(0, 240) + (text.length > 240 ? '...' : '');
+        return {
+            de_summary: fallbackDe,
+            uk_summary: `[UA Fail] ${fallbackDe}`,
+            uk_content: `[UA Fail] ${fallbackDe}`,
+            uk_title: title,
+            action_hint: '',
+            actions: [],
+        };
+    }
 }
 
 /* -----------------------------
@@ -874,21 +811,19 @@ async function runPublishedAtExtractor(items: ProcessedItem[]): Promise<Processe
     console.log(`🤖 [AGENT 4.5] PublishedAt: Extracting from article HTML...`);
 
     // Concurrency-limited fetch
-    const tasks = items.map((item) =>
-        limitAI(async () => {
-            const { iso, source } = await extractPublishedAtFromHtml(item.raw.url);
-            if (iso) {
-                item.raw.published_at = iso;
-                item.meta = item.meta || {};
-                item.meta.published_at_source = source;
-            } else {
-                item.meta = item.meta || {};
-                item.meta.published_at_source = item.meta.published_at_source || 'unknown';
-            }
-            item.stage = 'PUBLISHED_AT';
-            return item;
-        }),
-    );
+    const tasks = items.map(async (item) => {
+        const { iso, source } = await extractPublishedAtFromHtml(item.raw.url);
+        if (iso) {
+            item.raw.published_at = iso;
+            item.meta = item.meta || {};
+            item.meta.published_at_source = source;
+        } else {
+            item.meta = item.meta || {};
+            item.meta.published_at_source = item.meta.published_at_source || 'unknown';
+        }
+        item.stage = 'PUBLISHED_AT';
+        return item;
+    });
 
     const done = await Promise.all(tasks);
     return done;
@@ -901,23 +836,20 @@ async function runPublishedAtExtractor(items: ProcessedItem[]): Promise<Processe
 async function runAIEnrich(items: ProcessedItem[]): Promise<ProcessedItem[]> {
     console.log(`🤖 [AGENT 5/6] AI Enrich: Summary + UA translate + title + actions... (provider=${AI_PROVIDER}, useAI=${USE_AI})`);
 
-    const tasks = items.map((item) =>
-        limitAI(async () => {
-            // Rate limit: wait 4s to stay under ~15 RPM quota
-            await new Promise(r => setTimeout(r, 4000));
-            const result = await aiEnrichOne(item);
-            item.classification.de_summary = result.de_summary;
-            item.classification.uk_summary = result.uk_summary;
-            item.classification.uk_content = result.uk_content;
-            item.classification.actions = Array.isArray(result.actions) ? result.actions.slice(0, 3) : [];
-            item.meta = item.meta || {};
-            if (result.reasonTag) item.meta.reasonTag = result.reasonTag;
-            // Overwrite title with AI title
-            item.raw.title = result.uk_title || item.raw.title;
-            item.stage = 'AI_ENRICH';
-            return item;
-        })
-    );
+    const tasks = items.map(async (item) => {
+        // Vertex Client handles strict rate limiting and backoff internally
+        const result = await aiEnrichOne(item);
+        item.classification.de_summary = result.de_summary;
+        item.classification.uk_summary = result.uk_summary;
+        item.classification.uk_content = result.uk_content;
+        item.classification.actions = Array.isArray(result.actions) ? result.actions.slice(0, 3) : [];
+        item.meta = item.meta || {};
+        if (result.reasonTag) item.meta.reasonTag = result.reasonTag;
+        // Overwrite title with AI title
+        item.raw.title = result.uk_title || item.raw.title;
+        item.stage = 'AI_ENRICH';
+        return item;
+    });
     const done = await Promise.all(tasks);
     return done;
 }

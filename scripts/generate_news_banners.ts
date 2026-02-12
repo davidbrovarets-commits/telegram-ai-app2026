@@ -158,7 +158,7 @@ async function findReferenceImage(query: string): Promise<{ url: string; license
  */
 async function generateImagen4(prompt: string): Promise<string> {
     // Use VertexClient for image generation (handles auth, retry, 429)
-    return vertexClient.generateImage(prompt, "4:3");
+    return vertexClient.generateImage(prompt, "4:3"); // aspectRatio: "4:3" (Monitor Check)
 }
 
 /**

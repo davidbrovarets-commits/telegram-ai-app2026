@@ -416,32 +416,7 @@ type AIEnrichResult = {
     reasonTag?: string;
 };
 
-import { initializeApp } from "firebase/app";
-// import { getAI } from "firebase/ai"; // unused
-
-// ... imports
-
-/* -----------------------------
-   AI SERVICE (interface)
------------------------------- */
-
-// Check if app is already initialized to avoid "Duplicate App" error
-// In a script, it usually runs once, but let's be safe.
-// Note: We need the config from env.
-
-const firebaseConfig = {
-    apiKey: process.env.VITE_FIREBASE_API_KEY,
-    authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.VITE_FIREBASE_PROJECT_ID,
-    storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.VITE_FIREBASE_APP_ID,
-    measurementId: process.env.VITE_FIREBASE_MEASUREMENT_ID
-};
-
-// Initialize Firebase (if not already)
-// We designate a unique name for this app instance in the script to avoid conflicts with other imports if any.
-initializeApp(firebaseConfig, 'orchestratorApp');
+// Firebase Client SDK removed - using VertexClient for AI calls.
 
 
 /**
@@ -469,6 +444,10 @@ INPUT TEXT: ${text}
 `;
 
     try {
+        if (DRY_RUN) {
+            return fallbackMock(text, title);
+        }
+
         // VertexClient handles auth, retries, and rate limiting
         const parsed = await vertexClient.generateJSON<any>(prompt, 0.3);
 
@@ -496,7 +475,7 @@ function fallbackMock(text: string, title: string): AIEnrichResult {
         uk_title: `[UA Mock] ${title}`,
         action_hint: '',
         actions: [],
-        reasonTag: 'SYSTEM_PRIORITY',
+        reasonTag: 'IMPORTANT_LOCAL',
     };
 }
 
@@ -984,6 +963,7 @@ async function cycle() {
     pipeline = await runDedup(pipeline);
 
     // --- SAFETY CAP (Patch 2026-02-12) ---
+    const MAX_ORCHESTRATOR_BATCH = Math.min(200, Math.max(1, Number(process.env.MAX_ORCHESTRATOR_BATCH || 50))); // Safety Cap for bulk operation
     if (pipeline.length > MAX_ORCHESTRATOR_BATCH) {
         console.warn(`⚠️ Safety: Trimming batch from ${pipeline.length} to ${MAX_ORCHESTRATOR_BATCH}`);
         pipeline.length = MAX_ORCHESTRATOR_BATCH; // In-place trim

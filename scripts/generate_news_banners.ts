@@ -16,10 +16,11 @@ const DRY_RUN_RAW = (process.env.NEWS_IMAGES_DRY_RUN_PROMPT || '').trim().toLowe
 const IS_DRY_RUN = ['true', '1', 'yes', 'on'].includes(DRY_RUN_RAW);
 
 // --- SAFETY & RELIABILITY (PATCH 4: 2026-02-12) ---
-const MAX_IMAGES_PER_RUN = 20;        // HARD CAP
-const MAX_CONCURRENCY = 2;            // Parallel generation cap
-const MAX_RETRIES = 2;                // Prevent retry storms
-const SAFETY_ABORT_THRESHOLD = 30;    // Absolute kill-switch
+// Allow ops overrides via env, but clamp to safe bounds.
+const MAX_IMAGES_PER_RUN = Math.min(50, Math.max(1, Number(process.env.MAX_IMAGES_PER_RUN || 20)));      // HARD CAP
+const MAX_CONCURRENCY = Math.min(4, Math.max(1, Number(process.env.MAX_CONCURRENCY || 2)));             // Parallel cap
+const MAX_RETRIES = Math.min(3, Math.max(0, Number(process.env.MAX_RETRIES || 2)));                      // Retry storm guard
+const SAFETY_ABORT_THRESHOLD = Math.min(100, Math.max(5, Number(process.env.SAFETY_ABORT_THRESHOLD || 30))); // Kill-switch
 
 console.log("SAFETY CONFIG:");
 console.log("MAX_IMAGES_PER_RUN:", MAX_IMAGES_PER_RUN);
@@ -35,7 +36,7 @@ const MANDATORY_LIGHTING_TOKENS = [
 ];
 // PATCH 3.1: Technical Tokens
 const MANDATORY_LENS_TOKENS = ['35mm lens', '50mm lens'];
-const MANDATORY_APERTURE_TOKENS = ['f/2.8 aperture', 'f/8 aperture']; // PATCH 3.1.1: Fixed tokens
+const MANDATORY_APERTURE_TOKENS = ['f/2.8 aperture', 'f/8 aperture']; // keep tokens canonical (lowercase)
 
 const NEGATIVE_PROMPTS = "Blurry. Low quality. Distorted text. Watermark. Oversaturated. Anatomically incorrect. No text. No logos. Not an illustration. No propaganda. No distorted faces. No uncanny people.";
 
@@ -117,7 +118,7 @@ function validatePrompt(prompt: string): { valid: boolean; reason?: string } {
     const hasLens = MANDATORY_LENS_TOKENS.some(t => p.includes(t));
     if (!hasLens) return { valid: false, reason: 'Missing mandatory Lens token' };
 
-    const hasAperture = MANDATORY_APERTURE_TOKENS.some(t => p.includes(t)); // PATCH 3.1.1: Removed toLowerCase as tokens are strict
+    const hasAperture = MANDATORY_APERTURE_TOKENS.some(t => p.includes(t.toLowerCase()));
     if (!hasAperture) return { valid: false, reason: 'Missing mandatory Aperture token' };
 
     // 5. Text Safety
@@ -354,7 +355,8 @@ async function run() {
         // We can check attempts here too if we want to be extra safe.
         if (item.image_generation_attempts >= MAX_RETRIES) {
             console.warn(`[Safety] Skipping item ${item.id} (Attempts ${item.image_generation_attempts} >= ${MAX_RETRIES})`);
-            await markImageFailed(supabase, item.id, "Max retries exceeded (Safety Guard)", MAX_RETRIES);
+            // Do NOT overwrite attempts with MAX_RETRIES (could reduce/warp). Preserve existing attempts by setting same value.
+            await markImageFailed(supabase, item.id, "Max retries exceeded (Safety Guard)", item.image_generation_attempts);
             continue;
         }
 

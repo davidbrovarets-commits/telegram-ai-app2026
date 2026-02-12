@@ -6,8 +6,8 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: news-images-generator
-  cancel-in-progress: true
+  group: vertex-ai-global
+  cancel-in-progress: false
 
 jobs:
   generate-news-images:

@@ -15,8 +15,8 @@ on:
 # Prevent concurrent orchestrator runs.
 # If a new run starts, cancel the previous in-progress run automatically.
 concurrency:
-  group: l6-news-orchestrator-${{ github.ref }}
-  cancel-in-progress: true
+  group: vertex-ai-global
+  cancel-in-progress: false
 
 jobs:
   run-orchestrator:

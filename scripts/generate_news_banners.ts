@@ -15,6 +15,17 @@ const BATCH_SIZE = Math.min(50, Math.max(1, BATCH_SIZE_UNCLAMPED));
 const DRY_RUN_RAW = (process.env.NEWS_IMAGES_DRY_RUN_PROMPT || '').trim().toLowerCase();
 const IS_DRY_RUN = ['true', '1', 'yes', 'on'].includes(DRY_RUN_RAW);
 
+// --- SAFETY & RELIABILITY (PATCH 4: 2026-02-12) ---
+const MAX_IMAGES_PER_RUN = 20;        // HARD CAP
+const MAX_CONCURRENCY = 2;            // Parallel generation cap
+const MAX_RETRIES = 2;                // Prevent retry storms
+const SAFETY_ABORT_THRESHOLD = 30;    // Absolute kill-switch
+
+console.log("SAFETY CONFIG:");
+console.log("MAX_IMAGES_PER_RUN:", MAX_IMAGES_PER_RUN);
+console.log("MAX_CONCURRENCY:", MAX_CONCURRENCY);
+console.log("MAX_RETRIES:", MAX_RETRIES);
+
 // --- PATCH 3: CONSTANTS & VALIDATION ---
 const MANDATORY_REALISM_TOKENS = [
     'film grain', 'chromatic aberration', 'dust particles', 'subtle motion blur'
@@ -294,15 +305,18 @@ async function processItem(item: NewsItemImageState) {
         const msg = e instanceof Error ? e.message : String(e);
         console.error(`[Job] Failed item ${item.id}:`, msg);
 
-        // Patch 5: Smart Retry Logic
+        // Patch 5: Smart Retry Logic + Patch 4 Safety
         // If error is related to Safety, Policy, or 400 Bad Request (likely invalid prompt),
         // we should NOT retry to avoid burning attempts/quota or getting banned.
         const isBlockingError = /safety|blocked|policy|content/i.test(msg) || msg.includes('400');
 
-        let attemptsToSet = item.image_generation_attempts;
-        if (isBlockingError) {
-            console.warn(`[Job] Blocking error detected for ${item.id}. Disabling further retries.`);
-            attemptsToSet = MAX_GENERATION_ATTEMPTS; // Max out attempts to stop retry
+        let attemptsToSet = item.image_generation_attempts + 1; // Increment attempt count
+
+        if (isBlockingError || attemptsToSet >= MAX_RETRIES) {
+            if (isBlockingError) console.warn(`[Job] Blocking error detected for ${item.id}. Disabling further retries.`);
+            else console.warn(`[Job] Max retries (${MAX_RETRIES}) reached for ${item.id}. Stop.`);
+
+            attemptsToSet = MAX_GENERATION_ATTEMPTS; // Max out attempts to stop retry logic in DB
         }
 
         await markImageFailed(supabase, item.id, msg, attemptsToSet);
@@ -316,11 +330,34 @@ async function processItem(item: NewsItemImageState) {
 async function run() {
     console.log('=== Starting News Image Pipeline ===');
     console.log(`[Job] DryRun = ${IS_DRY_RUN ? 'ON' : 'OFF'} (raw="${process.env.NEWS_IMAGES_DRY_RUN_PROMPT || ''}")`);
-    console.log(`[Job] Batch size = ${BATCH_SIZE} (Effective)`);
-    const items = await claimNewsForGeneration(supabase, BATCH_SIZE);
+    console.log(`[Job] Batch size = ${Math.min(BATCH_SIZE, MAX_IMAGES_PER_RUN)} (Effective Safety Cap)`);
+
+    // Safety: Claim only up to MAX_IMAGES_PER_RUN
+    const items = await claimNewsForGeneration(supabase, Math.min(BATCH_SIZE, MAX_IMAGES_PER_RUN));
     console.log(`[Job] Claimed ${items.length} items`);
 
+    // Safety: Hard Stop if too many items somehow claimed (though query limits it, good to double check)
+    if (items.length > SAFETY_ABORT_THRESHOLD) {
+        console.error("SAFETY STOP: Too many pending images claimed. Aborting run.");
+        process.exit(1);
+    }
+
+    // Safety: Serial Execution to respect MAX_CONCURRENCY (which is low, so serial is fine/safe)
+    // For true concurrency up to MAX_CONCURRENCY, we can use p-limit or similar, 
+    // but simpler to just process sequentially or in small chunks for now to be safe.
+    // The instruction said "Wrap image generation loop in a controlled async queue" 
+    // OR "sequential chunk execution". Let's do sequential for maximum safety.
+
     for (const item of items) {
+        // Enforce per-item retry limit overriding global if needed, 
+        // but here we just pass the item to processItem which handles logic.
+        // We can check attempts here too if we want to be extra safe.
+        if (item.image_generation_attempts >= MAX_RETRIES) {
+            console.warn(`[Safety] Skipping item ${item.id} (Attempts ${item.image_generation_attempts} >= ${MAX_RETRIES})`);
+            await markImageFailed(supabase, item.id, "Max retries exceeded (Safety Guard)", MAX_RETRIES);
+            continue;
+        }
+
         await processItem(item);
     }
     console.log('=== Batch Complete ===');

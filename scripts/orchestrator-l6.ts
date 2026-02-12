@@ -514,6 +514,7 @@ async function aiEnrichOne(item: ProcessedItem): Promise<AIEnrichResult> {
             return {
                 de_summary: de,
                 uk_summary: `[UA Mock] ${de}`,
+                uk_content: `[UA Mock Content] ${de}`, // Fix TS error
                 uk_title: `[UA Mock] ${title}`,
                 action_hint: text.toLowerCase().includes('frist') ? '⚠️ Увага: є строк/дія' : '',
                 actions: text.toLowerCase().includes('frist') ? ['deadline'] : [],
@@ -981,6 +982,13 @@ async function cycle() {
     pipeline = await runClassifier(pipeline);
     pipeline = runRouter(pipeline);
     pipeline = await runDedup(pipeline);
+
+    // --- SAFETY CAP (Patch 2026-02-12) ---
+    if (pipeline.length > MAX_ORCHESTRATOR_BATCH) {
+        console.warn(`⚠️ Safety: Trimming batch from ${pipeline.length} to ${MAX_ORCHESTRATOR_BATCH}`);
+        pipeline.length = MAX_ORCHESTRATOR_BATCH; // In-place trim
+    }
+    // -------------------------------------
 
     // NEW: Published date from article HTML
     pipeline = await runPublishedAtExtractor(pipeline);

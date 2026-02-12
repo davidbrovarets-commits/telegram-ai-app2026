@@ -71,10 +71,6 @@ export const NewsView = ({ land, city }: Omit<NewsViewProps, 'onNewsClick'>) => 
         // onNewsClick({ ...item, type: 'news' } as any); // This prop is for parent component, not needed if detail is shown here
     }
 
-    if (showArchive) {
-        return <ArchiveView onBack={() => setShowArchive(false)} />;
-    }
-
     if (selectedNews) {
         return (
             <NewsDetailView
@@ -82,6 +78,13 @@ export const NewsView = ({ land, city }: Omit<NewsViewProps, 'onNewsClick'>) => 
                 onBack={() => setSelectedNews(null)}
             />
         );
+    }
+
+    if (showArchive) {
+        return <ArchiveView
+            onBack={() => setShowArchive(false)}
+            onSelectNews={setSelectedNews}
+        />;
     }
 
     return (

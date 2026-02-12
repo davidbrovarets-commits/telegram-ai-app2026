@@ -44,3 +44,6 @@ Policy:
 - Use `gcloud auth print-access-token` via PATH with `shell: true` for local dev fallback.
 - Do not silently default projectId; fail-fast if missing.
 - Imagen model must be configurable via `VERTEX_IMAGEN_MODEL` to prevent unintended model usage during stabilization.
+
+### Resolved Issues
+- ✅ FIXED: Archive News — Click on card did not open news detail. Cause: Missing navigation/state handler. Fix: Wired `ArchiveView` click to `NewsView` selection state, ensuring detail view renders over archive view. Smoke-test: Open Archive -> Click Item -> Detail Opens.

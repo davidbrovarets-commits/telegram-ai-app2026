@@ -7,9 +7,10 @@ import { ArrowLeft } from 'lucide-react';
 
 interface ArchiveViewProps {
     onBack: () => void;
+    onSelectNews: (news: News) => void;
 }
 
-export const ArchiveView = ({ onBack }: ArchiveViewProps) => {
+export const ArchiveView = ({ onBack, onSelectNews }: ArchiveViewProps) => {
     const { history, handleArchiveDeletion } = useNews();
     const [archivedItems, setArchivedItems] = useState<Record<number, News>>({});
     const [loading, setLoading] = useState(true);
@@ -41,6 +42,7 @@ export const ArchiveView = ({ onBack }: ArchiveViewProps) => {
     const handleCardClick = (item: News) => {
         // Just log or maybe expand? For now same as news view but without tracking open rate maybe?
         console.log('Clicked archived item', item.id);
+        onSelectNews(item);
     };
 
     // Sort items by reverse order of addition (newest archived first) roughly, 

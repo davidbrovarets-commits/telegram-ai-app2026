@@ -1,13 +1,13 @@
 name: Weekly Production Update
 
 on:
-  schedule:
-    # Every Monday at 07:00 UTC
-    - cron: '0 7 * * 1'
+  # schedule:
+  #   # Every Monday at 07:09 UTC
+  #   - cron: '9 7 * * 1'
   workflow_dispatch: # Allow manual trigger
 
 concurrency:
-  group: weekly-prod-update-${{ github.ref }}
+  group: ag-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

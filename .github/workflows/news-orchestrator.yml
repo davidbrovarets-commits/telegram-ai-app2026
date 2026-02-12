@@ -2,8 +2,8 @@ name: L6 News Orchestrator
 
 on:
   # schedule: # TEMPORARILY DISABLED FOR STABILIZATION
-  #   # Run every hour at minute 0
-  #   - cron: '0 * * * *'
+  #   # Run every hour at minute 5
+  #   - cron: '5 * * * *'
   workflow_dispatch: # Allow manual trigger
     inputs:
       dry_run:
@@ -15,8 +15,8 @@ on:
 # Prevent concurrent orchestrator runs.
 # If a new run starts, cancel the previous in-progress run automatically.
 concurrency:
-  group: vertex-ai-global
-  cancel-in-progress: false
+  group: ag-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   run-orchestrator:
@@ -29,7 +29,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
         cache: 'npm'
 
     - name: Install dependencies
@@ -48,7 +48,6 @@ jobs:
         GOOGLE_PROJECT_ID: ${{ secrets.GOOGLE_PROJECT_ID }}
         GOOGLE_CLOUD_LOCATION: 'us-central1'
         # NEW: DRY RUN INPUT
-        DRY_RUN: ${{ inputs.dry_run || 'false' }}
+        DRY_RUN: ${{ inputs.dry_run }}
         AI_PROVIDER: 'vertex'
-        VERTEX_API_KEY: ${{ secrets.VERTEX_API_KEY }}
       run: npx tsx scripts/orchestrator-l6.ts

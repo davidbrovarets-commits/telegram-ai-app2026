@@ -1,8 +1,8 @@
 name: Personal Assistant (Secretary & Architect)
 
 on:
-  schedule:
-    - cron: '*/5 * * * *' # Every 5 minutes (Real-ish time)
+  # schedule:
+  #   - cron: '2,12,22,42,47,57 * * * *'
   workflow_dispatch:
   push:
     branches: [ main ] # Keep for testing interactions:
@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: personal-assistant-${{ github.ref }}
+  group: ag-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

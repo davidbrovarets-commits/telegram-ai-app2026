@@ -47,3 +47,20 @@ Policy:
 
 ### Resolved Issues
 - ✅ FIXED: Archive News — Click on card did not open news detail. Cause: Missing navigation/state handler. Fix: Wired `ArchiveView` click to `NewsView` selection state, ensuring detail view renders over archive view. Smoke-test: Open Archive -> Click Item -> Detail Opens.
+
+## Execution Governance v1.0 (GitHub Actions)
+**Status:** Enforced (incident-driven hardening)
+**Rule:** Never couple heavy workflows by time; couple by DB state.
+**Concurrency:** Every heavy workflow must include:
+```yaml
+concurrency:
+  group: ag-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+```
+**Cron Deconflict:** Heavy workflows must not start on the same minute (avoid minute 0).
+**Incident Freeze:** During stabilization/patching and any AI-provider incident, all schedules must be disabled and all in-progress runs cancelled before changes and tests.
+**Reactivation Order:** Monitor → Orchestrator → Image Generator → Auto-Healer → Secretary → Weekly jobs.
+
+- **CI Node Standard:** GitHub Actions for operational workflows must run on Node.js **20** (project runtime baseline).
+- **Vertex Auth:** CI uses ADC (google-github-actions/auth). No `VERTEX_API_KEY` in workflow env.
+

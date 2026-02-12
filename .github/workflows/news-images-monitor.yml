@@ -3,11 +3,11 @@ name: News Images Monitor (Read-Only)
 on:
   workflow_dispatch:
   # schedule: # TEMPORARILY DISABLED FOR STABILIZATION
-  #   - cron: "0 * * * *" # Hourly
+  #   - cron: '12,32,52 * * * *'
 
 concurrency:
-  group: vertex-ai-global
-  cancel-in-progress: false
+  group: ag-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   monitor:

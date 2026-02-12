@@ -1,13 +1,13 @@
 name: Weekly News Banner
 
 on:
-  schedule:
-    - cron: '0 8 * * 1' # Every Monday at 08:00 UTC
+  # schedule:
+  #   - cron: '7 6 * * 1'
   workflow_dispatch: # Manual trigger
 
 concurrency:
-  group: vertex-ai-global
-  cancel-in-progress: false
+  group: ag-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   generate-banner:

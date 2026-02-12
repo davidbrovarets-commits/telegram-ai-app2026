@@ -1,15 +1,7 @@
-
 import { supabase } from './supabaseClient';
 import { claimNewsForGeneration, markImageGenerated, markImageFailed, releaseImageLock, NewsItemImageState, MAX_GENERATION_ATTEMPTS } from './lib/imageStatus';
-import { VertexAI } from '@google-cloud/vertexai'; // PATCH 3.1: Removed unused imports
+import { vertexClient } from './utils/vertex-client';
 
-// Environment check for Google Auth
-import { GoogleAuth } from 'google-auth-library';
-import { execSync } from 'child_process';
-
-const PROJECT_ID = process.env.GOOGLE_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT || 'claude-vertex-prod';
-const LOCATION = process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
-const MODEL_ID = 'imagen-4.0-generate-001';
 const BUCKET_NAME = process.env.SUPABASE_NEWS_BUCKET || 'images';
 
 // Configurable Overrides (PATCH 2.1.1: Robust Parsing & Clamping)
@@ -28,7 +20,7 @@ const MANDATORY_REALISM_TOKENS = [
     'film grain', 'chromatic aberration', 'dust particles', 'subtle motion blur'
 ];
 const MANDATORY_LIGHTING_TOKENS = [
-    'cinematic lighting', 'rim light', 'chiaroscuro', 'natural diffused light'
+    'cinematic lighting', 'rim lighting', 'chiaroscuro lighting', 'natural diffused lighting'
 ];
 // PATCH 3.1: Technical Tokens
 const MANDATORY_LENS_TOKENS = ['35mm lens', '50mm lens'];
@@ -51,9 +43,6 @@ function buildFallbackPrompt(title: string, location: string): string {
  */
 async function generatePromptWithGemini(context: string, title: string, location: string): Promise<string> {
     try {
-        const vertexAI = new VertexAI({ project: PROJECT_ID, location: LOCATION });
-        const model = vertexAI.getGenerativeModel({ model: 'gemini-2.0-flash-001' });
-
         const systemInstruction = `You are an expert Art Director for a serious News Application.
 Your task is to describe a compelling, realistic, documentary-style photograph based on a news story.
 
@@ -81,14 +70,8 @@ News Content: "${context}"
 
 Describe the photo now.`;
 
-        const resp = await model.generateContent({
-            contents: [{ role: 'user', parts: [{ text: systemInstruction + '\n\n' + userPrompt }] }],
-            generationConfig: { maxOutputTokens: 300, temperature: 0.7 }
-        });
-
-        const text = resp.response.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!text) throw new Error('Empty response from Gemini Flash');
-
+        // Use VertexClient for text generation (will use default model or env var)
+        const text = await vertexClient.generateText(systemInstruction + '\n\n' + userPrompt, 0.7);
         return text.trim();
 
     } catch (e: unknown) {
@@ -174,57 +157,8 @@ async function findReferenceImage(query: string): Promise<{ url: string; license
  * 2. Imagen 4 Logic
  */
 async function generateImagen4(prompt: string): Promise<string> {
-    let accessToken = process.env.GOOGLE_ACCESS_TOKEN;
-
-    // Auth Fallback: gcloud CLI
-    if (!accessToken) {
-        try {
-            // Hotfix: Use portable command, relying on PATH
-            const gcloudCmd = 'gcloud auth print-access-token';
-            accessToken = execSync(gcloudCmd).toString().trim();
-        } catch {
-            // Ignore silent fail, try GoogleAuth
-        }
-    }
-
-    // Auth Fallback: Application Default Credentials
-    if (!accessToken) {
-        const auth = new GoogleAuth({ scopes: ['https://www.googleapis.com/auth/cloud-platform'] });
-        const client = await auth.getClient();
-        accessToken = (await client.getAccessToken()).token || undefined;
-    }
-
-    if (!accessToken) throw new Error('No Google Access Token found.');
-
-    const endpoint = `https://${LOCATION}-aiplatform.googleapis.com/v1beta1/projects/${PROJECT_ID}/locations/${LOCATION}/publishers/google/models/${MODEL_ID}:predict`;
-
-    const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            instances: [{ prompt: prompt }],
-            parameters: {
-                sampleCount: 1,
-                aspectRatio: "4:3", // Patch 4: Changed to 4:3
-                outputOptions: { mimeType: "image/png" }
-            }
-        })
-    });
-
-    if (!response.ok) {
-        const txt = await response.text();
-        throw new Error(`Vertex AI Error ${response.status}: ${txt}`);
-    }
-
-    const data = await response.json() as { predictions?: { bytesBase64Encoded: string }[] };
-    const b64 = data.predictions?.[0]?.bytesBase64Encoded;
-
-    if (!b64) throw new Error('No image data in Vertex response');
-
-    return b64;
+    // Use VertexClient for image generation (handles auth, retry, 429)
+    return vertexClient.generateImage(prompt, "4:3");
 }
 
 /**

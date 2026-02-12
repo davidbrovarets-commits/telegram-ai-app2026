@@ -52,10 +52,21 @@ export class VertexClient {
     private baseBackoffMs: number;
 
     constructor(config: VertexClientConfig = {}) {
-        this.projectId = config.projectId || process.env.GOOGLE_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT || 'claude-vertex-prod';
+        this.projectId =
+            config.projectId ||
+            process.env.GOOGLE_PROJECT_ID ||
+            process.env.GOOGLE_CLOUD_PROJECT ||
+            process.env.GCLOUD_PROJECT ||
+            '';
+        if (!this.projectId) {
+            throw new Error('[VertexClient] Missing projectId. Set GOOGLE_PROJECT_ID / GOOGLE_CLOUD_PROJECT / GCLOUD_PROJECT or pass config.projectId');
+        }
         this.location = config.location || process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
         this.modelId = config.modelId || process.env.VERTEX_MODEL || 'gemini-2.5-pro';
-        this.imagenModelId = config.imagenModelId || 'imagen-3.0-generate-001';
+        this.imagenModelId =
+            config.imagenModelId ||
+            process.env.VERTEX_IMAGEN_MODEL ||
+            'imagen-3.0-generate-001';
 
         // Concurrency & Rate Limit Knobs
         this.maxConcurrency = config.concurrency || parseInt(process.env.VERTEX_MAX_CONCURRENCY || '3', 10);
@@ -78,11 +89,9 @@ export class VertexClient {
 
         // 2. GCloud CLI (Fastest for local dev)
         try {
-            const gcloudCmd = process.platform === 'win32'
-                ? '& "C:\\Users\\David\\AppData\\Local\\Google\\Cloud SDK\\google-cloud-sdk\\bin\\gcloud.cmd" auth print-access-token'
-                : 'gcloud auth print-access-token';
+            const gcloudCmd = 'gcloud auth print-access-token';
 
-            const token = execSync(gcloudCmd, { encoding: 'utf-8', shell: 'powershell.exe' }).trim();
+            const token = execSync(gcloudCmd, { encoding: 'utf-8', shell: true }).trim();
             if (token && token.length > 20) return token;
         } catch (e) {
             // Ignore (fallback to GoogleAuth)

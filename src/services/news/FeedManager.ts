@@ -345,8 +345,11 @@ export class FeedManager {
 
         // Filter out used IDs if any exist
         let idsToExclude = usedIds;
-        if (usedIds.size > 0) {
-            query = query.not('id', 'in', `(${Array.from(usedIds).join(',')})`);
+        // Only positive numeric IDs are valid for SQL IN lists
+        const usedIdsPositive = Array.from(usedIds).filter((id) => typeof id === 'number' && id > 0);
+
+        if (usedIdsPositive.length > 0) {
+            query = query.not('id', 'in', `(${usedIdsPositive.join(',')})`);
         }
 
         let { data: candidates } = await query
@@ -392,9 +395,6 @@ export class FeedManager {
             console.log('[FeedManager] Not enough strict local candidates. Expanding to neighbors...');
             geoFiltered = this.filterByGeo(candidates as News[], true);
         }
-
-        // Apply Sort: Local > Fallback
-        geoFiltered = this.sortCandidatesByGeo(geoFiltered);
 
         // Apply Sort: Local > Fallback
         geoFiltered = this.sortCandidatesByGeo(geoFiltered);

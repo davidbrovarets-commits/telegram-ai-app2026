@@ -27,3 +27,20 @@
 - **Mode 1 (Default)**: Dry Run (List Only). Artifact produced: `legacy-delete-list.json`.
 - **Mode 2 (Action)**: Delete. Requires `LEGACY_PURGE_APPROVE="true"` in workflow dispatch.
 - **Safety**: Post-delete verification scans DB for broken links.
+
+## Ingestion & Source Registry (Patches RSS-NORM)
+
+### Policy
+- **Format**: All sources must provide a valid **RSS/Atom XML** feed.
+- **HTML Handling**: Raw HTML homepage URLs are **NOT supported** for ingestion.
+- **No-Feed Protocol**: Sources without a discoverable feed must be explicitly annotated in `source-registry.ts` with `// NO_FEED (reason: ...)`.
+- **Normalization**: The registry has been normalized (Feb 2026) to replace ~90 HTML URLs with discovering feeds and annotate ~140 missing ones.
+
+## Known Issues / Risks
+
+### Risk: Local auth fragility in Vertex client
+Vertex access token retrieval must not rely on machine-specific absolute paths or PowerShell-only execution.
+Policy:
+- Use `gcloud auth print-access-token` via PATH with `shell: true` for local dev fallback.
+- Do not silently default projectId; fail-fast if missing.
+- Imagen model must be configurable via `VERTEX_IMAGEN_MODEL` to prevent unintended model usage during stabilization.

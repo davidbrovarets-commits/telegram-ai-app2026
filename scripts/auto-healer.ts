@@ -1,5 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
+import { assertMutationAllowed, isDryRun } from './lib/mutation-guard';
+import { checkAndFixQuality } from './agents/quality-monitor';
 
 dotenv.config();
 
@@ -7,14 +9,9 @@ dotenv.config();
 const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
-// If keys are missing, we can't create a valid client. 
-// But we shouldn't crash at the top level if we want to log the error inside the function.
-// Actually, createClient might throw if URL is empty.
 const supabase = (supabaseUrl && supabaseKey)
     ? createClient(supabaseUrl, supabaseKey)
     : null as any;
-// We handle the null check inside runAutoHealer logic (added in previous step)
-
 
 export async function runAutoHealer() {
     console.log('🚑 Starting Auto-Healer Scan...');
@@ -22,12 +19,17 @@ export async function runAutoHealer() {
     // 0. Safety Check
     if (!process.env.VITE_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
         console.warn('⚠️ Missing Supabase credentials. Skipping Auto-Healer.');
-        return; // Exit gracefully instead of crashing
+        return;
+    }
+
+    // 0.1 DRY RUN GUARD
+    if (isDryRun()) {
+        console.log('🚑 [DRY_RUN] Auto-Healer: auto-healer in read-only mode');
+        // We do NOT return here, we proceed to read-only checks, 
+        // BUT we guard writes below.
     }
 
     // 1. GLOBAL SYSTEM CHECK: Is the content fresh?
-    // Determine if the *latest* news item in the pool is too old (> 24h).
-    // If so, it suggests the Orchestrator/Scraper is down.
     const { data: latestNews } = await supabase
         .from('news')
         .select('created_at')
@@ -42,15 +44,19 @@ export async function runAutoHealer() {
 
         if (hoursSinceUpdate > 24) {
             console.error(`🚨 CRITICAL: System stale! Last news was ${hoursSinceUpdate.toFixed(1)} hours ago.`);
-            // Potential Action: Trigger webhook, send email, or run fallback scraper?
-            // For now, log error to 'system_errors' so it's visible in DB
-            await supabase.from('system_errors').insert({
-                user_id: 'SYSTEM',
-                error_code: 'SYSTEM_STALE',
-                message: `Feed is stale (${hoursSinceUpdate.toFixed(1)}h)`,
-                severity: 'CRITICAL',
-                status: 'OPEN'
-            });
+
+            if (isDryRun()) {
+                console.log('[DRY_RUN] Would insert SYSTEM_STALE error.');
+            } else {
+                assertMutationAllowed('auto-healer:insert-system-error');
+                await supabase.from('system_errors').insert({
+                    user_id: 'SYSTEM',
+                    error_code: 'SYSTEM_STALE',
+                    message: `Feed is stale (${hoursSinceUpdate.toFixed(1)}h)`,
+                    severity: 'CRITICAL',
+                    status: 'OPEN'
+                });
+            }
         } else {
             console.log(`✅ System Healthy. Last news: ${hoursSinceUpdate.toFixed(1)}h ago.`);
         }
@@ -59,9 +65,8 @@ export async function runAutoHealer() {
     // 3. RUN SUB-TASKS
     await runDatabaseCleaner();
     await checkSourceHealth();
-    await runAIReviver(); // Level 3
-    await runQualityMonitor(); // Level 4: Quality Check
-
+    // await runAIReviver(); // Level 3 (commented out in original?)
+    await runQualityMonitor();
 
     // 4. Fetch OPEN Client Errors
     const { data: errors, error } = await supabase
@@ -87,12 +92,17 @@ async function runDatabaseCleaner() {
     console.log('🧹 [Level 1] Running Database Cleaner...');
     const THIRTY_DAYS_AGO = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-    // Delete old news that are NOT archived
+    if (isDryRun()) {
+        console.log('   [DRY_RUN] Skipping delete.');
+        return;
+    }
+
+    assertMutationAllowed('auto-healer:clean-db');
     const { count, error } = await supabase
         .from('news')
         .delete({ count: 'exact' })
         .lt('created_at', THIRTY_DAYS_AGO)
-        .neq('status', 'ARCHIVED'); // Keep archives!
+        .neq('status', 'ARCHIVED');
 
     if (error) console.error('   ❌ Failed to clean DB:', error.message);
     else console.log(`   ✅ Cleaned ${count || 0} old news items.`);
@@ -102,17 +112,15 @@ async function runDatabaseCleaner() {
 async function checkSourceHealth() {
     console.log('🕵️‍♂️ [Level 2] Inspecting Source Health...');
 
-    // Get unique cities present in the database (active only)
     const { data: cities } = await supabase
         .from('news')
         .select('city')
         .not('city', 'is', null)
         .eq('status', 'ACTIVE')
-        .order('created_at', { ascending: false }); // Heuristic
+        .order('created_at', { ascending: false });
 
     if (!cities) return;
 
-    // Group by City and find latest date
     const uniqueCities = [...new Set(cities.map((c: { city: string }) => c.city))];
     const NOW = Date.now();
     let issuesFound = 0;
@@ -132,14 +140,19 @@ async function checkSourceHealth() {
             const hours = (NOW - new Date(latest.created_at).getTime()) / (1000 * 60 * 60);
             if (hours > 48) {
                 console.warn(`   ⚠️ City '${city}' is STALE! (${hours.toFixed(1)}h old)`);
-                // Log to system_errors so we see it in dashboard
-                await supabase.from('system_errors').insert({
-                    user_id: 'SYSTEM',
-                    error_code: 'SOURCE_STALE',
-                    message: `City ${city} has no news for ${hours.toFixed(1)}h`,
-                    severity: 'WARNING',
-                    status: 'OPEN'
-                });
+
+                if (isDryRun()) {
+                    console.log('[DRY_RUN] Would insert system error.');
+                } else {
+                    assertMutationAllowed('auto-healer:insert-system-error');
+                    await supabase.from('system_errors').insert({
+                        user_id: 'SYSTEM',
+                        error_code: 'SOURCE_STALE',
+                        message: `City ${city} has no news for ${hours.toFixed(1)}h`,
+                        severity: 'WARNING',
+                        status: 'OPEN'
+                    });
+                }
                 issuesFound++;
             }
         }
@@ -149,17 +162,10 @@ async function checkSourceHealth() {
     else console.log(`   ⚠️ Found ${issuesFound} stale cities.`);
 }
 
-
-
-import { checkAndFixQuality } from './agents/quality-monitor';
-
 // --- LEVEL 4: QUALITY MONITOR 🧐 ---
 async function runQualityMonitor() {
     console.log('🧐 [Level 4] Running Quality Monitor (Tone & Format)...');
 
-    // Fetch batch of active news to check
-    // We can't check everything every time. Random sample? Or sorted by created_at?
-    // Let's check last 20 items.
     const { data: recentNews } = await supabase
         .from('news')
         .select('*')
@@ -173,18 +179,22 @@ async function runQualityMonitor() {
     for (const item of recentNews) {
         const fix = await checkAndFixQuality({
             id: item.id,
-            title: item.title_en || item.title, // Check translated title if possible 
+            title: item.title_en || item.title,
             content: item.summary_en || item.content || ''
         });
 
         if (fix) {
-            // Update DB with fixed content
-            await supabase
-                .from('news')
-                .update({ summary_en: fix.new_summary })
-                .eq('id', fix.original_id);
+            if (isDryRun()) {
+                console.log(`   [DRY_RUN] Would update quality for item ${fix.original_id}`);
+            } else {
+                assertMutationAllowed('auto-healer:quality-update');
+                await supabase
+                    .from('news')
+                    .update({ summary_en: fix.new_summary })
+                    .eq('id', fix.original_id);
 
-            console.log(`      ✅ Fixed quality for item ${fix.original_id}`);
+                console.log(`      ✅ Fixed quality for item ${fix.original_id}`);
+            }
             issuesFixed++;
         }
     }
@@ -194,12 +204,18 @@ async function runQualityMonitor() {
 
 async function tryFixError(err: any) {
     console.log(`🔧 Fixing Issue ${err.error_code} for User ${err.user_id}...`);
+
+    if (isDryRun()) {
+        console.log('   [DRY_RUN] Skipping fix execution.');
+        return;
+    }
+
+    assertMutationAllowed('auto-healer:fix-error');
+
     let fixed = false;
 
     try {
-        // --- STRATEGY 1: Corrupted State (JSON Error) ---
         if (err.error_code === 'STATE_CORRUPTION') {
-            // ACTION: Reset User State to defaults
             await supabase
                 .from('user_news_states')
                 .delete()
@@ -208,11 +224,7 @@ async function tryFixError(err: any) {
             fixed = true;
             console.log(`   -> Corrupted state wiped. User will start fresh.`);
         }
-
-        // --- STRATEGY 2: Feed Empty (Stuck in 0) ---
         else if (err.error_code === 'FEED_EMPTY') {
-            // ACTION: Force delete 'visibleFeed' in DB so client refills it
-            // We read the state first
             const { data: userState } = await supabase
                 .from('user_news_states')
                 .select('state')
@@ -231,7 +243,6 @@ async function tryFixError(err: any) {
             }
         }
 
-        // --- MARK AS FIXED ---
         if (fixed) {
             await supabase
                 .from('system_errors')
@@ -246,6 +257,3 @@ async function tryFixError(err: any) {
         console.error(`💥 Failed to fix ${err.id}:`, e);
     }
 }
-
-// Export only, let orchestrator call it
-// runAutoHealer();

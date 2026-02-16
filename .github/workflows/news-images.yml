@@ -42,6 +42,7 @@ jobs:
           # GCP / Vertex (MUST match what scripts/generate_news_banners.ts expects)
           GOOGLE_PROJECT_ID: ${{ secrets.GOOGLE_PROJECT_ID }}
           GOOGLE_CLOUD_LOCATION: 'us-central1'
+          DRY_RUN: 'false'
         run: |
           # Access token for direct REST calls to Vertex Imagen
           export GOOGLE_ACCESS_TOKEN=$(gcloud auth print-access-token)

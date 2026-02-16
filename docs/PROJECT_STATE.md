@@ -64,3 +64,9 @@ concurrency:
 - **CI Node Standard:** GitHub Actions for operational workflows must run on Node.js **20** (project runtime baseline).
 - **Vertex Auth:** CI uses ADC (google-github-actions/auth). No `VERTEX_API_KEY` in workflow env.
 
+## Safety Hardening (Patch DRY-RUN)
+- **Hard Mutation Guard**: `scripts/lib/mutation-guard.ts` enforces `DRY_RUN` checks at the code level.
+- **Local Default**: `DRY_RUN=true` (via `scripts/local-dev-run.ts`). Explicit `DRY_RUN=false` required for mutations.
+- **Production**: All mutating workflows explicitly set `DRY_RUN='false'`.
+- **CI**: `ci-smoke` runs with `DRY_RUN=true` to verify logic without side effects.
+

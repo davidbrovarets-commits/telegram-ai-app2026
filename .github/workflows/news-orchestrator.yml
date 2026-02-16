@@ -47,7 +47,7 @@ jobs:
         SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         GOOGLE_PROJECT_ID: ${{ secrets.GOOGLE_PROJECT_ID }}
         GOOGLE_CLOUD_LOCATION: 'us-central1'
-        # NEW: DRY RUN INPUT
-        DRY_RUN: ${{ inputs.dry_run }}
+        # NEW: DRY RUN INPUT (Default to 'false' for schedule)
+        DRY_RUN: ${{ inputs.dry_run || 'false' }}
         AI_PROVIDER: 'vertex'
       run: npx tsx scripts/orchestrator-l6.ts

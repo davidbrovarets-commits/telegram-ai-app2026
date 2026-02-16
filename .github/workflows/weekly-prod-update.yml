@@ -36,6 +36,7 @@ jobs:
       - name: Generate Banner
         env:
           GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_PROJECT_ID }}
+          DRY_RUN: 'false'
         run: |
           # Get Access Token for the script
           export GOOGLE_ACCESS_TOKEN=$(gcloud auth print-access-token)

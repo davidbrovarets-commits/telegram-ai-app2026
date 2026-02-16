@@ -15,7 +15,10 @@
     "test": "vitest run",
     "preflight": "tsx scripts/preflight.ts",
     "preflight:lint": "PREFLIGHT_LINT=1 tsx scripts/preflight.ts",
-    "ai:diff-review": "tsx scripts/vertex_diff_review.ts"
+    "ai:diff-review": "tsx scripts/vertex_diff_review.ts",
+    "dev:dry": "tsx scripts/local-dev-run.ts",
+    "dev:run": "cross-env DRY_RUN=false tsx scripts/local-dev-run.ts",
+    "dev:check": "tsx scripts/preflight.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.72.1",

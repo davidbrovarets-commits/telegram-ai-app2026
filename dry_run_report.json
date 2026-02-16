@@ -1,0 +1,922 @@
+{
+  "timestamp": "2026-02-12T20:54:35.524Z",
+  "mode": "DRY_RUN",
+  "collected": 50,
+  "items": [
+    {
+      "id": "531ce73ec1313f2eb342d1ea",
+      "title": "[UA Mock] Mehr Barrierefreiheit",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Gesetzgebung"
+        ],
+        "relevance_score": 40,
+        "type": "IMPORTANT",
+        "actions": [],
+        "de_summary": "Der Gesetzentwurf enthält wichtige Regelungen zur Verbesserung der Barrierefreiheit im öffentlichen und im privaten Bereich....",
+        "uk_summary": "[UA Mock] Der Gesetzentwurf enthält wichtige Regelungen zur Verbesserung der Barrierefreiheit im öffentlichen und im privaten Bereich....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Der Gesetzentwurf enthält wichtige Regelungen zur Verbesserung der Barrierefreiheit im öffentlichen und im privaten Bereich...."
+      }
+    },
+    {
+      "id": "3b6a4dc7de7237fca5beb9d1",
+      "title": "[UA Mock] Bundesministerin Bärbel Bas empfängt die moldauische Arbeitsministerin Natalia Plugaru",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Arbeit",
+          "Events"
+        ],
+        "relevance_score": 35,
+        "type": "INFO",
+        "actions": [],
+        "de_summary": "Die Ministerinnen haben ein gemeinsames Arbeitsprogramm zur vertieften Zusammenarbeit unterzeichnet....",
+        "uk_summary": "[UA Mock] Die Ministerinnen haben ein gemeinsames Arbeitsprogramm zur vertieften Zusammenarbeit unterzeichnet....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Die Ministerinnen haben ein gemeinsames Arbeitsprogramm zur vertieften Zusammenarbeit unterzeichnet...."
+      }
+    },
+    {
+      "id": "2c42727b9babd8c3e3577843",
+      "title": "[UA Mock] MY TURN startet in zweite Förderphase",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Aufenthalt",
+          "Events"
+        ],
+        "relevance_score": 45,
+        "type": "INFO",
+        "actions": [],
+        "de_summary": "Im ESF Plus-Förderprogramm \"MY TURN - Frauen mit Migrationserfahrung starten durch\" konnten bislang knapp 30.000 Teilnehmerinnen von einem umfangreichen, zielgruppenspezifischen Angebot profitieren....",
+        "uk_summary": "[UA Mock] Im ESF Plus-Förderprogramm \"MY TURN - Frauen mit Migrationserfahrung starten durch\" konnten bislang knapp 30.000 Teilnehmerinnen von einem umfangreichen, zielgruppenspezifischen Angebot profitieren....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Im ESF Plus-Förderprogramm \"MY TURN - Frauen mit Migrationserfahrung starten durch\" konnten bislang knapp 30.000 Teilnehmerinnen von einem umfangreichen, zielgruppenspezifischen Angebot profitieren...."
+      }
+    },
+    {
+      "id": "914b62e58ea58d9424fac5f7",
+      "title": "[UA Mock] \"Gemeinsam einzigartig\": Am 4. Februar ist Weltkrebstag",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Arbeit"
+        ],
+        "relevance_score": 20,
+        "type": "INFO",
+        "actions": [],
+        "de_summary": "Am 4. Februar, erinnert das Aktionsbündnis \"Roadmap on Carcinogens\" unter Federführung des BMAS Unternehmen an ihre Verantwortung für eine sichere Arbeitsumgebung....",
+        "uk_summary": "[UA Mock] Am 4. Februar, erinnert das Aktionsbündnis \"Roadmap on Carcinogens\" unter Federführung des BMAS Unternehmen an ihre Verantwortung für eine sichere Arbeitsumgebung....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Am 4. Februar, erinnert das Aktionsbündnis \"Roadmap on Carcinogens\" unter Federführung des BMAS Unternehmen an ihre Verantwortung für eine sichere Arbeitsumgebung...."
+      }
+    },
+    {
+      "id": "43143c947c2e7bea0cbc84f2",
+      "title": "[UA Mock] Arbeitsmarkt weiter unter Druck",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Arbeit",
+          "Events"
+        ],
+        "relevance_score": 35,
+        "type": "INFO",
+        "actions": [],
+        "de_summary": "Bundesministerin Bärbel Bas zu den Arbeitsmarktzahlen im Januar 2026....",
+        "uk_summary": "[UA Mock] Bundesministerin Bärbel Bas zu den Arbeitsmarktzahlen im Januar 2026....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Bundesministerin Bärbel Bas zu den Arbeitsmarktzahlen im Januar 2026...."
+      }
+    },
+    {
+      "id": "60bccfec7e009bc0c71b159f",
+      "title": "[UA Mock] Bundesministerin Bärbel Bas auf Betriebsbesuch bei ABB",
+      "routing": {
+        "layer": "STATE",
+        "target_state": "Brandenburg"
+      },
+      "classification": {
+        "topics": [
+          "Events"
+        ],
+        "relevance_score": 15,
+        "type": "FUN",
+        "actions": [],
+        "de_summary": "Das Ausbildungszentrum des Elektrifizierungs- und Automationsspezialisten ABB in Berlin-Pankow ist mit rund 650 Auszubildenden das größte in Berlin und Brandenburg. Hier beginnen jedes Jahr 230 neue Azubis ihre Ausbildung, etwa als Anlagenm...",
+        "uk_summary": "[UA Mock] Das Ausbildungszentrum des Elektrifizierungs- und Automationsspezialisten ABB in Berlin-Pankow ist mit rund 650 Auszubildenden das größte in Berlin und Brandenburg. Hier beginnen jedes Jahr 230 neue Azubis ihre Ausbildung, etwa als Anlagenm...",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Das Ausbildungszentrum des Elektrifizierungs- und Automationsspezialisten ABB in Berlin-Pankow ist mit rund 650 Auszubildenden das größte in Berlin und Brandenburg. Hier beginnen jedes Jahr 230 neue Azubis ihre Ausbildung, etwa als Anlagenm..."
+      }
+    },
+    {
+      "id": "5d0f8f064256a72b18c951f1",
+      "title": "[UA Mock] Die Staatssekretär*innen stellen sich vor",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Arbeit",
+          "Gesetzgebung"
+        ],
+        "relevance_score": 60,
+        "type": "IMPORTANT",
+        "actions": [],
+        "de_summary": "Lernen Sie die Staatssekretär*innen des Bundesministeriums für Arbeit und Soziales und deren Aufgabenbereiche sowie die Integrationsbeauftragte der Bundesregierung kennen....",
+        "uk_summary": "[UA Mock] Lernen Sie die Staatssekretär*innen des Bundesministeriums für Arbeit und Soziales und deren Aufgabenbereiche sowie die Integrationsbeauftragte der Bundesregierung kennen....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Lernen Sie die Staatssekretär*innen des Bundesministeriums für Arbeit und Soziales und deren Aufgabenbereiche sowie die Integrationsbeauftragte der Bundesregierung kennen...."
+      }
+    },
+    {
+      "id": "52f06cc44ed842f060a476a5",
+      "title": "[UA Mock] Bärbel Bas, Bundesministerin für Arbeit und Soziales",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Arbeit"
+        ],
+        "relevance_score": 20,
+        "type": "INFO",
+        "actions": [],
+        "de_summary": "Bundesministerin Bärbel Bas stellt sich und das Ministerium für Arbeit und Soziales vor....",
+        "uk_summary": "[UA Mock] Bundesministerin Bärbel Bas stellt sich und das Ministerium für Arbeit und Soziales vor....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Bundesministerin Bärbel Bas stellt sich und das Ministerium für Arbeit und Soziales vor...."
+      }
+    },
+    {
+      "id": "9f32cb5eb487f3ead01e472e",
+      "title": "[UA Mock] \"Neue Chancen schaffen, das ist das zentrale Ziel\"",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Events"
+        ],
+        "relevance_score": 15,
+        "type": "FUN",
+        "actions": [],
+        "de_summary": "Rede von Bundesministerin Bärbel Bas zur 1. Lesung Grundsicherung im Plenum am 15. Januar 2026....",
+        "uk_summary": "[UA Mock] Rede von Bundesministerin Bärbel Bas zur 1. Lesung Grundsicherung im Plenum am 15. Januar 2026....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Rede von Bundesministerin Bärbel Bas zur 1. Lesung Grundsicherung im Plenum am 15. Januar 2026...."
+      }
+    },
+    {
+      "id": "f9e70fbf040461648cf2cb25",
+      "title": "[UA Mock] Vielfalt stärken: Neue INQA-Experimentierräume für mehr Diversität in Betrieben",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Arbeit"
+        ],
+        "relevance_score": 20,
+        "type": "INFO",
+        "actions": [],
+        "de_summary": "Die INQA-Experimentierräume gehen in die nächste Runde. Fünf Projekte erproben über einen Zeitraum von zwei Jahren innovative Ansätze, um Vielfalt in der Arbeitswelt zu fördern....",
+        "uk_summary": "[UA Mock] Die INQA-Experimentierräume gehen in die nächste Runde. Fünf Projekte erproben über einen Zeitraum von zwei Jahren innovative Ansätze, um Vielfalt in der Arbeitswelt zu fördern....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Die INQA-Experimentierräume gehen in die nächste Runde. Fünf Projekte erproben über einen Zeitraum von zwei Jahren innovative Ansätze, um Vielfalt in der Arbeitswelt zu fördern...."
+      }
+    },
+    {
+      "id": "ded35425a059d7735c14bfd2",
+      "title": "[UA Mock] Kommission nimmt Arbeit auf",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Arbeit"
+        ],
+        "relevance_score": 20,
+        "type": "INFO",
+        "actions": [],
+        "de_summary": "Die Bundesministerin für Arbeit und Soziales, Bärbel Bas, hat heute die Mitglieder der Alterssicherungskommission ernannt. Die Kommission hat unmittelbar darauf mit ihrer Arbeit begonnen....",
+        "uk_summary": "[UA Mock] Die Bundesministerin für Arbeit und Soziales, Bärbel Bas, hat heute die Mitglieder der Alterssicherungskommission ernannt. Die Kommission hat unmittelbar darauf mit ihrer Arbeit begonnen....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Die Bundesministerin für Arbeit und Soziales, Bärbel Bas, hat heute die Mitglieder der Alterssicherungskommission ernannt. Die Kommission hat unmittelbar darauf mit ihrer Arbeit begonnen...."
+      }
+    },
+    {
+      "id": "fa450121eded5ca20c592663",
+      "title": "[UA Mock] Arbeitsmarkt von schwächelnder Konjunktur geprägt",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Arbeit",
+          "Events"
+        ],
+        "relevance_score": 35,
+        "type": "INFO",
+        "actions": [],
+        "de_summary": "Mit der auslaufenden Herbstbelebung ist die Zahl arbeitsloser Menschen im Dezember 2025 leicht gestiegen. Insgesamt waren 2,908 Millionen Menschen arbeitslos – das waren 23.000 mehr als vor einem Monat....",
+        "uk_summary": "[UA Mock] Mit der auslaufenden Herbstbelebung ist die Zahl arbeitsloser Menschen im Dezember 2025 leicht gestiegen. Insgesamt waren 2,908 Millionen Menschen arbeitslos – das waren 23.000 mehr als vor einem Monat....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Mit der auslaufenden Herbstbelebung ist die Zahl arbeitsloser Menschen im Dezember 2025 leicht gestiegen. Insgesamt waren 2,908 Millionen Menschen arbeitslos – das waren 23.000 mehr als vor einem Monat...."
+      }
+    },
+    {
+      "id": "482173d10ff0366e6ee39331",
+      "title": "[UA Mock] Start des Beratungsangebots \"Faire Integration\"",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Arbeit",
+          "Gesetzgebung"
+        ],
+        "relevance_score": 60,
+        "type": "IMPORTANT",
+        "actions": [],
+        "de_summary": "Zum 1. Januar 2026 haben die Beratungsstellen ihre Arbeit auf neuer gesetzlicher Grundlage aufgenommen. Ziel ist es, durch eine arbeits- und sozialrechtliche Beratung Drittstaatsangehörige vor Ausbeutung und zugleich Einheimische vor Lohndu...",
+        "uk_summary": "[UA Mock] Zum 1. Januar 2026 haben die Beratungsstellen ihre Arbeit auf neuer gesetzlicher Grundlage aufgenommen. Ziel ist es, durch eine arbeits- und sozialrechtliche Beratung Drittstaatsangehörige vor Ausbeutung und zugleich Einheimische vor Lohndu...",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Zum 1. Januar 2026 haben die Beratungsstellen ihre Arbeit auf neuer gesetzlicher Grundlage aufgenommen. Ziel ist es, durch eine arbeits- und sozialrechtliche Beratung Drittstaatsangehörige vor Ausbeutung und zugleich Einheimische vor Lohndu..."
+      }
+    },
+    {
+      "id": "6555f4bfc327481ec5dcf7f9",
+      "title": "[UA Mock] Das ändert sich im neuen Jahr",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Arbeit",
+          "Events"
+        ],
+        "relevance_score": 35,
+        "type": "INFO",
+        "actions": [],
+        "de_summary": "Übersicht über die wesentlichen Änderungen und Neuregelungen, die zum Jahresbeginn und im Laufe des Jahres 2026 im Zuständigkeitsbereich des Bundesministeriums für Arbeit und Soziales wirksam werden....",
+        "uk_summary": "[UA Mock] Übersicht über die wesentlichen Änderungen und Neuregelungen, die zum Jahresbeginn und im Laufe des Jahres 2026 im Zuständigkeitsbereich des Bundesministeriums für Arbeit und Soziales wirksam werden....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Übersicht über die wesentlichen Änderungen und Neuregelungen, die zum Jahresbeginn und im Laufe des Jahres 2026 im Zuständigkeitsbereich des Bundesministeriums für Arbeit und Soziales wirksam werden...."
+      }
+    },
+    {
+      "id": "9b60006861a785ed47f4a75b",
+      "title": "[UA Mock] Austausch zur bilateralen Zusammenarbeit mit der Ukraine",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Aufenthalt",
+          "Arbeit"
+        ],
+        "relevance_score": 50,
+        "type": "INFO",
+        "actions": [],
+        "de_summary": "Staatssekretärin Lilian Tschan und die ukrainische Vizewirtschaftsministerin Daryna Marchak verständigen sich auf die Fortführung der gemeinsamen Verwaltungspartnerschaft. Deren thematischer Schwerpunkt soll die Gesundheit und Sicherheit am...",
+        "uk_summary": "[UA Mock] Staatssekretärin Lilian Tschan und die ukrainische Vizewirtschaftsministerin Daryna Marchak verständigen sich auf die Fortführung der gemeinsamen Verwaltungspartnerschaft. Deren thematischer Schwerpunkt soll die Gesundheit und Sicherheit am...",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Staatssekretärin Lilian Tschan und die ukrainische Vizewirtschaftsministerin Daryna Marchak verständigen sich auf die Fortführung der gemeinsamen Verwaltungspartnerschaft. Deren thematischer Schwerpunkt soll die Gesundheit und Sicherheit am..."
+      }
+    },
+    {
+      "id": "3ff8404f2944842ea5bee572",
+      "title": "[UA Mock] Richterwahlausschuss wählt neue Richter*innen",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Arbeit"
+        ],
+        "relevance_score": 20,
+        "type": "INFO",
+        "actions": [],
+        "de_summary": "Neue Bundesrichterinnen und Bundesrichter für das Bundesarbeitsgericht und das Bundessozialgericht gewählt....",
+        "uk_summary": "[UA Mock] Neue Bundesrichterinnen und Bundesrichter für das Bundesarbeitsgericht und das Bundessozialgericht gewählt....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Neue Bundesrichterinnen und Bundesrichter für das Bundesarbeitsgericht und das Bundessozialgericht gewählt...."
+      }
+    },
+    {
+      "id": "79bfad826c64b20003fdbbce",
+      "title": "[UA Mock] Alterssicherungskommission nimmt ihre Arbeit auf",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Arbeit",
+          "Gesetzgebung"
+        ],
+        "relevance_score": 60,
+        "type": "IMPORTANT",
+        "actions": [],
+        "de_summary": "Das Bundeskabinett hat den vom BMAS vorgelegten Einsetzungsbeschluss für eine Alterssicherungskommission gefasst....",
+        "uk_summary": "[UA Mock] Das Bundeskabinett hat den vom BMAS vorgelegten Einsetzungsbeschluss für eine Alterssicherungskommission gefasst....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Das Bundeskabinett hat den vom BMAS vorgelegten Einsetzungsbeschluss für eine Alterssicherungskommission gefasst...."
+      }
+    },
+    {
+      "id": "f4fe59e02e36ae01040a2c3d",
+      "title": "[UA Mock] Kabinett beschließt weitere Verlängerung des Kurzarbeitergeldes auf bis zu 24 Monate",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Arbeit",
+          "Gesetzgebung"
+        ],
+        "relevance_score": 60,
+        "type": "IMPORTANT",
+        "actions": [],
+        "de_summary": "Das Bundeskabinett beschließt die Vierte Verordnung über die Bezugsdauer für das Kurzarbeitergeld....",
+        "uk_summary": "[UA Mock] Das Bundeskabinett beschließt die Vierte Verordnung über die Bezugsdauer für das Kurzarbeitergeld....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Das Bundeskabinett beschließt die Vierte Verordnung über die Bezugsdauer für das Kurzarbeitergeld...."
+      }
+    },
+    {
+      "id": "3dd3fa81273f54f89a226cff",
+      "title": "[UA Mock] Solidarität und Eigenverantwortung neu ausbalancieren",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Arbeit",
+          "Gesetzgebung"
+        ],
+        "relevance_score": 60,
+        "type": "IMPORTANT",
+        "actions": [],
+        "de_summary": "Das Bundeskabinett hat 17. Dezember 2025 den Gesetzentwurf zur Umgestaltung der Grundsicherung für Arbeitsuchende beschlossen. Die Bundesregierung setzt mit dem 13. SGB II-Änderungsgesetz den entsprechenden Auftrag aus dem Koalitionsvertrag...",
+        "uk_summary": "[UA Mock] Das Bundeskabinett hat 17. Dezember 2025 den Gesetzentwurf zur Umgestaltung der Grundsicherung für Arbeitsuchende beschlossen. Die Bundesregierung setzt mit dem 13. SGB II-Änderungsgesetz den entsprechenden Auftrag aus dem Koalitionsvertrag...",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Das Bundeskabinett hat 17. Dezember 2025 den Gesetzentwurf zur Umgestaltung der Grundsicherung für Arbeitsuchende beschlossen. Die Bundesregierung setzt mit dem 13. SGB II-Änderungsgesetz den entsprechenden Auftrag aus dem Koalitionsvertrag..."
+      }
+    },
+    {
+      "id": "116cee01a68834a18154d0b4",
+      "title": "[UA Mock] Im Austausch zur Zukunft der Arbeit: Staatssekretärin Lilian Tschan in China",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Arbeit"
+        ],
+        "relevance_score": 20,
+        "type": "INFO",
+        "actions": [],
+        "de_summary": "Diskutiert wurden die Herausforderungen des demografischen Wandels für die Rentenversicherung und die Sicherung guter Arbeitsbedingungen....",
+        "uk_summary": "[UA Mock] Diskutiert wurden die Herausforderungen des demografischen Wandels für die Rentenversicherung und die Sicherung guter Arbeitsbedingungen....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Diskutiert wurden die Herausforderungen des demografischen Wandels für die Rentenversicherung und die Sicherung guter Arbeitsbedingungen...."
+      }
+    },
+    {
+      "id": "18c83110fc2547e50d2b6cf3",
+      "title": "[UA Mock] For more occupational safety – Korean members of parliament visit the Federal Ministry of Labour and Social Affairs",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Events"
+        ],
+        "relevance_score": 15,
+        "type": "FUN",
+        "actions": [],
+        "de_summary": "Parliamentary State Secretary Katja Mast received members of the Korean National Assembly at the Federal Ministry of Labour and Social Affairs to discuss prevention strategies in occupational safety and sustainable approaches to pension fin...",
+        "uk_summary": "[UA Mock] Parliamentary State Secretary Katja Mast received members of the Korean National Assembly at the Federal Ministry of Labour and Social Affairs to discuss prevention strategies in occupational safety and sustainable approaches to pension fin...",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Parliamentary State Secretary Katja Mast received members of the Korean National Assembly at the Federal Ministry of Labour and Social Affairs to discuss prevention strategies in occupational safety and sustainable approaches to pension fin..."
+      }
+    },
+    {
+      "id": "ce9b14959690b05111e1bd1c",
+      "title": "[UA Mock] Für mehr Arbeitssicherheit – koreanische Parlamentsabgeordnete im BMAS",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Arbeit"
+        ],
+        "relevance_score": 20,
+        "type": "INFO",
+        "actions": [],
+        "de_summary": "Staatssekretärin Katja Mast empfing im BMAS Mitglieder der koreanischen Nationalversammlung, um über Präventionsstrategien im Arbeitsschutz und zukunftsfähige Wege der Rentenfinanzierung zu sprechen....",
+        "uk_summary": "[UA Mock] Staatssekretärin Katja Mast empfing im BMAS Mitglieder der koreanischen Nationalversammlung, um über Präventionsstrategien im Arbeitsschutz und zukunftsfähige Wege der Rentenfinanzierung zu sprechen....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Staatssekretärin Katja Mast empfing im BMAS Mitglieder der koreanischen Nationalversammlung, um über Präventionsstrategien im Arbeitsschutz und zukunftsfähige Wege der Rentenfinanzierung zu sprechen...."
+      }
+    },
+    {
+      "id": "e023f2dafe747474323c2ad5",
+      "title": "[UA Mock] Bärbel Bas zum Beschluss des Rentenpakets 2025",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Gesetzgebung"
+        ],
+        "relevance_score": 40,
+        "type": "IMPORTANT",
+        "actions": [],
+        "de_summary": "<p> <a href=\"https://www.bmas.de/SharedDocs/Videos/DE/Artikel/Rente/2025-12-05-bas-rentenpaket.html\" > <img align=\"left\" src=\"https://www.bmas.de/SharedDocs/Bilder/DE/Logos/rss-default.jpg?__blob=normal&v=4\" title=\"\" alt=\"\" /> </a> </p> <br...",
+        "uk_summary": "[UA Mock] <p> <a href=\"https://www.bmas.de/SharedDocs/Videos/DE/Artikel/Rente/2025-12-05-bas-rentenpaket.html\" > <img align=\"left\" src=\"https://www.bmas.de/SharedDocs/Bilder/DE/Logos/rss-default.jpg?__blob=normal&v=4\" title=\"\" alt=\"\" /> </a> </p> <br...",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: <p> <a href=\"https://www.bmas.de/SharedDocs/Videos/DE/Artikel/Rente/2025-12-05-bas-rentenpaket.html\" > <img align=\"left\" src=\"https://www.bmas.de/SharedDocs/Bilder/DE/Logos/rss-default.jpg?__blob=normal&v=4\" title=\"\" alt=\"\" /> </a> </p> <br..."
+      }
+    },
+    {
+      "id": "b62c02a2b4c6fd00bf2e25f5",
+      "title": "[UA Mock] Weiberfastnacht: Karneval als Krisenschild - Narren feiern im Regen",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Events"
+        ],
+        "relevance_score": 15,
+        "type": "FUN",
+        "actions": [],
+        "de_summary": "...",
+        "uk_summary": "[UA Mock] ...",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: ..."
+      }
+    },
+    {
+      "id": "3066e7b119fd0dbec0d06dff",
+      "title": "[UA Mock] Kriminalität: Falsche Tickets? Festnahmen nach Betrugsverdacht im Louvre",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Events"
+        ],
+        "relevance_score": 15,
+        "type": "FUN",
+        "actions": [],
+        "de_summary": "...",
+        "uk_summary": "[UA Mock] ...",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: ..."
+      }
+    },
+    {
+      "id": "ca86830bf0e3c17bf67e76c0",
+      "title": "[UA Mock] Olympische Winterspiele: Ukrainisches Rodelteam solidarisiert sich mit Heraskewytsch",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Aufenthalt"
+        ],
+        "relevance_score": 30,
+        "type": "INFO",
+        "actions": [],
+        "de_summary": "Das Rodelteam der Ukraine hat sich mit dem disqualifizierten Wladyslaw Heraskewytsch solidarisiert. Im Eisschnelllauf gewann Francesca Lollobrigida Gold. Das Liveblog...",
+        "uk_summary": "[UA Mock] Das Rodelteam der Ukraine hat sich mit dem disqualifizierten Wladyslaw Heraskewytsch solidarisiert. Im Eisschnelllauf gewann Francesca Lollobrigida Gold. Das Liveblog...",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Das Rodelteam der Ukraine hat sich mit dem disqualifizierten Wladyslaw Heraskewytsch solidarisiert. Im Eisschnelllauf gewann Francesca Lollobrigida Gold. Das Liveblog..."
+      }
+    },
+    {
+      "id": "eb353e9fc9fb1eb7c3d71558",
+      "title": "[UA Mock] Olympia: Voigt feiert Gold-Rodler",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Events"
+        ],
+        "relevance_score": 15,
+        "type": "FUN",
+        "actions": [],
+        "de_summary": "...",
+        "uk_summary": "[UA Mock] ...",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: ..."
+      }
+    },
+    {
+      "id": "602d49537eb34924dab59b74",
+      "title": "[UA Mock] Der Prozess Gisèle Pelicot: Ihre Sicht auf die Festnahme (Podcast-Folge 5)",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Events"
+        ],
+        "relevance_score": 15,
+        "type": "FUN",
+        "actions": [],
+        "de_summary": "In zwei neuen Podcast-Folgen erzählt Gisèle Pelicot, wie sie die Festnahme ihres Ehemannes erlebte. Wie sie ihren Peinigern vor Gericht begegnete. Und wie ihre Familie an den unfassbaren Taten zu zerbrechen drohte....",
+        "uk_summary": "[UA Mock] In zwei neuen Podcast-Folgen erzählt Gisèle Pelicot, wie sie die Festnahme ihres Ehemannes erlebte. Wie sie ihren Peinigern vor Gericht begegnete. Und wie ihre Familie an den unfassbaren Taten zu zerbrechen drohte....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: In zwei neuen Podcast-Folgen erzählt Gisèle Pelicot, wie sie die Festnahme ihres Ehemannes erlebte. Wie sie ihren Peinigern vor Gericht begegnete. Und wie ihre Familie an den unfassbaren Taten zu zerbrechen drohte...."
+      }
+    },
+    {
+      "id": "fb2065b0110a24a644d89a8e",
+      "title": "[UA Mock] Olympische Spiele 2026: Debatte über den Helm von Wladyslaw Heraskewytsch: Die falschen Tränen der Kirsty Coventry - ein Kommentar",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Aufenthalt",
+          "Gesetzgebung"
+        ],
+        "relevance_score": 70,
+        "type": "IMPORTANT",
+        "actions": [],
+        "de_summary": "Das IOC und seine neue Präsidentin haben mit der Disqualifikation des Ukrainers Wladyslaw Heraskewytsch ein verhängnisvolles Zeichen gesetzt. In Moskau werden sie sich freuen....",
+        "uk_summary": "[UA Mock] Das IOC und seine neue Präsidentin haben mit der Disqualifikation des Ukrainers Wladyslaw Heraskewytsch ein verhängnisvolles Zeichen gesetzt. In Moskau werden sie sich freuen....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Das IOC und seine neue Präsidentin haben mit der Disqualifikation des Ukrainers Wladyslaw Heraskewytsch ein verhängnisvolles Zeichen gesetzt. In Moskau werden sie sich freuen...."
+      }
+    },
+    {
+      "id": "88960791c948005b05b82a16",
+      "title": "[UA Mock] Minnesota – ICE: Grenzbeauftragter Tom Homan verkündet Ende von »Operation Metro Surge«",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Events"
+        ],
+        "relevance_score": 15,
+        "type": "FUN",
+        "actions": [],
+        "de_summary": "Zwei Menschen wurden bei Einsätzen des umstrittenen Grenzschutzes in Minneapolis erschossen, Trumps Abschiebepolitik spaltet die USA. Nun reagiert die Regierung....",
+        "uk_summary": "[UA Mock] Zwei Menschen wurden bei Einsätzen des umstrittenen Grenzschutzes in Minneapolis erschossen, Trumps Abschiebepolitik spaltet die USA. Nun reagiert die Regierung....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Zwei Menschen wurden bei Einsätzen des umstrittenen Grenzschutzes in Minneapolis erschossen, Trumps Abschiebepolitik spaltet die USA. Nun reagiert die Regierung...."
+      }
+    },
+    {
+      "id": "f298852475db88d11f95b62e",
+      "title": "[UA Mock] Aufrüstung: Inflation durch steigende Preise für Rüstungsgüter",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Gesetzgebung"
+        ],
+        "relevance_score": 40,
+        "type": "IMPORTANT",
+        "actions": [],
+        "de_summary": "Die Bundesregierung will Deutschland schnell wehrfähig machen und hat dafür theoretisch fast unbegrenzte Mittel. Bei den jüngsten Investitionen drängt sich die Frage auf: Sitzt das Geld zu locker?...",
+        "uk_summary": "[UA Mock] Die Bundesregierung will Deutschland schnell wehrfähig machen und hat dafür theoretisch fast unbegrenzte Mittel. Bei den jüngsten Investitionen drängt sich die Frage auf: Sitzt das Geld zu locker?...",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Die Bundesregierung will Deutschland schnell wehrfähig machen und hat dafür theoretisch fast unbegrenzte Mittel. Bei den jüngsten Investitionen drängt sich die Frage auf: Sitzt das Geld zu locker?..."
+      }
+    },
+    {
+      "id": "29fd33909fd63fc4f8e15883",
+      "title": "[UA Mock] Fatales Signal aus Deutschland",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Gesetzgebung"
+        ],
+        "relevance_score": 40,
+        "type": "IMPORTANT",
+        "actions": [],
+        "de_summary": "Bei ihrem Israelbesuch besucht Bundestagspräsidentin Julia Klöckner als erste europäische Spitzenpolitikerin den Gazastreifen. Damit sendet sie die falsche Botschaft....",
+        "uk_summary": "[UA Mock] Bei ihrem Israelbesuch besucht Bundestagspräsidentin Julia Klöckner als erste europäische Spitzenpolitikerin den Gazastreifen. Damit sendet sie die falsche Botschaft....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Bei ihrem Israelbesuch besucht Bundestagspräsidentin Julia Klöckner als erste europäische Spitzenpolitikerin den Gazastreifen. Damit sendet sie die falsche Botschaft...."
+      }
+    },
+    {
+      "id": "b34ce414789bb723fe3f5b74",
+      "title": "[UA Mock] KI-Holocaust-Fakes und Erinnerungsarbeit: Falsches Spiel mit Anne Frank",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Arbeit"
+        ],
+        "relevance_score": 20,
+        "type": "INFO",
+        "actions": [],
+        "de_summary": "Junge Menschen interessieren sich sehr für den Holocaust. Dabei werden sie in sozialen Medien oft mit gefälschten Bildern und Videos konfrontiert. Deutsche Gedenkstätten sind alarmiert. Aber KI kann auch eine Chance sein....",
+        "uk_summary": "[UA Mock] Junge Menschen interessieren sich sehr für den Holocaust. Dabei werden sie in sozialen Medien oft mit gefälschten Bildern und Videos konfrontiert. Deutsche Gedenkstätten sind alarmiert. Aber KI kann auch eine Chance sein....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Junge Menschen interessieren sich sehr für den Holocaust. Dabei werden sie in sozialen Medien oft mit gefälschten Bildern und Videos konfrontiert. Deutsche Gedenkstätten sind alarmiert. Aber KI kann auch eine Chance sein...."
+      }
+    },
+    {
+      "id": "c45edee330ed37d18c712983",
+      "title": "[UA Mock] Gil Ofarim: Antisemitismus-Beauftragter Felix Klein kritisiert Dschungelcamp-Auftritt",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Gesetzgebung"
+        ],
+        "relevance_score": 40,
+        "type": "IMPORTANT",
+        "actions": [],
+        "de_summary": "»Ich verstehe nicht, was in diesen Mann gefahren ist«: Der Antisemitismusbeauftragte der Bundesregierung, Felix Klein, findet harsche Worte für das Auftreten von Gil Ofarim im RTL-Dschungel....",
+        "uk_summary": "[UA Mock] »Ich verstehe nicht, was in diesen Mann gefahren ist«: Der Antisemitismusbeauftragte der Bundesregierung, Felix Klein, findet harsche Worte für das Auftreten von Gil Ofarim im RTL-Dschungel....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: »Ich verstehe nicht, was in diesen Mann gefahren ist«: Der Antisemitismusbeauftragte der Bundesregierung, Felix Klein, findet harsche Worte für das Auftreten von Gil Ofarim im RTL-Dschungel...."
+      }
+    },
+    {
+      "id": "5a5931f2070f37bdf20a2a33",
+      "title": "[UA Mock] Börse: Sie fürchten den Crash an den Aktienmärkten?",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Events"
+        ],
+        "relevance_score": 15,
+        "type": "FUN",
+        "actions": [],
+        "de_summary": "Crashpropheten warnen immer wieder vor dem großen Zusammenbruch am Finanzmarkt – dabei fällt ihre eigene Anlagebilanz oft verheerend aus. Hier erfahren Sie, wie Sie Warnungen einordnen und teure Fehler vermeiden....",
+        "uk_summary": "[UA Mock] Crashpropheten warnen immer wieder vor dem großen Zusammenbruch am Finanzmarkt – dabei fällt ihre eigene Anlagebilanz oft verheerend aus. Hier erfahren Sie, wie Sie Warnungen einordnen und teure Fehler vermeiden....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Crashpropheten warnen immer wieder vor dem großen Zusammenbruch am Finanzmarkt – dabei fällt ihre eigene Anlagebilanz oft verheerend aus. Hier erfahren Sie, wie Sie Warnungen einordnen und teure Fehler vermeiden...."
+      }
+    },
+    {
+      "id": "d1317736cf02591d69e0953e",
+      "title": "[UA Mock] Brandenburg: Bundesregierung gibt Schloss Meseberg als Gästehaus auf",
+      "routing": {
+        "layer": "STATE",
+        "target_state": "Brandenburg"
+      },
+      "classification": {
+        "topics": [
+          "Gesetzgebung"
+        ],
+        "relevance_score": 40,
+        "type": "IMPORTANT",
+        "actions": [],
+        "de_summary": "Die edle Kulisse für streitende Koalitionäre ist Geschichte: Künftig lädt die Bundesregierung nicht mehr ins herrschaftliche Meseburg nördlich von Berlin ein....",
+        "uk_summary": "[UA Mock] Die edle Kulisse für streitende Koalitionäre ist Geschichte: Künftig lädt die Bundesregierung nicht mehr ins herrschaftliche Meseburg nördlich von Berlin ein....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Die edle Kulisse für streitende Koalitionäre ist Geschichte: Künftig lädt die Bundesregierung nicht mehr ins herrschaftliche Meseburg nördlich von Berlin ein...."
+      }
+    },
+    {
+      "id": "7ca1464e73e902903dd434c0",
+      "title": "[UA Mock] Töpferstudio: Eine ehemalige Sozialarbeiterin erzählt vom Weg in die Selbstständigkeit",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Arbeit"
+        ],
+        "relevance_score": 20,
+        "type": "INFO",
+        "actions": [],
+        "de_summary": "Als Sozialarbeiterin ging Rebecca Lorenz über ihre Grenzen, bis sie nicht mehr konnte. Warum ein eigenes Töpferstudio ihre Rettung war und sie trotzdem manchmal an ihr Limit bringt....",
+        "uk_summary": "[UA Mock] Als Sozialarbeiterin ging Rebecca Lorenz über ihre Grenzen, bis sie nicht mehr konnte. Warum ein eigenes Töpferstudio ihre Rettung war und sie trotzdem manchmal an ihr Limit bringt....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Als Sozialarbeiterin ging Rebecca Lorenz über ihre Grenzen, bis sie nicht mehr konnte. Warum ein eigenes Töpferstudio ihre Rettung war und sie trotzdem manchmal an ihr Limit bringt...."
+      }
+    },
+    {
+      "id": "8a15fd4d7800f2d12423a08d",
+      "title": "[UA Mock] Schwangerschaftsmythen: Gynäkologe erklärt was wirklich hilft – und was nicht",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Events"
+        ],
+        "relevance_score": 15,
+        "type": "FUN",
+        "actions": [],
+        "de_summary": "Der Markt rund ums Schwangerwerden verspricht viel und hält wenig. Aber Hoffnung verkauft sich eben gut. Ein Gynäkologe räumt mit Schwangerschaftsmythen auf und sagt, was wirklich helfen kann....",
+        "uk_summary": "[UA Mock] Der Markt rund ums Schwangerwerden verspricht viel und hält wenig. Aber Hoffnung verkauft sich eben gut. Ein Gynäkologe räumt mit Schwangerschaftsmythen auf und sagt, was wirklich helfen kann....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Der Markt rund ums Schwangerwerden verspricht viel und hält wenig. Aber Hoffnung verkauft sich eben gut. Ein Gynäkologe räumt mit Schwangerschaftsmythen auf und sagt, was wirklich helfen kann...."
+      }
+    },
+    {
+      "id": "a387f820b2677ca3e66df2ff",
+      "title": "[UA Mock] Pam Bondi vor US-Kongress: »Sie haben mir gar nichts zu sagen, sie Versager von einem Anwalt«",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Arbeit"
+        ],
+        "relevance_score": 20,
+        "type": "INFO",
+        "actions": [],
+        "de_summary": "Es geht um die Epstein-Akten: US-Justizministerin Pam Bondi muss sich vor dem Kongress für die Arbeit ihrer Behörde verteidigen. Ihre Taktik: Bloß niemanden ausreden lassen. Doch die demokratischen Abgeordneten halten dagegen....",
+        "uk_summary": "[UA Mock] Es geht um die Epstein-Akten: US-Justizministerin Pam Bondi muss sich vor dem Kongress für die Arbeit ihrer Behörde verteidigen. Ihre Taktik: Bloß niemanden ausreden lassen. Doch die demokratischen Abgeordneten halten dagegen....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Es geht um die Epstein-Akten: US-Justizministerin Pam Bondi muss sich vor dem Kongress für die Arbeit ihrer Behörde verteidigen. Ihre Taktik: Bloß niemanden ausreden lassen. Doch die demokratischen Abgeordneten halten dagegen...."
+      }
+    },
+    {
+      "id": "d1afb4ad890a269170bb5dfd",
+      "title": "[UA Mock] Soundcore Nebula X1 Pro im Test: Outdoor-Projektor fürs Gartenkino",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Events"
+        ],
+        "relevance_score": 15,
+        "type": "FUN",
+        "actions": [],
+        "de_summary": "Im Freien Filme und Fußball schauen? Mit dem neuen Projektor von Soundcore soll das gehen. Im Test zeigt sich: Das Gerät taugt sogar für Public Viewing. Allerdings nur in der Dunkelheit und wenn die Nachbarn mitspielen....",
+        "uk_summary": "[UA Mock] Im Freien Filme und Fußball schauen? Mit dem neuen Projektor von Soundcore soll das gehen. Im Test zeigt sich: Das Gerät taugt sogar für Public Viewing. Allerdings nur in der Dunkelheit und wenn die Nachbarn mitspielen....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Im Freien Filme und Fußball schauen? Mit dem neuen Projektor von Soundcore soll das gehen. Im Test zeigt sich: Das Gerät taugt sogar für Public Viewing. Allerdings nur in der Dunkelheit und wenn die Nachbarn mitspielen...."
+      }
+    },
+    {
+      "id": "1a85d4d739986d3d3e7313da",
+      "title": "[UA Mock] Münchner Sicherheitskonferenz soll Beziehungen zu den USA verbessern",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Events"
+        ],
+        "relevance_score": 15,
+        "type": "FUN",
+        "actions": [],
+        "de_summary": "Der Leiter der Münchner Sicherheitskonferenz, Ischinger, will das \"kaputte Fahrrad\" der Beziehungen zwischen Europa und den USA reparieren - auch, wenn es weiterhin knirschen sollte. Von Christine Auerbach....",
+        "uk_summary": "[UA Mock] Der Leiter der Münchner Sicherheitskonferenz, Ischinger, will das \"kaputte Fahrrad\" der Beziehungen zwischen Europa und den USA reparieren - auch, wenn es weiterhin knirschen sollte. Von Christine Auerbach....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Der Leiter der Münchner Sicherheitskonferenz, Ischinger, will das \"kaputte Fahrrad\" der Beziehungen zwischen Europa und den USA reparieren - auch, wenn es weiterhin knirschen sollte. Von Christine Auerbach...."
+      }
+    },
+    {
+      "id": "99315af971fddfd9e5079e34",
+      "title": "[UA Mock] Fast 800 Lufthansa-Flüge wegen Streiks gestrichen",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Arbeit"
+        ],
+        "relevance_score": 20,
+        "type": "INFO",
+        "actions": [],
+        "de_summary": "Wegen des Streiks der Piloten und des Kabinenpersonals hat die Lufthansa Hunderte Flüge gestrichen. Ab Freitag soll wieder alles nach Plan laufen - doch das Cockpitpersonal droht schon mit dem nächsten Arbeitskampf....",
+        "uk_summary": "[UA Mock] Wegen des Streiks der Piloten und des Kabinenpersonals hat die Lufthansa Hunderte Flüge gestrichen. Ab Freitag soll wieder alles nach Plan laufen - doch das Cockpitpersonal droht schon mit dem nächsten Arbeitskampf....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Wegen des Streiks der Piloten und des Kabinenpersonals hat die Lufthansa Hunderte Flüge gestrichen. Ab Freitag soll wieder alles nach Plan laufen - doch das Cockpitpersonal droht schon mit dem nächsten Arbeitskampf...."
+      }
+    },
+    {
+      "id": "2a1934d9596ff5510f5233a1",
+      "title": "[UA Mock] Marktbericht: DAX rutscht mit schwacher Wall Street ins Minus",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Events"
+        ],
+        "relevance_score": 15,
+        "type": "FUN",
+        "actions": [],
+        "de_summary": "Nachdem Siemens zunächst den DAX über 25.000 Punkte gezogen hatte, setzten im Sog einer schwachen Wall Street am Nachmittag Gewinnmitnahmen ein. Tagessieger war die T-Aktie, die positiv überraschte....",
+        "uk_summary": "[UA Mock] Nachdem Siemens zunächst den DAX über 25.000 Punkte gezogen hatte, setzten im Sog einer schwachen Wall Street am Nachmittag Gewinnmitnahmen ein. Tagessieger war die T-Aktie, die positiv überraschte....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Nachdem Siemens zunächst den DAX über 25.000 Punkte gezogen hatte, setzten im Sog einer schwachen Wall Street am Nachmittag Gewinnmitnahmen ein. Tagessieger war die T-Aktie, die positiv überraschte...."
+      }
+    },
+    {
+      "id": "f25dac52d02eb14e45de2d85",
+      "title": "[UA Mock] WhatsApp übt scharfe Kritik an Blockade in Russland",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Events"
+        ],
+        "relevance_score": 15,
+        "type": "FUN",
+        "actions": [],
+        "de_summary": "Messenger wie Telegram oder WhatsApp können in Russland nur noch sehr eingeschränkt genutzt werden. WhatsApp prangert das Vorgehen des Kreml scharf an. Der will Nutzer stattdessen zur staatlichen Variante des Chatdienstes lenken....",
+        "uk_summary": "[UA Mock] Messenger wie Telegram oder WhatsApp können in Russland nur noch sehr eingeschränkt genutzt werden. WhatsApp prangert das Vorgehen des Kreml scharf an. Der will Nutzer stattdessen zur staatlichen Variante des Chatdienstes lenken....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Messenger wie Telegram oder WhatsApp können in Russland nur noch sehr eingeschränkt genutzt werden. WhatsApp prangert das Vorgehen des Kreml scharf an. Der will Nutzer stattdessen zur staatlichen Variante des Chatdienstes lenken...."
+      }
+    },
+    {
+      "id": "f2a7069b2cb74ef965b41fc4",
+      "title": "[UA Mock] Kritik an Gaza-Besuch von Bundestagspräsidentin Klöckner",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Gesetzgebung"
+        ],
+        "relevance_score": 40,
+        "type": "IMPORTANT",
+        "actions": [],
+        "de_summary": "Als erste deutsche Politikerin hat Bundestagspräsidentin Klöckner seit dem Überfall der Hamas auf Israel den Gazastreifen besucht. Es war ein von Israel gewährter Einblick, der in Deutschland auch auf Kritik stößt. Von Jan-Christoph Kitzler...",
+        "uk_summary": "[UA Mock] Als erste deutsche Politikerin hat Bundestagspräsidentin Klöckner seit dem Überfall der Hamas auf Israel den Gazastreifen besucht. Es war ein von Israel gewährter Einblick, der in Deutschland auch auf Kritik stößt. Von Jan-Christoph Kitzler...",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Als erste deutsche Politikerin hat Bundestagspräsidentin Klöckner seit dem Überfall der Hamas auf Israel den Gazastreifen besucht. Es war ein von Israel gewährter Einblick, der in Deutschland auch auf Kritik stößt. Von Jan-Christoph Kitzler..."
+      }
+    },
+    {
+      "id": "855c9476a4b5e89bb597cb3c",
+      "title": "[UA Mock] Marktbericht: Siemens übertrifft SAP beim Börsenwert",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Events"
+        ],
+        "relevance_score": 15,
+        "type": "FUN",
+        "actions": [],
+        "de_summary": "Der Siemens-Konzern ist der neue Star im DAX. Den langjährigen Spitzenreiter SAP hat der Technologiekonzern dank guter Geschäftszahlen und eines gestiegenen Aktienkurses abgehängt....",
+        "uk_summary": "[UA Mock] Der Siemens-Konzern ist der neue Star im DAX. Den langjährigen Spitzenreiter SAP hat der Technologiekonzern dank guter Geschäftszahlen und eines gestiegenen Aktienkurses abgehängt....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Der Siemens-Konzern ist der neue Star im DAX. Den langjährigen Spitzenreiter SAP hat der Technologiekonzern dank guter Geschäftszahlen und eines gestiegenen Aktienkurses abgehängt...."
+      }
+    },
+    {
+      "id": "9953cf413122a3be9cdb53f9",
+      "title": "[UA Mock] Taliban verschärfen Strafrecht - Kritik wird zum Verbrechen",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Gesetzgebung"
+        ],
+        "relevance_score": 40,
+        "type": "IMPORTANT",
+        "actions": [],
+        "de_summary": "Mit einem neuen Strafgesetzbuch festigen die Taliban ihre Macht in Afghanistan. Wer Einwände erhebt, riskiert Strafverfolgung. Menschenrechtler warnen vor massiven Eingriffen in die Grundrechte, besonders für Frauen. Von Peter Hornung....",
+        "uk_summary": "[UA Mock] Mit einem neuen Strafgesetzbuch festigen die Taliban ihre Macht in Afghanistan. Wer Einwände erhebt, riskiert Strafverfolgung. Menschenrechtler warnen vor massiven Eingriffen in die Grundrechte, besonders für Frauen. Von Peter Hornung....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Mit einem neuen Strafgesetzbuch festigen die Taliban ihre Macht in Afghanistan. Wer Einwände erhebt, riskiert Strafverfolgung. Menschenrechtler warnen vor massiven Eingriffen in die Grundrechte, besonders für Frauen. Von Peter Hornung...."
+      }
+    },
+    {
+      "id": "41ddc4cb3536e913053ffb1e",
+      "title": "[UA Mock] Wie die Bundesregierung der Filmbranche helfen will",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Gesetzgebung",
+          "Events"
+        ],
+        "relevance_score": 55,
+        "type": "IMPORTANT",
+        "actions": [],
+        "de_summary": "22 Filme werden bei der heute beginnenden Berlinale gezeigt - darunter drei überwiegend in Deutschland produzierte. Internationale Produktionen weichen oft in günstigere Länder aus. Die Bundesregierung will das ändern. Von N. Markwald....",
+        "uk_summary": "[UA Mock] 22 Filme werden bei der heute beginnenden Berlinale gezeigt - darunter drei überwiegend in Deutschland produzierte. Internationale Produktionen weichen oft in günstigere Länder aus. Die Bundesregierung will das ändern. Von N. Markwald....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: 22 Filme werden bei der heute beginnenden Berlinale gezeigt - darunter drei überwiegend in Deutschland produzierte. Internationale Produktionen weichen oft in günstigere Länder aus. Die Bundesregierung will das ändern. Von N. Markwald...."
+      }
+    },
+    {
+      "id": "aebe1f21e9127ac1e6ec76e5",
+      "title": "[UA Mock] Zum Auftakt der Berlinale: Exilfilmemacher in Deutschland",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Events"
+        ],
+        "relevance_score": 15,
+        "type": "FUN",
+        "actions": [],
+        "de_summary": "Die Berlinale eröffnet heute mit \"No Good Men\" von Shahrbanoo Sadat. Sie ist eine von mehreren Exilfilmemachern im diesjährigen Festivalprogramm. Fernab des roten Teppichs haben sie jedoch oft zu kämpfen. Von Andrea Heinze....",
+        "uk_summary": "[UA Mock] Die Berlinale eröffnet heute mit \"No Good Men\" von Shahrbanoo Sadat. Sie ist eine von mehreren Exilfilmemachern im diesjährigen Festivalprogramm. Fernab des roten Teppichs haben sie jedoch oft zu kämpfen. Von Andrea Heinze....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Die Berlinale eröffnet heute mit \"No Good Men\" von Shahrbanoo Sadat. Sie ist eine von mehreren Exilfilmemachern im diesjährigen Festivalprogramm. Fernab des roten Teppichs haben sie jedoch oft zu kämpfen. Von Andrea Heinze...."
+      }
+    },
+    {
+      "id": "b9d0bbf1973bd86f22527507",
+      "title": "[UA Mock] Generalinspekteur Breuer soll Vorsitzender des NATO-Militärausschusses werden",
+      "routing": {
+        "layer": "COUNTRY"
+      },
+      "classification": {
+        "topics": [
+          "Gesetzgebung"
+        ],
+        "relevance_score": 40,
+        "type": "IMPORTANT",
+        "actions": [],
+        "de_summary": "Der Militärausschuss ist das oberste militärische Gremium der NATO. Die Bundesregierung will für den künftigen Vorsitz den Generalinspekteur der Bundeswehr ins Rennen schicken. Carsten Breuer sei ein \"exzellenter Kandidat\"....",
+        "uk_summary": "[UA Mock] Der Militärausschuss ist das oberste militärische Gremium der NATO. Die Bundesregierung will für den künftigen Vorsitz den Generalinspekteur der Bundeswehr ins Rennen schicken. Carsten Breuer sei ein \"exzellenter Kandidat\"....",
+        "uk_content": "[UA Mock Content] This is a mock detail content roughly 250 words long to test the UI layout. It should contain paragraphs and bullet points.\n\n• Point 1\n• Point 2\n\nOriginal text: Der Militärausschuss ist das oberste militärische Gremium der NATO. Die Bundesregierung will für den künftigen Vorsitz den Generalinspekteur der Bundeswehr ins Rennen schicken. Carsten Breuer sei ein \"exzellenter Kandidat\"...."
+      }
+    }
+  ]
+}

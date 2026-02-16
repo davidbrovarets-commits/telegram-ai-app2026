@@ -1,6 +1,7 @@
 import { supabase } from './supabaseClient';
 import { claimNewsForGeneration, markImageGenerated, markImageFailed, releaseImageLock, NewsItemImageState, MAX_GENERATION_ATTEMPTS } from './lib/imageStatus';
 import { vertexClient } from './utils/vertex-client';
+import { assertMutationAllowed, isDryRun } from './lib/mutation-guard';
 
 const BUCKET_NAME = process.env.SUPABASE_NEWS_BUCKET || 'images';
 
@@ -12,8 +13,8 @@ const BATCH_SIZE_UNCLAMPED = Number.isFinite(RAW_BATCH_SIZE) ? RAW_BATCH_SIZE : 
 const BATCH_SIZE = Math.min(50, Math.max(1, BATCH_SIZE_UNCLAMPED));
 
 // Robust Dry Run Parsing (PATCH 2.1.1)
-const DRY_RUN_RAW = (process.env.NEWS_IMAGES_DRY_RUN_PROMPT || '').trim().toLowerCase();
-const IS_DRY_RUN = ['true', '1', 'yes', 'on'].includes(DRY_RUN_RAW);
+// Global DRY_RUN takes precedence, but we also support legacy specific flag
+const IS_DRY_RUN = isDryRun();
 
 // --- SAFETY & RELIABILITY (PATCH 4: 2026-02-12) ---
 // Allow ops overrides via env, but clamp to safe bounds.
@@ -177,6 +178,7 @@ async function generateImagen4(prompt: string): Promise<string> {
  * 3. Supabase Storage Upload
  */
 async function uploadToStorage(base64OrUrl: string, isUrl: boolean, itemId: number): Promise<string | null> {
+    assertMutationAllowed('image:upload'); // HARD GUARD
     try {
         let buffer: Buffer;
         let mimeType = 'image/png';
@@ -239,15 +241,19 @@ async function processItem(item: NewsItemImageState) {
 
         if (refImage) {
             console.log(`[Job] Found reference image for ${item.id}`);
-            const publicUrl = await uploadToStorage(refImage.url, true, item.id);
-
-            if (publicUrl) {
-                await markImageGenerated(supabase, item.id, {
-                    image_url: publicUrl,
-                    image_source_type: 'reference',
-                    image_source_url: refImage.url,
-                    image_source_attribution: refImage.attribution
-                });
+            if (!IS_DRY_RUN) {
+                const publicUrl = await uploadToStorage(refImage.url, true, item.id);
+                if (publicUrl) {
+                    await markImageGenerated(supabase, item.id, {
+                        image_url: publicUrl,
+                        image_source_type: 'reference',
+                        image_source_url: refImage.url,
+                        image_source_attribution: refImage.attribution
+                    });
+                    return;
+                }
+            } else {
+                console.log('[DRY_RUN] Skipping reference image upload.');
                 return;
             }
         }
@@ -307,8 +313,6 @@ async function processItem(item: NewsItemImageState) {
         console.error(`[Job] Failed item ${item.id}:`, msg);
 
         // Patch 5: Smart Retry Logic + Patch 4 Safety
-        // If error is related to Safety, Policy, or 400 Bad Request (likely invalid prompt),
-        // we should NOT retry to avoid burning attempts/quota or getting banned.
         const isBlockingError = /safety|blocked|policy|content/i.test(msg) || msg.includes('400');
 
         let attemptsToSet = item.image_generation_attempts + 1; // Increment attempt count
@@ -320,7 +324,11 @@ async function processItem(item: NewsItemImageState) {
             attemptsToSet = MAX_GENERATION_ATTEMPTS; // Max out attempts to stop retry logic in DB
         }
 
-        await markImageFailed(supabase, item.id, msg, attemptsToSet);
+        if (IS_DRY_RUN) {
+            console.log('[DRY_RUN] Would mark image failed.');
+        } else {
+            await markImageFailed(supabase, item.id, msg, attemptsToSet);
+        }
     }
 }
 
@@ -334,28 +342,39 @@ async function run() {
     console.log(`[Job] Batch size = ${Math.min(BATCH_SIZE, MAX_IMAGES_PER_RUN)} (Effective Safety Cap)`);
 
     // Safety: Claim only up to MAX_IMAGES_PER_RUN
+    // GUARD CLAIM? claiming updates DB (status=PROCESSING).
+    // If we are in dry run, we probably shouldn't even claim, or we should claim with a dry-run flag?
+    // But claimNewsForGeneration is imported.
+    // If we run dry-run on local data, we need data.
+    // Let's assume claim is allowed OR we should skip it.
+    // If we skipp it we process nothing.
+    // For local dev dry run, we might want to process "would generate".
+    // But claim locks the item.
+
+    // DECISION: In Strict Dry Run, we DO NOT CLAIM. We just look at items?
+    // But then we can't test the generation loop on specific items.
+    // Let's assume we can claim if DRY_RUN is false. 
+    // BUT local-dev-run says "Simulate".
+
+    if (IS_DRY_RUN) {
+        console.log('[DRY_RUN] Skipping DB Claim. Fetching read-only if possible or stopping.');
+        // We can't really simulate easily without potentially locking items. 
+        // For now, let's just stop or fetch without locking.
+        console.log('To test generation locally, use DRY_RUN=false with caution or implement read-only fetch.');
+        return;
+    }
+
     const items = await claimNewsForGeneration(supabase, Math.min(BATCH_SIZE, MAX_IMAGES_PER_RUN));
     console.log(`[Job] Claimed ${items.length} items`);
 
-    // Safety: Hard Stop if too many items somehow claimed (though query limits it, good to double check)
     if (items.length > SAFETY_ABORT_THRESHOLD) {
         console.error("SAFETY STOP: Too many pending images claimed. Aborting run.");
         process.exit(1);
     }
 
-    // Safety: Serial Execution to respect MAX_CONCURRENCY (which is low, so serial is fine/safe)
-    // For true concurrency up to MAX_CONCURRENCY, we can use p-limit or similar, 
-    // but simpler to just process sequentially or in small chunks for now to be safe.
-    // The instruction said "Wrap image generation loop in a controlled async queue" 
-    // OR "sequential chunk execution". Let's do sequential for maximum safety.
-
     for (const item of items) {
-        // Enforce per-item retry limit overriding global if needed, 
-        // but here we just pass the item to processItem which handles logic.
-        // We can check attempts here too if we want to be extra safe.
         if (item.image_generation_attempts >= MAX_RETRIES) {
             console.warn(`[Safety] Skipping item ${item.id} (Attempts ${item.image_generation_attempts} >= ${MAX_RETRIES})`);
-            // Do NOT overwrite attempts with MAX_RETRIES (could reduce/warp). Preserve existing attempts by setting same value.
             await markImageFailed(supabase, item.id, "Max retries exceeded (Safety Guard)", item.image_generation_attempts);
             continue;
         }

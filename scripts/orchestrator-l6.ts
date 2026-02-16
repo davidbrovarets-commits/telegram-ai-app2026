@@ -838,35 +838,18 @@ async function runAIEnrich(items: ProcessedItem[]): Promise<ProcessedItem[]> {
    FINALIZER: INSERT
 ------------------------------ */
 
+import { assertMutationAllowed, isDryRun } from './lib/mutation-guard';
+
 async function runInsertion(items: ProcessedItem[]) {
     console.log(`💾 [Finalizer] Bulk inserting into Database...`);
 
     // 5. Publish (Mock)
-    if (DRY_RUN) {
+    if (isDryRun()) {
         console.log('   [DRY RUN] Skipping notification dispatch.');
-
-        // SAVE ARTIFACT REPORT
-        const report = {
-            timestamp: new Date().toISOString(),
-            mode: 'DRY_RUN',
-            collected: items.length,
-            items: items.map(i => ({
-                id: i.id,
-                title: i.raw.title,
-                routing: i.routing,
-                classification: i.classification
-            }))
-        };
-
-        // Write to filesystem if running locally (GitHub Artifact upload handled by workflow wrapper usually, 
-        // but writing to disk allows step to pick it up)
-        await import('fs').then(fs => {
-            fs.writeFileSync('dry_run_report.json', JSON.stringify(report, null, 2));
-            console.log('   ✅ [DRY RUN] Report saved to dry_run_report.json');
-        });
-
         return;
     }
+
+    assertMutationAllowed('orchestrator:insert');
 
     const rows = items
         .filter((item) => item.classification.uk_summary) // only valid
@@ -877,8 +860,6 @@ async function runInsertion(items: ProcessedItem[]) {
             const content = item.classification.uk_content || item.classification.uk_summary || '';
 
             // Generate deterministic priority
-            // Generate ID or let DB handle it? We usually insert without ID.
-            // But we need a dedupe logic.
             const dedupe_group = item.classification.dedupe_group || null;
 
             // Simple Priority Logic
@@ -888,7 +869,6 @@ async function runInsertion(items: ProcessedItem[]) {
 
             // Extracted date or fallback
             const publishedIso = item.raw.published_at || new Date().toISOString();
-
 
             return {
                 // Keep existing fields but make semantics consistent:
@@ -924,7 +904,6 @@ async function runInsertion(items: ProcessedItem[]) {
         return;
     }
 
-    // Client-side dedup just in case
     // Client-side dedup just in case
     const byLink = new Map<string, typeof rows[0]>();
     for (const r of rows) if (!byLink.has(r.link)) byLink.set(r.link, r);
@@ -981,17 +960,26 @@ async function cycle() {
     console.log('\n✅ L6 ORCHESTRATOR DONE\n');
 }
 
-// MAIN LOOP with Integrated Auto-Healer Scheduler
-async function main() {
+// Export for local runner
+export async function main() {
     console.log('🚀 SYSTEM STARTUP: Orchestrator + Auto-Healer');
 
     // 1. Run News Cycle Immediately
     await cycle().catch(e => console.error('FATAL Cycle Error:', e));
 
     // 2. Run Healer Immediately
+    // In DRY_RUN, healer will self-terminate safely.
     await runAutoHealer().catch(e => console.error('FATAL Healer Error:', e));
 
-    // 3. Schedule Healer (Every 60 minutes)
+    // 3. Schedule Healer (Every 60 minutes) - ONLY IF NOT DRY RUN? 
+    // Actually, local-dev-run won't call this main() if we split it right. 
+    // But if we do call main(), we don't want to hang forever in CI/local-one-shot.
+
+    if (process.env.DRY_RUN === 'true') {
+        console.log('✅ [DRY_RUN] Orchestrator cycle complete. Exiting (no schedule).');
+        return;
+    }
+
     setInterval(() => {
         runAutoHealer().catch(e => console.error('Scheduled Healer Error:', e));
     }, 60 * 60 * 1000);
@@ -1005,4 +993,8 @@ async function main() {
     setInterval(() => { }, 1000 * 60 * 60);
 }
 
-main();
+// Only run if called directly (not imported)
+import { fileURLToPath } from 'url';
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+    main();
+}

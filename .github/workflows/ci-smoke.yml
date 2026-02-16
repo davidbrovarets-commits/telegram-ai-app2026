@@ -1,0 +1,30 @@
+name: CI Smoke Test (Dry Run)
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+
+jobs:
+  dry-run-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Orchestrator (Dry Run)
+        env:
+          DRY_RUN: "true"
+          AI_PROVIDER: "mock" 
+          # Environment variables for preflight/init
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: npm run dev:dry

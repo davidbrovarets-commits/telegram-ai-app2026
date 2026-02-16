@@ -33,3 +33,4 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           GOOGLE_APPLICATION_CREDENTIALS: ./google-credentials.json
           GOOGLE_PROJECT_ID: claude-vertex-prod
+          DRY_RUN: 'false'

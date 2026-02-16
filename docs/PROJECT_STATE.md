@@ -70,3 +70,9 @@ concurrency:
 - **Production**: All mutating workflows explicitly set `DRY_RUN='false'`.
 - **CI**: `ci-smoke` runs with `DRY_RUN=true` to verify logic without side effects.
 
+### Governance Alignment Check (Post DRY_RUN Patch)
+- **Node 20** enforced across all workflows.
+- **Concurrency blocks** verified on heavy jobs.
+- **Cron deconflict** applied (no minute 0 overlap).
+- **Vertex auth** standardized via ADC (no API keys).
+

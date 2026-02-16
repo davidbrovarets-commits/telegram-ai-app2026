@@ -12,6 +12,11 @@
 4.  **Reactivation Order:** Monitor → Orchestrator → Image Generator → Auto-Healer → Secretary → Weekly jobs.
 - **Auth Standard (CI):** Workflows must use `google-github-actions/auth@v2` (ADC). Do **not** pass `VERTEX_API_KEY` via workflow env. Vertex access must be via centralized vertex-client and ADC tokens.
 
+### CI Runtime Enforcement (Feb 2026)
+All operational GitHub Actions workflows MUST run on:
+- **Node.js 20** (project runtime baseline).
+- No workflow may use Node 18.
+
 ## 4. Mutation Guards (Hard Enforcement)
 As of Feb 2026, we enforce a **Code-Level Mutation Guard** (`scripts/lib/mutation-guard.ts`).
 

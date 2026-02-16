@@ -24,13 +24,15 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
+
       - name: Run Auto-Healer
-        run: |
-          echo '${{ secrets.GOOGLE_CREDENTIALS }}' > google-credentials.json
-          npx tsx scripts/auto-healer.ts
+        run: npx tsx scripts/auto-healer.ts
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          GOOGLE_APPLICATION_CREDENTIALS: ./google-credentials.json
           GOOGLE_PROJECT_ID: claude-vertex-prod
           DRY_RUN: 'false'

@@ -38,4 +38,5 @@ jobs:
           INSPECTOR_ALLOW_LOCK_RELEASE: "false" # Always OFF for event triggers (prevent loops)
           INSPECTOR_LOCK_STUCK_MINUTES: "45"
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+          GOOGLE_PROJECT_ID: ${{ secrets.GOOGLE_PROJECT_ID }}
         run: npx tsx scripts/inspector/run_inspection.ts

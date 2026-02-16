@@ -13,6 +13,7 @@ const INSPECTOR_LOCK_STUCK_MINUTES = parseInt(process.env.INSPECTOR_LOCK_STUCK_M
 const CRITICAL_STUCK_COUNT = 3;
 
 console.log('DEBUG: Env Check');
+console.log('Env Keys:', JSON.stringify(Object.keys(process.env).sort()));
 console.log('GOOGLE_PROJECT_ID present:', !!process.env.GOOGLE_PROJECT_ID);
 console.log('GOOGLE_PROJECT_ID length:', process.env.GOOGLE_PROJECT_ID ? process.env.GOOGLE_PROJECT_ID.length : 0);
 

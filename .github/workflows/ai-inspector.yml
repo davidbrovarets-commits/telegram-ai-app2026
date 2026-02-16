@@ -32,6 +32,8 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           GOOGLE_PROJECT_ID: ${{ secrets.GOOGLE_PROJECT_ID }}
+          GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_PROJECT_ID }}
+          TEST_VAR: "hello_debug"
           INSPECTOR_ALLOW_LOCK_RELEASE: "false" # Default OFF for safety
           INSPECTOR_LOCK_STUCK_MINUTES: "45"
         run: npx tsx scripts/inspector/run_inspection.ts

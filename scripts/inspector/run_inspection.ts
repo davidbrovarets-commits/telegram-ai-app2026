@@ -12,11 +12,6 @@ const INSPECTOR_ALLOW_LOCK_RELEASE = process.env.INSPECTOR_ALLOW_LOCK_RELEASE ==
 const INSPECTOR_LOCK_STUCK_MINUTES = parseInt(process.env.INSPECTOR_LOCK_STUCK_MINUTES || '45', 10);
 const CRITICAL_STUCK_COUNT = 3;
 
-console.log('DEBUG: Env Check');
-console.log('Env Keys:', JSON.stringify(Object.keys(process.env).sort()));
-console.log('GOOGLE_PROJECT_ID present:', !!process.env.GOOGLE_PROJECT_ID);
-console.log('GOOGLE_PROJECT_ID length:', process.env.GOOGLE_PROJECT_ID ? process.env.GOOGLE_PROJECT_ID.length : 0);
-
 if (!SUPABASE_URL || !SUPABASE_KEY) {
     console.error('❌ Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
     process.exit(1);

@@ -353,7 +353,9 @@ export class FeedManager {
         }
 
         let { data: candidates } = await query
-            .order('priority', { ascending: false }) // Prioritize important ones first
+            .order('priority', { ascending: false })
+            .order('created_at', { ascending: false })
+            .order('id', { ascending: false })
             .limit(100);
 
         // --- RECYCLE FALLBACK ---
@@ -368,6 +370,8 @@ export class FeedManager {
                 .not('image_url', 'is', null)
                 .not('type', 'is', null)
                 .order('priority', { ascending: false })
+                .order('created_at', { ascending: false })
+                .order('id', { ascending: false })
                 .limit(50);
 
             if (recycled && recycled.length > 0) {

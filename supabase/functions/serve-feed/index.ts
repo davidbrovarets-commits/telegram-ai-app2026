@@ -255,8 +255,14 @@ serve(async (req) => {
                             }
                         });
 
-                        // Sort by Final Score
-                        feed.sort((a, b) => (b.finalScore || 0) - (a.finalScore || 0));
+                        // Sort by Final Score (deterministic tie-breaker: newest → highest ID)
+                        feed.sort((a, b) => {
+                            const scoreDiff = (b.finalScore || 0) - (a.finalScore || 0);
+                            if (scoreDiff !== 0) return scoreDiff;
+                            const timeDiff = new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+                            if (timeDiff !== 0) return timeDiff;
+                            return (b.id || 0) - (a.id || 0);
+                        });
                     }
                 }
             }

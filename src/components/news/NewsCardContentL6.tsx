@@ -73,10 +73,14 @@ export function NewsCardContentL6({ item, onPress }: Props) {
                         <div style={{
                             width: '100%',
                             height: '100%',
-                            background: 'linear-gradient(45deg, #f3f4f6 25%, #e5e7eb 25%, #e5e7eb 50%, #f3f4f6 50%, #f3f4f6 75%, #e5e7eb 75%, #e5e7eb 100%)',
-                            backgroundSize: '20px 20px',
-                            opacity: 0.5
-                        }} />
+                            background: 'linear-gradient(135deg, var(--bg-secondary, #f3f4f6) 0%, var(--card-bg, #e5e7eb) 100%)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            opacity: 0.6
+                        }}>
+                            <span style={{ fontSize: '32px' }}>📰</span>
+                        </div>
                     )}
                 </div>
 

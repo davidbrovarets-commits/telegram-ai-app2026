@@ -99,7 +99,7 @@ export function ProductionStateView() {
             <header className="prod-state__header">
                 <div className="prod-state__badge">PRODUCTION (LIVE)</div>
                 <h1 className="prod-state__title">Production State</h1>
-                <p className="prod-state__subtitle">navitec.com — Build Verification</p>
+                <p className="prod-state__subtitle">navestic.com — Build Verification</p>
             </header>
 
             <section className="prod-state__meta">

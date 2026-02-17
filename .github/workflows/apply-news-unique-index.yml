@@ -1,0 +1,37 @@
+name: Apply News Unique Index
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: apply-news-unique-index
+  cancel-in-progress: false
+
+jobs:
+  apply-migration:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Supabase CLI
+        run: npm install -g supabase
+
+      - name: Apply SQL migration
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          echo "Applying UNIQUE index migration..."
+          supabase db execute --db-url "$SUPABASE_DB_URL" --file docs/sql/news_link_unique.sql
+
+      - name: Verify index exists
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          supabase db execute --db-url "$SUPABASE_DB_URL" --command "
+          SELECT indexname
+          FROM pg_indexes
+          WHERE tablename = 'news'
+          AND indexname = 'news_link_unique';
+          "

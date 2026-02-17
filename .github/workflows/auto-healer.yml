@@ -1,8 +1,8 @@
 name: Auto-Healer System
 
 on:
-  schedule:
-    - cron: '17 * * * *' # Every hour
+  # schedule: # DISABLED — UI QA freeze
+  #   - cron: '17 * * * *' # Every hour
   workflow_dispatch: # Allow manual trigger
 
 concurrency:

@@ -1,8 +1,8 @@
 name: News Images Generator (Imagen 4)
 
 on:
-  schedule:
-    - cron: '10,30,50 * * * *'
+  # schedule: # DISABLED — UI QA freeze
+  #   - cron: '10,30,50 * * * *'
   workflow_dispatch:
 
 concurrency:

@@ -2,8 +2,8 @@ name: AI Inspector — News Images (Verification Only)
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '*/15 * * * *'
+  # schedule: # DISABLED — UI QA freeze
+  #   - cron: '*/15 * * * *'
 
 concurrency:
   group: ai-inspector-news-images

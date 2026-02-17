@@ -59,7 +59,8 @@ export class VertexClient {
             process.env.GCLOUD_PROJECT ||
             '';
         if (!this.projectId) {
-            throw new Error('[VertexClient] Missing projectId. Set GOOGLE_PROJECT_ID / GOOGLE_CLOUD_PROJECT / GCLOUD_PROJECT or pass config.projectId');
+            // Defer error to call time — allows DRY_RUN / CI Smoke to import without credentials
+            console.warn('[VertexClient] No projectId configured. Calls will fail unless DRY_RUN is active.');
         }
         this.location = config.location || process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
         this.modelId = config.modelId || process.env.VERTEX_MODEL || 'gemini-2.5-pro';
@@ -163,6 +164,9 @@ export class VertexClient {
      * Internal: Execute with Retry (Exponential Backoff + Jitter)
      */
     private async callWithRetry<T>(operationName: string, fn: () => Promise<T>, attempts = 0, rid?: string): Promise<T> {
+        if (!this.projectId) {
+            throw new Error(`[VertexClient] Cannot execute ${operationName}: no projectId configured. Set GOOGLE_PROJECT_ID.`);
+        }
         const myRid = rid || this.generateRid();
 
         if (attempts === 0) {

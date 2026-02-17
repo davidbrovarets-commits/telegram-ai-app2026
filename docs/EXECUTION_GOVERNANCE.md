@@ -30,3 +30,11 @@ As of Feb 2026, we enforce a **Code-Level Mutation Guard** (`scripts/lib/mutatio
 ### Development Loop
 - **`npm run dev:dry`**: (Default) Runs safely. Logs "Would insert...".
 - **`npm run dev:run`**: (Manual) Runs with real mutations. Use with caution.
+
+### Registry Drift Guard (CI)
+
+A CI job compares the authoritative registry (`scripts/registries/source-registry.ts`) against the documentation list (`docs/UUDISTE_ALLIKATE_NIMEKIRI.md`). Mismatches fail the workflow to prevent silent drift.
+
+### Per-run Metrics (Local Artifacts)
+
+Runs produce a local JSON metrics artifact (e.g., `artifacts/run-metrics.json`) to track failures, dedup drops, AI/image outcomes, and selection counts without introducing new services.

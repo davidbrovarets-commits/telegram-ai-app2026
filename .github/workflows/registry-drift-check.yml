@@ -1,0 +1,24 @@
+name: Registry Drift Check
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ag-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  drift-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - run: npm ci
+
+      - name: Run Registry Drift Check
+        run: npx tsx scripts/tools/check-registry-drift.ts

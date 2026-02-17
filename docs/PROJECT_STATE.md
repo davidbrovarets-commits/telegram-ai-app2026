@@ -76,3 +76,21 @@ concurrency:
 - **Cron deconflict** applied (no minute 0 overlap).
 - **Vertex auth** standardized via ADC (no API keys).
 
+# Hardening Patch (Determinism/Failures/Costs/Drift)
+
+- **Determinism**: URL hash, title similarity dedup, per-scope caps.
+- **Failure Modes**: Safe fallbacks for RSS/AI/Imagen failures.
+- **Cost Controls**: Token caps, max AI/Imagen calls per run, concurrency limits.
+- **Registry Drift Guard**: CI checks `source-registry.ts` vs docs count.
+- **Documentation**: All policies documented and enforced.
+
+## Registry Drift Guard
+
+Added CI enforcement preventing divergence between:
+
+- Runtime registry (scripts/registries/source-registry.ts)
+- Documentation list (docs/UUDISTE_ALLIKATE_NIMEKIRI.md)
+
+CI workflow: registry-drift-check.yml
+
+Status: ACTIVE

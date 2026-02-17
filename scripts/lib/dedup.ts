@@ -12,11 +12,16 @@ export function urlKey(url: string): string {
     if (!url) return '';
     try {
         const u = new URL(url);
-        // Strip common tracking params and trailing slash
-        u.searchParams.delete('utm_source');
-        u.searchParams.delete('utm_medium');
-        u.searchParams.delete('utm_campaign');
-        u.searchParams.delete('fbclid');
+        // P1.2: Strip all known tracking params for canonical URL
+        const TRACKING_PARAMS = [
+            'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term',
+            'fbclid', 'gclid', 'ref', 'source',
+        ];
+        for (const p of TRACKING_PARAMS) {
+            u.searchParams.delete(p);
+        }
+        // Normalize: lowercase host, strip trailing slash
+        u.hostname = u.hostname.toLowerCase();
         let clean = u.toString();
         if (clean.endsWith('/')) clean = clean.slice(0, -1);
         return clean;
@@ -51,7 +56,7 @@ export interface DedupResult<T> {
 
 export function dedupCandidates<T extends { raw: { title: string; url: string } }>(items: T[]): DedupResult<T> {
     const seenUrls = new Set<string>();
-    const seenTitles = new Set<string>();
+    const keptTitles: string[] = [];
     const kept: T[] = [];
     const dropped: T[] = [];
 
@@ -59,18 +64,27 @@ export function dedupCandidates<T extends { raw: { title: string; url: string } 
         const uKey = urlKey(item.raw.url);
         const tKey = normalizeTitle(item.raw.title);
 
+        // 1. Exact URL dedup
         if (seenUrls.has(uKey)) {
             dropped.push(item);
             continue;
         }
 
-        if (seenTitles.has(tKey)) {
+        // 2. Exact title dedup
+        if (keptTitles.includes(tKey)) {
+            dropped.push(item);
+            continue;
+        }
+
+        // 3. P1.2: Near-duplicate title dedup (Jaccard > 0.85)
+        const isNearDup = keptTitles.some(existing => isNearDuplicateTitle(item.raw.title, existing));
+        if (isNearDup) {
             dropped.push(item);
             continue;
         }
 
         seenUrls.add(uKey);
-        seenTitles.add(tKey);
+        keptTitles.push(tKey);
         kept.push(item);
     }
 

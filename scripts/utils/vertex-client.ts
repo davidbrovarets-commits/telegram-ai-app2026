@@ -74,7 +74,8 @@ export class VertexClient {
         this.minRequestIntervalMs = (60 * 1000) / rpm;
 
         // Retry Knobs
-        this.maxRetries = config.maxRetries || parseInt(process.env.VERTEX_MAX_RETRIES || '6', 10);
+        // P1.1: Reduced from 6 to 2 to prevent retry storms (single retry layer)
+        this.maxRetries = config.maxRetries || parseInt(process.env.VERTEX_MAX_RETRIES || '2', 10);
         this.baseBackoffMs = config.baseBackoffMs || parseInt(process.env.VERTEX_BASE_BACKOFF_MS || '1000', 10);
     }
 
@@ -175,13 +176,24 @@ export class VertexClient {
             console.log(`[VertexClient] ${operationName} success (rid=${myRid}, ${duration}ms)`);
             return res; // Success
         } catch (error: any) {
-            const isRetryable =
-                error.message?.includes('429') ||
-                error.message?.includes('503') ||
-                error.message?.includes('Quota exceeded') ||
-                error.message?.includes('Resource exhausted') ||
-                error.message?.includes('ETIMEDOUT') ||
-                error.message?.includes('ECONNRESET');
+            const msg = error.message || '';
+
+            // P1.1: Classify non-retryable errors (safety, schema, blocked)
+            const isNonRetryable =
+                msg.includes('safety') ||
+                msg.includes('blocked') ||
+                msg.includes('SAFETY') ||
+                msg.includes('AI_SCHEMA_INVALID') ||
+                msg.includes('400');
+
+            const isRetryable = !isNonRetryable && (
+                msg.includes('429') ||
+                msg.includes('503') ||
+                msg.includes('Quota exceeded') ||
+                msg.includes('Resource exhausted') ||
+                msg.includes('ETIMEDOUT') ||
+                msg.includes('ECONNRESET')
+            );
 
             if (isRetryable && attempts < this.maxRetries) {
                 // Exponential backoff: base * 2^attempts

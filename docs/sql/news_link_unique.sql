@@ -1,0 +1,15 @@
+-- ============================================================
+-- Migration: Add UNIQUE constraint on news.link
+-- Required for: Atomic upsert (P0.2 — Red Team Hardening)
+-- 
+-- PURPOSE:
+--   Enables `ON CONFLICT (link)` upsert in orchestrator-l6.ts,
+--   replacing the unsafe delete-before-insert pattern.
+--
+-- APPLY ONCE:
+--   Run this in the Supabase SQL Editor or via CLI:
+--     psql $DATABASE_URL -f docs/sql/news_link_unique.sql
+--
+-- SAFE TO RE-RUN: Uses IF NOT EXISTS.
+-- ============================================================
+CREATE UNIQUE INDEX IF NOT EXISTS news_link_unique ON public.news (link);

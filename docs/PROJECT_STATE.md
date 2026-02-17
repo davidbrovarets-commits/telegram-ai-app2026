@@ -94,3 +94,11 @@ Added CI enforcement preventing divergence between:
 CI workflow: registry-drift-check.yml
 
 Status: ACTIVE
+
+## Production Verification / Web UI
+
+`/production` (LIVE Production State View):
+- Shows build SHA, build time, deploy run ref, branch, environment label.
+- Shows Supabase target fingerprint (URL domain only) + anon key present boolean.
+- Renders real production news feed read-only.
+- Operator uses SHA match against latest Deploy-to-Firebase run to confirm navitec.com is current.

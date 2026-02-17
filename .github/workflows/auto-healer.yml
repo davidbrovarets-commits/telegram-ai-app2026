@@ -1,8 +1,8 @@
 name: Auto-Healer System
 
 on:
-  # schedule: # DISABLED — INCIDENT: unique index missing in prod
-  #   - cron: '17 * * * *' # Every hour
+  schedule:
+    - cron: '17 * * * *' # Every hour
   workflow_dispatch: # Allow manual trigger
 
 concurrency:

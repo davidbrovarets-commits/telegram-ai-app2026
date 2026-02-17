@@ -1,6 +1,7 @@
 name: CI Smoke Test (Dry Run)
 
 on:
+  workflow_dispatch:
   push:
     branches: [ "**" ]
   pull_request:

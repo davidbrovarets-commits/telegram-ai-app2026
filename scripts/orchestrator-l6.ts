@@ -34,8 +34,10 @@ dotenv.config();
 type AIProviderName = 'vertex' | 'mock';
 
 const AI_PROVIDER = (process.env.AI_PROVIDER || 'vertex').toLowerCase() as AIProviderName;
-const VERTEX_API_KEY = process.env.VERTEX_API_KEY || process.env.VITE_FIREBASE_API_KEY || '';
-const USE_AI = AI_PROVIDER === 'vertex' || !!VERTEX_API_KEY;
+
+// Policy: Vertex access is via centralized vertexClient + ADC.
+// Do NOT gate on any API key env var.
+const USE_AI = AI_PROVIDER === 'vertex';
 
 // Global flag
 const DRY_RUN = isDryRun();
@@ -338,7 +340,7 @@ async function aiEnrichOne(item: ProcessedItem): Promise<AIEnrichResult> {
     const title = item.raw.title;
 
     // Safety check BEFORE valid call
-    if (!USE_AI || AI_PROVIDER === 'mock') {
+    if (!USE_AI) {
         return fallbackMock(text, title);
     }
 
@@ -797,21 +799,15 @@ async function cycle() {
 }
 
 export async function main() {
-    console.log('🚀 SYSTEM STARTUP: Orchestrator + Auto-Healer');
+    console.log('🚀 SYSTEM STARTUP: Orchestrator (one-shot)');
+
+    // One-shot run only (CI-safe)
     await cycle().catch(e => console.error('FATAL Cycle Error:', e));
+
+    // Optional: keep auto-healer as one-shot post-step (still CI-safe)
     await runAutoHealer().catch(e => console.error('FATAL Healer Error:', e));
 
-    if (DRY_RUN) {
-        console.log('✅ [DRY_RUN] Orchestrator cycle complete. Exiting.');
-        return;
-    }
-
-    setInterval(() => {
-        runAutoHealer().catch(e => console.error('Scheduled Healer Error:', e));
-    }, 60 * 60 * 1000);
-
-    console.log('🕒 Scheduler Active: Auto-Healer running every 60m.');
-    setInterval(() => { }, 1000 * 60 * 60);
+    console.log(`✅ Orchestrator complete. DRY_RUN=${DRY_RUN ? 'true' : 'false'}. Exiting.`);
 }
 
 // Only run if called directly

@@ -19,16 +19,34 @@ jobs:
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
+          set -euo pipefail
           echo "Applying UNIQUE index migration..."
-          psql "$SUPABASE_DB_URL" -f docs/sql/news_link_unique.sql
+          psql --set ON_ERROR_STOP=1 "$SUPABASE_DB_URL" -f docs/sql/news_link_unique.sql
 
       - name: Verify index exists
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
-          psql "$SUPABASE_DB_URL" -c "
-          SELECT indexname
-          FROM pg_indexes
-          WHERE tablename = 'news'
-          AND indexname = 'news_link_unique';
-          "
+          set -euo pipefail
+          RESULT=$(psql --set ON_ERROR_STOP=1 "$SUPABASE_DB_URL" -tAc "
+            SELECT COUNT(*) FROM pg_indexes
+            WHERE tablename='news' AND indexname='news_link_unique';")
+          if [ "$RESULT" != "1" ]; then
+            echo "FAIL: Index news_link_unique not found!" && exit 1
+          fi
+          echo "OK: Index news_link_unique exists"
+
+      - name: Verify zero duplicates
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          DUPES=$(psql --set ON_ERROR_STOP=1 "$SUPABASE_DB_URL" -tAc "
+            SELECT COUNT(*) FROM (
+              SELECT link FROM public.news
+              GROUP BY link HAVING COUNT(*) > 1
+            ) t;")
+          if [ "$DUPES" != "0" ]; then
+            echo "FAIL: $DUPES duplicate link groups still exist!" && exit 1
+          fi
+          echo "OK: Zero duplicate links"

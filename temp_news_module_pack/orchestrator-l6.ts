@@ -36,7 +36,7 @@ const AI_PROVIDER = (process.env.AI_PROVIDER || 'vertex').toLowerCase() as AIPro
 
 const VERTEX_API_KEY = process.env.VERTEX_API_KEY || process.env.VITE_FIREBASE_API_KEY || '';
 const VERTEX_ENDPOINT = process.env.VERTEX_ENDPOINT || ''; // optional if you implement Vertex REST
-const VERTEX_MODEL = process.env.VERTEX_MODEL || 'gemini-2.5-pro';
+const VERTEX_MODEL = process.env.VERTEX_MODEL || 'gemini-3-pro-preview';
 
 const USE_AI = AI_PROVIDER === 'vertex' || !!VERTEX_API_KEY;
 
@@ -491,7 +491,7 @@ async function callVertex_JSON(text: string, title: string): Promise<AIEnrichRes
 
     const vertexAI = new VertexAI({ project, location });
     const model = vertexAI.getGenerativeModel({
-        model: process.env.VERTEX_MODEL || 'gemini-2.5-pro',
+        model: process.env.VERTEX_MODEL || 'gemini-3-pro-preview',
         generationConfig: { responseMimeType: "application/json" }
     });
 

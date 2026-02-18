@@ -63,7 +63,7 @@ export class VertexClient {
             console.warn('[VertexClient] No projectId configured. Calls will fail unless DRY_RUN is active.');
         }
         this.location = config.location || process.env.GOOGLE_CLOUD_LOCATION || 'us-central1';
-        this.modelId = config.modelId || process.env.VERTEX_MODEL || 'gemini-2.5-pro';
+        this.modelId = config.modelId || process.env.VERTEX_MODEL || 'gemini-3-pro-preview';
         this.imagenModelId =
             config.imagenModelId ||
             process.env.VERTEX_IMAGEN_MODEL ||

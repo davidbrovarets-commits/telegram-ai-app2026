@@ -22,7 +22,7 @@ export class AIService {
             // Initialize the generative model
             // 1.5-flash retired in '25. Using 2.0-flash-exp for '26 context.
             this.genModel = getGenerativeModel(ai, {
-                model: 'gemini-2.5-pro',
+                model: 'gemini-3-pro-preview',
                 safetySettings: [
                     {
                         category: "HARM_CATEGORY_HARASSMENT",
@@ -43,7 +43,7 @@ export class AIService {
 
         return `
 You are a helpful AI assistant for the 'Telegram AI App'.
-IDENTITY: You are Gemini 2.5 Pro, a large language model trained by Google. You are NOT ChatGPT.
+IDENTITY: You are Gemini 3 Pro, a large language model trained by Google. You are NOT ChatGPT.
 Current Date: ${today}
 User Location: ${location}
 User Context:

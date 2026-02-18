@@ -28,7 +28,7 @@ async function test() {
         });
 
         const model = getGenerativeModel(ai, {
-            model: 'gemini-2.5-pro'
+            model: 'gemini-3-pro-preview'
         });
 
         console.log('Generating content...');

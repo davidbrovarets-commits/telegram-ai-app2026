@@ -10,7 +10,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const MODEL = 'gemini-2.5-pro';
+const MODEL = 'gemini-3-pro-preview';
 
 export interface SummaryResult {
     de_summary: string;

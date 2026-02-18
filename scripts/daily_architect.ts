@@ -32,7 +32,7 @@ async function runArchitectReview() {
 
     const vertexAI = new VertexAI({ project: project, location: location });
     const model = vertexAI.preview.getGenerativeModel({
-        model: 'gemini-2.5-pro',
+        model: 'gemini-3-pro-preview',
         generationConfig: {
             maxOutputTokens: 8192,
             temperature: 0.7, // Higher temp for creative critique

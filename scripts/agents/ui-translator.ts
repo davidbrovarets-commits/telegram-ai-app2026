@@ -14,7 +14,7 @@ dotenv.config();
 
 const PROJECT = process.env.GOOGLE_PROJECT_ID || 'claude-vertex-prod';
 const LOCATION = 'us-central1';
-const MODEL = 'gemini-2.5-pro'; // Use the fast/good model
+const MODEL = 'gemini-3-pro-preview'; // Use the fast/good model
 
 async function getAccessToken(): Promise<string | undefined> {
     try {

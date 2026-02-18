@@ -486,13 +486,13 @@ async function processItem(item: NewsItemImageState) {
         // A. Get details
         const { data: fullItem, error } = await supabase
             .from('news')
-            .select('title, content, uk_summary, city, land, source, published_at, link, category')
+            .select('title, content, uk_summary, city, land, source, published_at, link')
             .eq('id', item.id)
             .single();
 
         if (error || !fullItem) throw new Error('Item data not found');
 
-        const category = (fullItem as any).category || 'general';
+        const category = 'general'; // category column not in schema; default to general
 
         // B. Try Reference (Wikipedia)
         const searchQuery = fullItem.title.split(' ').slice(0, 5).join(' ');

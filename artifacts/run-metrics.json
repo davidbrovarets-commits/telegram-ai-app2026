@@ -1,0 +1,21 @@
+{
+  "runId": "2026-02-18T13-50-47-299Z",
+  "timestamp": "2026-02-18T14:10:10.348Z",
+  "metrics": {
+    "run_started": 1,
+    "ingestion_sources_failed": 144,
+    "ingestion_sources_ok": 93,
+    "total_collected_raw": 4963,
+    "total_after_filter": 912,
+    "dedup_dropped_local": 399,
+    "dedup_dropped_db": 0,
+    "scope_country_selected": 8,
+    "scope_land_selected": 6,
+    "scope_city_selected": 4,
+    "scope_dropped": 495,
+    "ai_calls_attempted": 18,
+    "ai_calls_failed": 18,
+    "upsert_ok": 1,
+    "db_inserted_rows": 18
+  }
+}

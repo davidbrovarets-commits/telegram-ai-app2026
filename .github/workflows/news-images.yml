@@ -1,8 +1,8 @@
 name: News Images Generator (Imagen 4)
 
 on:
-  schedule:
-    - cron: '10,30,50 * * * *'
+  # schedule: # DISABLED during patch/prompt-system-v2
+  #   - cron: '10,30,50 * * * *'
   workflow_dispatch:
 
 concurrency:
@@ -43,6 +43,7 @@ jobs:
           GOOGLE_PROJECT_ID: ${{ secrets.GOOGLE_PROJECT_ID }}
           GOOGLE_CLOUD_LOCATION: 'us-central1'
           DRY_RUN: 'false'
+          GEMINI_PROMPT_TEMPERATURE: '0.9'
         run: |
           # Access token for direct REST calls to Vertex Imagen
           export GOOGLE_ACCESS_TOKEN=$(gcloud auth print-access-token)

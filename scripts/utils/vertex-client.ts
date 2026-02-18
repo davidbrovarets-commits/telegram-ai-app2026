@@ -18,6 +18,7 @@ export interface VertexClientConfig {
     rpm?: number; // Max requests per minute
     maxRetries?: number;
     baseBackoffMs?: number;
+    promptTemperature?: number; // Default temperature for text generation
 }
 
 /**
@@ -40,6 +41,7 @@ export class VertexClient {
     private location: string;
     private modelId: string;
     private imagenModelId: string;
+    private promptTemperature: number;
 
     private queue: Task<any>[] = [];
     private activeRequests = 0;
@@ -78,6 +80,10 @@ export class VertexClient {
         // P1.1: Reduced from 6 to 2 to prevent retry storms (single retry layer)
         this.maxRetries = config.maxRetries || parseInt(process.env.VERTEX_MAX_RETRIES || '2', 10);
         this.baseBackoffMs = config.baseBackoffMs || parseInt(process.env.VERTEX_BASE_BACKOFF_MS || '1000', 10);
+
+        // V2: Configurable prompt temperature (default 0.7, override via GEMINI_PROMPT_TEMPERATURE)
+        const envTemp = parseFloat(process.env.GEMINI_PROMPT_TEMPERATURE || '');
+        this.promptTemperature = config.promptTemperature ?? (Number.isFinite(envTemp) ? envTemp : 0.7);
     }
 
     /**
@@ -220,7 +226,7 @@ export class VertexClient {
     /**
      * Generate Text via Gemini (generateContent)
      */
-    async generateJSON<T = any>(prompt: string, temp = 0.3): Promise<T> {
+    async generateJSON<T = any>(prompt: string, temp?: number): Promise<T> {
         return this.enqueue(() => this.callWithRetry('generateJSON', async () => {
             const token = await this.getAccessToken();
             const endpoint = `https://${this.location}-aiplatform.googleapis.com/v1beta1/projects/${this.projectId}/locations/${this.location}/publishers/google/models/${this.modelId}:generateContent`;
@@ -234,7 +240,7 @@ export class VertexClient {
                 body: JSON.stringify({
                     contents: [{ role: 'user', parts: [{ text: prompt }] }],
                     generationConfig: {
-                        temperature: temp,
+                        temperature: temp ?? Math.min(this.promptTemperature, 0.5),
                         responseMimeType: 'application/json'
                     }
                 })
@@ -256,7 +262,7 @@ export class VertexClient {
         }));
     }
 
-    async generateText(prompt: string, temp = 0.7): Promise<string> {
+    async generateText(prompt: string, temp?: number): Promise<string> {
         return this.enqueue(() => this.callWithRetry('generateText', async () => {
             const token = await this.getAccessToken();
             const endpoint = `https://${this.location}-aiplatform.googleapis.com/v1beta1/projects/${this.projectId}/locations/${this.location}/publishers/google/models/${this.modelId}:generateContent`;
@@ -270,7 +276,7 @@ export class VertexClient {
                 body: JSON.stringify({
                     contents: [{ role: 'user', parts: [{ text: prompt }] }],
                     generationConfig: {
-                        temperature: temp
+                        temperature: temp ?? this.promptTemperature
                     }
                 })
             });
@@ -305,7 +311,9 @@ export class VertexClient {
                     instances: [{ prompt }],
                     parameters: {
                         sampleCount: 1,
+                        // sampleCount: 2, // V2: uncomment for multi-sample experimentation
                         aspectRatio,
+                        personGeneration: 'allow_adult',
                         outputOptions: { mimeType: "image/png" }
                     }
                 })

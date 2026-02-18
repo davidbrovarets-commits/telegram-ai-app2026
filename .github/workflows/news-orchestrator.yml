@@ -1,9 +1,8 @@
 name: L6 News Orchestrator
 
 on:
-  schedule:
-    # Run every hour at minute 5
-    - cron: '5 * * * *'
+  # schedule: # DISABLED during patch/prompt-system-v2
+  #   - cron: '5 * * * *'
   workflow_dispatch: # Allow manual trigger
     inputs:
       dry_run:

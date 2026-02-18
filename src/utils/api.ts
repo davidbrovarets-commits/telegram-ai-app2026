@@ -2,6 +2,8 @@ import { aiService } from "../services/ai/AIService";
 import { analyzeDocumentStructured, type DocumentAnalysisResult } from "../services/ai/document-analysis";
 import { MODEL_CONFIG } from "../services/ai/model-config";
 import { invokeWithFallback, routeForTask } from '../services/ai/model-router';
+import { getAI, VertexAIBackend, getGenerativeModel } from 'firebase/ai';
+import { app } from '../firebaseConfig';
 
 /**
  * AI Document Analysis
@@ -125,69 +127,174 @@ function formatStructuredResult(r: DocumentAnalysisResult): string {
     return lines.join('\n');
 }
 
-// ─── Runtime Model Verification (browser console) ─────────────────
-// Usage: open browser console → await window.__testModelRouter()
-// This bypasses the router-enabled flag to test actual model access.
 
-interface TestResult {
+// ═══════════════════════════════════════════════════════════════════
+// DEFINITIVE RUNTIME VERTEX ACCESS PROBE
+// Usage:  await window.__probeVertexAccess()
+// Bypasses router feature flag. Tests each model directly.
+// REMOVE after verification.
+// ═══════════════════════════════════════════════════════════════════
+
+interface ProbeResult {
     ok: boolean;
-    model_trace?: {
-        used_model: string;
-        fallback: boolean;
-        primary_target: string;
-        fallback_target: string;
-        router_enabled: boolean;
-        time: number;
-    };
-    error?: string;
+    modelId: string;
+    location: string;
+    elapsedMs: number;
+    requestId: string;
+    status: 'OK' | 'ERROR';
+    responsePreview?: string;
+    httpStatus?: number | string;
+    code?: string;
+    reason?: string;
+    message?: string;
 }
 
-async function testModelRouter(): Promise<TestResult> {
-    console.log('🧪 [__testModelRouter] Starting model verification...');
-    console.log('🧪 Router enabled:', MODEL_CONFIG.ROUTER_ENABLED);
+interface ProbeReport {
+    ts: string;
+    routerEnabled: boolean;
+    results: Array<{ case: string } & ProbeResult>;
+}
 
-    const route = routeForTask('UNDERSTAND_DOC');
-    console.log('🧪 Route:', {
-        primary: route.primary.id,
-        primaryLocation: route.primary.location,
-        fallback: route.fallback.id,
-    });
+/**
+ * Low-level model access probe. Uses Firebase AI SDK directly.
+ * NEVER throws — always returns a structured result.
+ */
+async function probeModelAccess(
+    modelId: string,
+    location: string,
+    prompt: string,
+): Promise<ProbeResult> {
+    const requestId = `probe-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const t0 = performance.now();
+
+    console.log(`[PROBE_START] ${requestId} → ${modelId}@${location}`);
 
     try {
-        const testPrompt = 'Reply with exactly: {"status":"ok","model_name":"<your model name>"}';
-        const result = await invokeWithFallback('UNDERSTAND_DOC', [testPrompt]);
+        const ai = getAI(app, {
+            backend: new VertexAIBackend(location),
+        });
 
-        const trace: TestResult = {
+        const model = getGenerativeModel(ai, { model: modelId });
+        const result = await model.generateContent([prompt]);
+        const text = result.response.text();
+        const elapsedMs = Math.round(performance.now() - t0);
+
+        console.log(`[PROBE_OK] ${requestId} ${modelId}@${location} ${elapsedMs}ms`);
+
+        return {
             ok: true,
-            model_trace: {
-                used_model: result.modelUsed,
-                fallback: result.fallbackUsed,
-                primary_target: route.primary.id,
-                fallback_target: route.fallback.id,
-                router_enabled: MODEL_CONFIG.ROUTER_ENABLED,
-                time: Date.now(),
-            },
+            modelId,
+            location,
+            elapsedMs,
+            requestId,
+            status: 'OK',
+            responsePreview: (text || '').slice(0, 120),
         };
+    } catch (err: any) {
+        const elapsedMs = Math.round(performance.now() - t0);
 
-        console.log('🧪 [__testModelRouter] RESULT:', JSON.stringify(trace, null, 2));
+        // Extract as much diagnostic data as possible
+        const httpStatus = err.status ?? err.response?.status ?? err.httpErrorCode?.status ?? undefined;
+        const code = err.code ?? err.response?.code ?? extractGrpcCode(err.message) ?? undefined;
+        const reason = extractReason(err.message || String(err));
+        const message = (err.message || String(err)).slice(0, 300);
+        const details = err.details ? JSON.stringify(err.details).slice(0, 200) : undefined;
+        const cause = err.cause ? String(err.cause).slice(0, 200) : undefined;
 
-        if (result.fallbackUsed) {
-            console.warn('⚠️ FALLBACK WAS USED. Reason:', result.fallbackReason);
-        } else {
-            console.log('✅ PRIMARY MODEL RESPONDED:', result.modelUsed);
-        }
+        console.error(`[PROBE_FAIL] ${requestId} ${modelId}@${location} ${elapsedMs}ms`, {
+            httpStatus, code, reason, message, details, cause,
+        });
 
-        console.log('🧪 Raw response:', result.text.slice(0, 200));
-        return trace;
-    } catch (e: any) {
-        const errorResult: TestResult = {
+        return {
             ok: false,
-            error: e.message || String(e),
+            modelId,
+            location,
+            elapsedMs,
+            requestId,
+            status: 'ERROR',
+            httpStatus,
+            code,
+            reason,
+            message,
         };
-        console.error('🧪 [__testModelRouter] FAILED:', errorResult);
-        return errorResult;
     }
 }
 
+/** Extract gRPC-style status code from error messages */
+function extractGrpcCode(msg: string): string | undefined {
+    const codes = [
+        'PERMISSION_DENIED', 'NOT_FOUND', 'UNIMPLEMENTED',
+        'RESOURCE_EXHAUSTED', 'UNAUTHENTICATED', 'UNAVAILABLE',
+        'INTERNAL', 'INVALID_ARGUMENT', 'DEADLINE_EXCEEDED',
+    ];
+    for (const c of codes) {
+        if (msg.includes(c)) return c;
+    }
+    return undefined;
+}
+
+/** Extract human-readable reason from error */
+function extractReason(msg: string): string {
+    if (msg.includes('PERMISSION_DENIED')) return 'PERMISSION_DENIED';
+    if (msg.includes('NOT_FOUND') || msg.includes('404')) return 'NOT_FOUND';
+    if (msg.includes('UNIMPLEMENTED')) return 'UNIMPLEMENTED';
+    if (msg.includes('RESOURCE_EXHAUSTED') || msg.includes('429')) return 'RESOURCE_EXHAUSTED';
+    if (msg.includes('UNAUTHENTICATED') || msg.includes('401')) return 'UNAUTHENTICATED';
+    if (msg.includes('model not found') || msg.includes('is not supported')) return 'MODEL_NOT_AVAILABLE';
+    if (msg.includes('403')) return 'FORBIDDEN';
+    return 'UNKNOWN';
+}
+
+/**
+ * Definitive Vertex AI access probe.
+ * Tests Gemini 3 Pro Preview, GLM 4.7, and Gemini 2.5 Pro fallback individually.
+ * Returns a structured report. Bypasses all feature flags.
+ */
+async function probeVertexAccess(): Promise<ProbeReport> {
+    const defaultLocation = MODEL_CONFIG.GEMINI_FALLBACK.location; // us-central1
+
+    const cases = [
+        { name: 'GEMINI_3_PRO_PREVIEW', model: 'gemini-3-pro-preview', location: 'global' },
+        { name: 'GLM_4_7', model: 'glm-4.7', location: defaultLocation },
+        { name: 'GEMINI_2_5_PRO', model: 'gemini-2.5-pro', location: defaultLocation },
+    ];
+
+    const prompt = 'Return exactly: {"ok":true}. JSON only.';
+
+    console.log('');
+    console.log('══════════════════════════════════════════════');
+    console.log('  VERTEX AI ACCESS PROBE');
+    console.log(`  ${new Date().toISOString()}`);
+    console.log(`  Router enabled: ${MODEL_CONFIG.ROUTER_ENABLED}`);
+    console.log('══════════════════════════════════════════════');
+    console.log('');
+
+    const results: ProbeReport['results'] = [];
+
+    for (const c of cases) {
+        const r = await probeModelAccess(c.model, c.location, prompt);
+        results.push({ case: c.name, ...r });
+
+        // Single-line summary
+        if (r.ok) {
+            console.log(`✅ ACCESS OK: ${c.model}@${c.location}  (${r.elapsedMs}ms)`);
+        } else {
+            console.log(`❌ ACCESS FAIL: ${c.model}@${c.location} — ${r.reason || r.code || r.httpStatus || 'unknown'}  (${r.elapsedMs}ms)`);
+        }
+    }
+
+    const report: ProbeReport = {
+        ts: new Date().toISOString(),
+        routerEnabled: MODEL_CONFIG.ROUTER_ENABLED,
+        results,
+    };
+
+    console.log('');
+    console.log('[VERTEX_ACCESS_REPORT]', JSON.stringify(report, null, 2));
+    console.log('');
+
+    return report;
+}
+
 // Expose to browser console
-(window as any).__testModelRouter = testModelRouter;
+(window as any).__probeVertexAccess = probeVertexAccess;

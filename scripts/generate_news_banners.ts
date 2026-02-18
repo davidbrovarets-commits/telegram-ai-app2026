@@ -267,6 +267,7 @@ async function processItem(item: NewsItemImageState) {
 
         const finalPrompt = `${richPrompt} Exclude: ${NEGATIVE_PROMPTS}`;
 
+        console.log('[IMAGE_PROMPT]', JSON.stringify({ newsId: item.id, title: fullItem.title, promptLength: finalPrompt.length }));
         console.log('--- PROMPT START ---\n' + finalPrompt + '\n--- PROMPT END ---');
 
         if (IS_DRY_RUN) {

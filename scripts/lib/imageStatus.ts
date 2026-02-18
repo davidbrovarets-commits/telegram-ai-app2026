@@ -12,6 +12,7 @@ export interface NewsItemImageState {
     image_last_attempt_at?: string | null;
     image_error?: string | null;
     image_generated_at?: string | null;
+    image_prompt?: string | null;
 }
 
 export const MAX_GENERATION_ATTEMPTS = 3;

@@ -264,6 +264,32 @@
     color: #58a6ff;
 }
 
+/* Prompt debug panel */
+.prod-state__prompt-debug {
+    padding: 8px 14px;
+    border-top: 1px solid #30363d;
+    cursor: pointer;
+}
+
+.prod-state__prompt-debug summary {
+    font-size: 12px;
+    color: #8b949e;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.prod-state__prompt-pre {
+    white-space: pre-wrap;
+    font-size: 11px;
+    background: #111;
+    color: #0f0;
+    padding: 12px;
+    border-radius: 6px;
+    margin-top: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
 /* Load more */
 .prod-state__load-more {
     display: block;

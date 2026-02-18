@@ -9,6 +9,7 @@ const BUILD_REF = import.meta.env.VITE_BUILD_REF || 'local';
 const BUILD_BRANCH = import.meta.env.VITE_BUILD_BRANCH || 'local';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
 const ANON_KEY_PRESENT = !!import.meta.env.VITE_SUPABASE_ANON_KEY;
+const SHOW_PROMPT_DEBUG = import.meta.env.VITE_SHOW_PROMPT_DEBUG === 'true';
 
 interface NewsItem {
     id: number;
@@ -18,6 +19,7 @@ interface NewsItem {
     published_at: string | null;
     created_at: string;
     image_url: string | null;
+    image_prompt: string | null;
 }
 
 const PAGE_SIZE = 20;
@@ -49,7 +51,7 @@ export function ProductionStateView() {
         try {
             const { data, error: fetchError } = await supabase
                 .from('news')
-                .select('id, title, link, source, published_at, created_at, image_url')
+                .select('id, title, link, source, published_at, created_at, image_url, image_prompt')
                 .order('published_at', { ascending: false, nullsFirst: false })
                 .order('created_at', { ascending: false })
                 .range(offset, offset + PAGE_SIZE - 1);
@@ -208,6 +210,12 @@ export function ProductionStateView() {
                                     </span>
                                 </div>
                             </div>
+                            {SHOW_PROMPT_DEBUG && item.image_prompt && (
+                                <details className="prod-state__prompt-debug" onClick={e => e.preventDefault()}>
+                                    <summary>🔍 View Image Prompt</summary>
+                                    <pre className="prod-state__prompt-pre">{item.image_prompt}</pre>
+                                </details>
+                            )}
                         </a>
                     ))}
                 </div>

@@ -101,8 +101,7 @@ async function runDatabaseCleaner() {
     const { count, error } = await supabase
         .from('news')
         .delete({ count: 'exact' })
-        .lt('created_at', THIRTY_DAYS_AGO)
-        .neq('status', 'ARCHIVED');
+        .lt('created_at', THIRTY_DAYS_AGO);
 
     if (error) console.error('   ❌ Failed to clean DB:', error.message);
     else console.log(`   ✅ Cleaned ${count || 0} old news items.`);

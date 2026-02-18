@@ -16,6 +16,9 @@ const SLOTS = [
 // Store user geo for filtering
 let userGeo: { land?: string; city?: string } = {};
 
+const MAX_NEWS_AGE_DAYS = 30;
+const MAX_NEWS_AGE_MS = MAX_NEWS_AGE_DAYS * 24 * 60 * 60 * 1000;
+
 export class FeedManager {
 
     // Set user location for geo-filtering
@@ -264,8 +267,17 @@ export class FeedManager {
             return;
         }
 
-        const newsItems = result.data?.feed || [];
-        console.log(`[FeedManager] Received ${newsItems.length} items from server`);
+        const rawItems = result.data?.feed || [];
+        // Strict Date Filter (Client-Side Guard)
+        const CUTOFF_MS = Date.now() - MAX_NEWS_AGE_MS;
+        const newsItems = rawItems.filter((n: News) => {
+            const dateStr = n.published_at || n.created_at;
+            if (!dateStr) return true; // Default to keeping if no date found
+            const d = new Date(dateStr).getTime();
+            return d > CUTOFF_MS;
+        });
+
+        console.log(`[FeedManager] Received ${rawItems.length} items from server. Filtered to ${newsItems.length} (Active < 45d).`);
 
         // Filter and Fill (Standard Logic)
         const usedIds = new Set<number>([
@@ -333,6 +345,7 @@ export class FeedManager {
 
         // neededTypes removed as we loosened the query
         const usedIds = new Set([...state.visibleFeed, ...state.history.shown]);
+        const CUTOFF_DATE = new Date(Date.now() - MAX_NEWS_AGE_MS).toISOString();
 
         // Fetch candidates - BROAD QUERY (don't restrict by type initially to allow fallback)
         let query = supabase
@@ -341,7 +354,8 @@ export class FeedManager {
             .in('status', ['POOL', 'ACTIVE'])
             .eq('image_status', 'generated')
             .not('image_url', 'is', null)
-            .not('type', 'is', null);
+            .not('type', 'is', null)
+            .gt('published_at', CUTOFF_DATE); // Strict Date Filter
 
         // Filter out used IDs if any exist
         let idsToExclude = usedIds;
@@ -369,6 +383,7 @@ export class FeedManager {
                 .eq('image_status', 'generated')
                 .not('image_url', 'is', null)
                 .not('type', 'is', null)
+                .gt('published_at', CUTOFF_DATE) // Strict Date Filter on Recycle too
                 .order('priority', { ascending: false })
                 .order('created_at', { ascending: false })
                 .order('id', { ascending: false })
@@ -456,12 +471,18 @@ export class FeedManager {
 
         const { data } = await supabase
             .from('news')
-            .select('id')
+            .select('id, created_at, published_at')
             .in('id', idsToCheck);
 
         if (data) {
-            const foundIds = new Set(data.map(n => n.id));
-            const missingIds = idsToCheck.filter(id => !foundIds.has(id));
+            const CUTOFF_MS = Date.now() - MAX_NEWS_AGE_MS;
+            const validIds = new Set(data.filter(n => {
+                const dateStr = n.published_at || n.created_at;
+                if (!dateStr) return true;
+                return new Date(dateStr).getTime() > CUTOFF_MS;
+            }).map(n => n.id));
+
+            const missingIds = idsToCheck.filter(id => !validIds.has(id));
 
             if (missingIds.length > 0) {
                 console.warn('[FeedManager] Found dead IDs in persistent store:', missingIds);

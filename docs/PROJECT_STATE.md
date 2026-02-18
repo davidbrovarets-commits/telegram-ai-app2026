@@ -102,3 +102,18 @@ Status: ACTIVE
 - Shows Supabase target fingerprint (URL domain only) + anon key present boolean.
 - Renders real production news feed read-only.
 - Operator uses SHA match against latest Deploy-to-Firebase run to confirm navitec.com is current.
+
+## Production Mutation Mode (Audit Confirmation — Feb 2026)
+
+| Trigger | DRY_RUN Value | Behavior |
+|---|---|---|
+| **Scheduled** (cron) | `'false'` | **LIVE WRITES** — DB inserts, deletes, image uploads |
+| **Manual** (workflow_dispatch) | configurable (`true`/`false`) | User chooses on dispatch |
+| **CI smoke** | `'true'` | Read-only verification, no side effects |
+| **Local dev** (`npm run dev:dry`) | `'true'` (default) | Safe simulation |
+
+**Safety mechanisms:**
+- Unique index on `news.link` → deterministic upsert (no duplicates)
+- `assertMutationAllowed()` code-level guard in every write path
+- `cancel-in-progress` concurrency prevents overlapping runs
+

@@ -272,9 +272,13 @@ export class FeedManager {
         const CUTOFF_MS = Date.now() - MAX_NEWS_AGE_MS;
         const newsItems = rawItems.filter((n: News) => {
             const dateStr = n.published_at || n.created_at;
-            if (!dateStr) return true; // Default to keeping if no date found
+            if (!dateStr) return true;
             const d = new Date(dateStr).getTime();
-            return d > CUTOFF_MS;
+            if (d <= CUTOFF_MS) return false;
+
+            // Mock Filter
+            if ((n.title || '').includes('[UA Mock]')) return false;
+            return true;
         });
 
         console.log(`[FeedManager] Received ${rawItems.length} items from server. Filtered to ${newsItems.length} (Active < 45d).`);
@@ -355,7 +359,8 @@ export class FeedManager {
             .eq('image_status', 'generated')
             .not('image_url', 'is', null)
             .not('type', 'is', null)
-            .gt('published_at', CUTOFF_DATE); // Strict Date Filter
+            .gt('published_at', CUTOFF_DATE) // Strict Date Filter
+            .not('title', 'ilike', '%[UA Mock]%'); // Filter Mocks
 
         // Filter out used IDs if any exist
         let idsToExclude = usedIds;
@@ -384,6 +389,7 @@ export class FeedManager {
                 .not('image_url', 'is', null)
                 .not('type', 'is', null)
                 .gt('published_at', CUTOFF_DATE) // Strict Date Filter on Recycle too
+                .not('title', 'ilike', '%[UA Mock]%') // Filter Mocks on Recycle too
                 .order('priority', { ascending: false })
                 .order('created_at', { ascending: false })
                 .order('id', { ascending: false })
@@ -471,7 +477,7 @@ export class FeedManager {
 
         const { data } = await supabase
             .from('news')
-            .select('id, created_at, published_at')
+            .select('id, created_at, published_at, title')
             .in('id', idsToCheck);
 
         if (data) {
@@ -479,6 +485,7 @@ export class FeedManager {
             const validIds = new Set(data.filter(n => {
                 const dateStr = n.published_at || n.created_at;
                 if (!dateStr) return true;
+                if ((n.title || '').includes('[UA Mock]')) return false; // Filter Mocks from cache
                 return new Date(dateStr).getTime() > CUTOFF_MS;
             }).map(n => n.id));
 

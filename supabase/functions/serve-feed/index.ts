@@ -174,6 +174,7 @@ serve(async (req) => {
             .eq('image_status', 'generated')
             .not('image_url', 'is', null)
             .order('created_at', { ascending: false })
+            .order('id', { ascending: false }) // deterministic tie-breaker
             .range(page * limit, (page + 1) * limit + 100 - 1); // Extra for filtering
 
         if (feedError) throw feedError;

@@ -17,6 +17,15 @@ export const limits = {
     IMAGEN_REQUEST_TIMEOUT_MS: Number(process.env.LIMIT_IMAGEN_TIMEOUT_MS || 60000),
 };
 
-export function getLimit(key: keyof typeof limits, fallback?: number): number {
+/** Top-level numeric limit keys (excludes nested objects like MAX_ARTICLES_PER_SCOPE) */
+type NumericLimitKey =
+    | 'MAX_ARTICLES_PER_RUN_TOTAL'
+    | 'MAX_AI_CALLS_PER_RUN'
+    | 'MAX_IMAGE_GENS_PER_RUN'
+    | 'MAX_TOKENS_PER_ARTICLE'
+    | 'AI_REQUEST_TIMEOUT_MS'
+    | 'IMAGEN_REQUEST_TIMEOUT_MS';
+
+export function getLimit(key: NumericLimitKey, fallback?: number): number {
     return Number(limits[key]) || fallback || 0;
 }

@@ -9,13 +9,16 @@ export interface NewsItemImageState {
     image_generation_attempts: number;
     image_url?: string;
     image_source_type?: 'reference' | 'imagen' | null;
+    image_last_attempt_at?: string | null;
+    image_error?: string | null;
+    image_generated_at?: string | null;
 }
 
 export const MAX_GENERATION_ATTEMPTS = 3;
 
 /**
  * Claims a batch of news items for image generation.
- * Selects oldest 'placeholder' or 'failed' items (if attempts < MAX).
+ * Selects newest 'placeholder' or 'failed' items (if attempts < MAX).
  * Updates them to 'generating' to prevent race conditions.
  */
 export async function claimNewsForGeneration(
@@ -31,6 +34,7 @@ export async function claimNewsForGeneration(
         .in('image_status', ['placeholder', 'failed'])
         .lt('image_generation_attempts', options.maxAttempts)
         .order('created_at', { ascending: false }) // Newest first (aligned with index)
+        .order('id', { ascending: false }) // Deterministic tie-breaker
         .limit(limit);
 
     if (selectError) {

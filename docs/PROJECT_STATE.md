@@ -117,3 +117,19 @@ Status: ACTIVE
 - `assertMutationAllowed()` code-level guard in every write path
 - `cancel-in-progress` concurrency prevents overlapping runs
 
+## Operational Runbooks
+
+### Purge All News Everywhere (DB + Storage)
+
+**Preconditions:** disable schedules + cancel runs + `PURGE_NEWS_CONFIRM` gate + `DRY_RUN` default true
+
+**Command:**
+```bash
+# Dry run (safe — logs what would be deleted)
+DRY_RUN=true  PURGE_NEWS_CONFIRM="YES_DELETE_ALL_NEWS_EVERYWHERE" npm run admin:purge-news
+
+# Live purge (destructive — deletes all news data)
+DRY_RUN=false PURGE_NEWS_CONFIRM="YES_DELETE_ALL_NEWS_EVERYWHERE" npm run admin:purge-news
+```
+
+**Post-checks:** DB row counts = 0; Storage objects = 0; then run orchestrator manually for clean regen test.

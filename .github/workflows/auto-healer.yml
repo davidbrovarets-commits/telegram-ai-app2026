@@ -2,7 +2,7 @@ name: Auto-Healer System
 
 on:
   schedule:
-    - cron: '17 * * * *' # Every hour
+    # - cron: '17 * * * *' # DISABLED during patch/prompt-system-v2
   workflow_dispatch: # Allow manual trigger
 
 concurrency:

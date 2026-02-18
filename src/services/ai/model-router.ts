@@ -90,6 +90,12 @@ export async function invokeWithFallback(
     // --- Try primary ---
     try {
         const model = createModel(route.primary);
+        console.log('[MODEL_RUNTIME_CALL]', JSON.stringify({
+            model: route.primary.id,
+            location: route.primary.location,
+            task: taskType,
+            timestamp: new Date().toISOString(),
+        }));
         const result = await model.generateContent(contentParts);
         const text = result.response.text();
 
@@ -120,7 +126,13 @@ export async function invokeWithFallback(
             throw primaryError;
         }
 
-        console.warn(`[ModelRouter] ${taskType} primary failed (${route.primary.id}), falling back to ${route.fallback.id}. Reason: ${msg.slice(0, 100)}`);
+        console.warn('[MODEL_FALLBACK_TRIGGERED]', JSON.stringify({
+            primary_model: route.primary.id,
+            fallback_model: route.fallback.id,
+            task: taskType,
+            reason: msg.slice(0, 200),
+            timestamp: new Date().toISOString(),
+        }));
 
         // --- Try fallback ---
         // If primary === fallback (router disabled or same model), don't retry
@@ -130,6 +142,13 @@ export async function invokeWithFallback(
 
         try {
             const fallbackModel = createModel(route.fallback);
+            console.log('[MODEL_RUNTIME_CALL]', JSON.stringify({
+                model: route.fallback.id,
+                location: route.fallback.location,
+                task: taskType,
+                is_fallback: true,
+                timestamp: new Date().toISOString(),
+            }));
             const fallbackResult = await fallbackModel.generateContent(contentParts);
             const fallbackText = fallbackResult.response.text();
 

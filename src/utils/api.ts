@@ -1,6 +1,7 @@
 import { aiService } from "../services/ai/AIService";
 import { analyzeDocumentStructured, type DocumentAnalysisResult } from "../services/ai/document-analysis";
 import { MODEL_CONFIG } from "../services/ai/model-config";
+import { invokeWithFallback, routeForTask } from '../services/ai/model-router';
 
 /**
  * AI Document Analysis
@@ -123,3 +124,70 @@ function formatStructuredResult(r: DocumentAnalysisResult): string {
 
     return lines.join('\n');
 }
+
+// ─── Runtime Model Verification (browser console) ─────────────────
+// Usage: open browser console → await window.__testModelRouter()
+// This bypasses the router-enabled flag to test actual model access.
+
+interface TestResult {
+    ok: boolean;
+    model_trace?: {
+        used_model: string;
+        fallback: boolean;
+        primary_target: string;
+        fallback_target: string;
+        router_enabled: boolean;
+        time: number;
+    };
+    error?: string;
+}
+
+async function testModelRouter(): Promise<TestResult> {
+    console.log('🧪 [__testModelRouter] Starting model verification...');
+    console.log('🧪 Router enabled:', MODEL_CONFIG.ROUTER_ENABLED);
+
+    const route = routeForTask('UNDERSTAND_DOC');
+    console.log('🧪 Route:', {
+        primary: route.primary.id,
+        primaryLocation: route.primary.location,
+        fallback: route.fallback.id,
+    });
+
+    try {
+        const testPrompt = 'Reply with exactly: {"status":"ok","model_name":"<your model name>"}';
+        const result = await invokeWithFallback('UNDERSTAND_DOC', [testPrompt]);
+
+        const trace: TestResult = {
+            ok: true,
+            model_trace: {
+                used_model: result.modelUsed,
+                fallback: result.fallbackUsed,
+                primary_target: route.primary.id,
+                fallback_target: route.fallback.id,
+                router_enabled: MODEL_CONFIG.ROUTER_ENABLED,
+                time: Date.now(),
+            },
+        };
+
+        console.log('🧪 [__testModelRouter] RESULT:', JSON.stringify(trace, null, 2));
+
+        if (result.fallbackUsed) {
+            console.warn('⚠️ FALLBACK WAS USED. Reason:', result.fallbackReason);
+        } else {
+            console.log('✅ PRIMARY MODEL RESPONDED:', result.modelUsed);
+        }
+
+        console.log('🧪 Raw response:', result.text.slice(0, 200));
+        return trace;
+    } catch (e: any) {
+        const errorResult: TestResult = {
+            ok: false,
+            error: e.message || String(e),
+        };
+        console.error('🧪 [__testModelRouter] FAILED:', errorResult);
+        return errorResult;
+    }
+}
+
+// Expose to browser console
+(window as any).__testModelRouter = testModelRouter;

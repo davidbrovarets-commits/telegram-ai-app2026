@@ -19,7 +19,8 @@
     "dev:dry": "tsx scripts/local-dev-run.ts",
     "dev:run": "cross-env DRY_RUN=false tsx scripts/local-dev-run.ts",
     "dev:check": "tsx scripts/preflight.ts",
-    "admin:purge-news": "tsx scripts/admin/purge_all_news_everywhere.ts"
+    "admin:purge-news": "tsx scripts/admin/purge_all_news_everywhere.ts",
+    "admin:verify-zero-news": "tsx scripts/admin/verify_zero_news_state.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.72.1",

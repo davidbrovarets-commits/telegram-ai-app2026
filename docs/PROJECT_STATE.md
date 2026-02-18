@@ -133,3 +133,12 @@ DRY_RUN=false PURGE_NEWS_CONFIRM="YES_DELETE_ALL_NEWS_EVERYWHERE" npm run admin:
 ```
 
 **Post-checks:** DB row counts = 0; Storage objects = 0; then run orchestrator manually for clean regen test.
+
+### Verify ZERO News State
+
+**Command:**
+```bash
+EXPECT_ZERO_NEWS="YES" FAIL_ON_LEFTOVERS=true npm run admin:verify-zero-news
+```
+
+**Pass criteria:** Script prints "✅ VERIFIED: ZERO NEWS EVERYWHERE". All DB rowCounts = 0 and all Storage objectCounts = 0.

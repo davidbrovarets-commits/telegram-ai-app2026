@@ -1,5 +1,4 @@
 import type { Task, News } from '../../types';
-import { formatTitle7Words, formatSummary200Words } from '../../utils/newsFormat';
 
 interface TaskModalProps {
     task: (Task & { type?: never }) | (News & { type: 'news' });
@@ -28,9 +27,9 @@ export const TaskModal = ({ task, unlockedTasks, onClose, onUnlock }: TaskModalP
 
                 {isNews ? (
                     <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', minHeight: '100%' }}>
-                        {/* 1) TITLE */}
+                        {/* 1) TITLE — CR-007: rendered raw, word count enforced at generation */}
                         <h3 style={{ marginBottom: '15px' }}>
-                            {formatTitle7Words((task as any).title || (task as any).uk_summary || '')}
+                            {(task as any).title || (task as any).uk_summary || ''}
                         </h3>
 
                         {/* 2) IMAGE */}
@@ -40,9 +39,9 @@ export const TaskModal = ({ task, unlockedTasks, onClose, onUnlock }: TaskModalP
                             alt=""
                         />
 
-                        {/* 3) SUMMARY */}
+                        {/* 3) SUMMARY — CR-007: rendered raw, word count enforced at generation */}
                         <p className="modal-text">
-                            {formatSummary200Words((task as any).uk_summary || (task as any).content || '')}
+                            {(task as any).uk_summary || (task as any).content || ''}
                         </p>
 
                         {/* 4) SOURCE (Right aligned, immediately after summary) */}

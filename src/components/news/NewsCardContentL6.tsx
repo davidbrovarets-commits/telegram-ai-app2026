@@ -1,6 +1,5 @@
 // import React from 'react';
 import type { News } from '../../types';
-import { formatTitle7Words } from '../../utils/newsFormat';
 
 type Props = {
     item: News;
@@ -8,8 +7,8 @@ type Props = {
 };
 
 export function NewsCardContentL6({ item, onPress }: Props) {
-    // L6 Fix: Use shared formatters for Title, but use raw summary for short teaser
-    const preLine = formatTitle7Words(item.title || item.uk_summary || item.content || '');
+    // CR-007: Title word count enforced at generation time — render as-is
+    const preLine = item.title || item.uk_summary || item.content || '';
     const summary = item.uk_summary || item.content || '';
 
     return (

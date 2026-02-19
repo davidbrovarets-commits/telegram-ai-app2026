@@ -26,6 +26,7 @@ import { metrics } from './lib/run-metrics';
 import { assertMutationAllowed, isDryRun } from './lib/mutation-guard';
 import { sanitizeForPrompt, wrapUntrustedBlock } from './lib/prompt-sanitize';
 import { clampAiEnrich } from './lib/ai-guards';
+import { NEWS_TEXT_RULES } from '../src/config/newsTextRules';
 
 dotenv.config();
 
@@ -287,10 +288,10 @@ SAFETY RULES (MANDATORY):
 Task:
 1. Analyze the German Text and Title.
 2. Generate a JSON response with EXACTLY these fields:
-   - de_summary: A 1-sentence summary in German (max 600 chars).
-   - uk_summary: A professional summary in UKRAINIAN language only. NO German words (max 1200 chars).
-   - uk_content: A detailed summary in UKRAINIAN. Length must be strictly between 250 and 290 words. Use logical paragraphs and bullet points (•) where appropriate. Tone: Objective, journalistic (max 4000 chars).
-   - uk_title: A short, catchy title in UKRAINIAN language only (max 180 chars).
+   - de_summary: A 1-sentence summary in German.
+   - uk_summary: A professional summary in UKRAINIAN language only. NO German words. Length: ${NEWS_TEXT_RULES.feedSummary.minWords}–${NEWS_TEXT_RULES.feedSummary.maxWords} words.
+   - uk_content: A detailed summary in UKRAINIAN. Length must be strictly between ${NEWS_TEXT_RULES.detailContent.minWords} and ${NEWS_TEXT_RULES.detailContent.maxWords} words. Use logical paragraphs and bullet points (•) where appropriate. Tone: Objective, journalistic.
+   - uk_title: A complete sentence title in UKRAINIAN language only. Length: ${NEWS_TEXT_RULES.title.minWords}–${NEWS_TEXT_RULES.title.maxWords} words. Must end with a period.
    - action_hint: A short warning in UKRAINIAN if there is a deadline or action required, e.g. "Термін до 15.03" (max 120 chars).
    - actions: Array of tags from ONLY these values: ["deadline", "money", "documents", "event", "important"] (max 3 tags).
    - reasonTag: One of ["OFFICIAL_UPDATE", "IMPORTANT_LOCAL", "FOR_UKRAINIANS", "EVENT_NEAR_YOU"].

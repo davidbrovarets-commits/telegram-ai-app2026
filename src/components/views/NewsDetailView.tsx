@@ -1,6 +1,5 @@
 import React from 'react';
 import type { News } from '../../types';
-import { formatTitle7Words } from '../../utils/newsFormat';
 import './NewsDetailView.css'; // We will create this
 
 interface NewsDetailViewProps {
@@ -9,8 +8,8 @@ interface NewsDetailViewProps {
 }
 
 export const NewsDetailView: React.FC<NewsDetailViewProps> = ({ item, onBack }) => {
-    // 1. Header Logic: Matches Feed Card Title
-    const displayTitle = formatTitle7Words(item.title);
+    // CR-007: Title word count enforced at generation time — render as-is
+    const displayTitle = item.title;
 
     // 2. Hostname Extraction
     let hostname = '';

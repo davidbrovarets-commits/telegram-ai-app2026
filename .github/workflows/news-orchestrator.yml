@@ -44,9 +44,11 @@ jobs:
         VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
         VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         GOOGLE_PROJECT_ID: ${{ secrets.GOOGLE_PROJECT_ID }}
         GOOGLE_CLOUD_LOCATION: 'us-central1'
         # NEW: DRY RUN INPUT (Default to 'false' for schedule)
         DRY_RUN: ${{ inputs.dry_run || 'false' }}
         AI_PROVIDER: 'vertex'
+        VERTEX_MODEL: 'gemini-1.5-pro'
       run: npx tsx scripts/orchestrator-l6.ts

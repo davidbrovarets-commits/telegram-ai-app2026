@@ -240,4 +240,11 @@ graph TD
 - Added hostname normalization (lowercase).
 - **Files:** `scripts/lib/dedup.ts`.
 
+### Text Limits Audit
+- A comprehensive audit of all news text min/max length constraints (generation → storage → UI) is maintained in:
+  - **Report:** `docs/NEWS_TEXT_LIMITS_AUDIT.md`
+  - **Machine-readable:** `docs/NEWS_TEXT_LIMITS_AUDIT.json`
+  - **Verification tool:** `scripts/tools/news_text_limits_check.ts`
+- Key limits: `uk_title` ≤180 chars (schema) → 7 words (UI), `uk_content` 250–290 words (prompt) / ≤4000 chars (schema), `uk_summary` ≤1200 chars.
+
 INTROSPECTION COMPLETE

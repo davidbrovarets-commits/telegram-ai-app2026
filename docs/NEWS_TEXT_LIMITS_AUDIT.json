@@ -1,0 +1,371 @@
+{
+    "generated_at": "2026-02-19T14:02:00+01:00",
+    "project": "telegram-ai-app",
+    "audit_type": "read_only",
+    "entries": [
+        {
+            "id": "GEN_PROMPT.de_summary.max_chars",
+            "layer": "GENERATION",
+            "fields": [
+                "de_summary"
+            ],
+            "unit": "chars",
+            "min": null,
+            "max": 600,
+            "enforcement": "prompt_hint",
+            "file": "scripts/orchestrator-l6.ts",
+            "lines": "L290",
+            "notes": "AI prompt requests max 600 chars for German summary"
+        },
+        {
+            "id": "GEN_PROMPT.uk_summary.max_chars",
+            "layer": "GENERATION",
+            "fields": [
+                "uk_summary"
+            ],
+            "unit": "chars",
+            "min": null,
+            "max": 1200,
+            "enforcement": "prompt_hint",
+            "file": "scripts/orchestrator-l6.ts",
+            "lines": "L291",
+            "notes": "AI prompt requests max 1200 chars for Ukrainian summary"
+        },
+        {
+            "id": "GEN_PROMPT.uk_content.word_range",
+            "layer": "GENERATION",
+            "fields": [
+                "uk_content"
+            ],
+            "unit": "words",
+            "min": 250,
+            "max": 290,
+            "enforcement": "prompt_hint",
+            "file": "scripts/orchestrator-l6.ts",
+            "lines": "L292",
+            "notes": "AI prompt requests 250-290 words; NOT enforced at runtime"
+        },
+        {
+            "id": "GEN_PROMPT.uk_content.max_chars",
+            "layer": "GENERATION",
+            "fields": [
+                "uk_content"
+            ],
+            "unit": "chars",
+            "min": null,
+            "max": 4000,
+            "enforcement": "prompt_hint",
+            "file": "scripts/orchestrator-l6.ts",
+            "lines": "L292",
+            "notes": "AI prompt requests max 4000 chars for Ukrainian content"
+        },
+        {
+            "id": "GEN_PROMPT.uk_title.max_chars",
+            "layer": "GENERATION",
+            "fields": [
+                "uk_title"
+            ],
+            "unit": "chars",
+            "min": null,
+            "max": 180,
+            "enforcement": "prompt_hint",
+            "file": "scripts/orchestrator-l6.ts",
+            "lines": "L293",
+            "notes": "AI prompt requests max 180 chars for Ukrainian title"
+        },
+        {
+            "id": "GEN_PROMPT.action_hint.max_chars",
+            "layer": "GENERATION",
+            "fields": [
+                "action_hint"
+            ],
+            "unit": "chars",
+            "min": null,
+            "max": 120,
+            "enforcement": "prompt_hint",
+            "file": "scripts/orchestrator-l6.ts",
+            "lines": "L294",
+            "notes": "AI prompt requests max 120 chars for action hint"
+        },
+        {
+            "id": "GEN_SCHEMA.de_summary.max_chars",
+            "layer": "GENERATION",
+            "fields": [
+                "de_summary"
+            ],
+            "unit": "chars",
+            "min": null,
+            "max": 600,
+            "enforcement": "hard_reject",
+            "file": "scripts/lib/ai-schemas.ts",
+            "lines": "L26",
+            "notes": "Zod z.string().max(600) — rejects if exceeded"
+        },
+        {
+            "id": "GEN_SCHEMA.uk_summary.min_max_chars",
+            "layer": "GENERATION",
+            "fields": [
+                "uk_summary"
+            ],
+            "unit": "chars",
+            "min": 1,
+            "max": 1200,
+            "enforcement": "hard_reject",
+            "file": "scripts/lib/ai-schemas.ts",
+            "lines": "L27",
+            "notes": "Zod z.string().min(1).max(1200) — rejects if outside range"
+        },
+        {
+            "id": "GEN_SCHEMA.uk_content.min_max_chars",
+            "layer": "GENERATION",
+            "fields": [
+                "uk_content"
+            ],
+            "unit": "chars",
+            "min": 1,
+            "max": 4000,
+            "enforcement": "hard_reject",
+            "file": "scripts/lib/ai-schemas.ts",
+            "lines": "L28",
+            "notes": "Zod z.string().min(1).max(4000) — rejects if outside range"
+        },
+        {
+            "id": "GEN_SCHEMA.uk_title.min_max_chars",
+            "layer": "GENERATION",
+            "fields": [
+                "uk_title"
+            ],
+            "unit": "chars",
+            "min": 1,
+            "max": 180,
+            "enforcement": "hard_reject",
+            "file": "scripts/lib/ai-schemas.ts",
+            "lines": "L29",
+            "notes": "Zod z.string().min(1).max(180) — rejects if outside range"
+        },
+        {
+            "id": "GEN_SCHEMA.action_hint.max_chars",
+            "layer": "GENERATION",
+            "fields": [
+                "action_hint"
+            ],
+            "unit": "chars",
+            "min": null,
+            "max": 120,
+            "enforcement": "hard_reject",
+            "file": "scripts/lib/ai-schemas.ts",
+            "lines": "L30",
+            "notes": "Zod z.string().max(120) — rejects if exceeded"
+        },
+        {
+            "id": "GEN_SCHEMA.actions.max_count",
+            "layer": "GENERATION",
+            "fields": [
+                "actions"
+            ],
+            "unit": "count",
+            "min": null,
+            "max": 3,
+            "enforcement": "hard_reject",
+            "file": "scripts/lib/ai-schemas.ts",
+            "lines": "L31",
+            "notes": "Zod z.array().max(3) — rejects if more than 3 tags"
+        },
+        {
+            "id": "GEN_INPUT.sanitize.max_chars",
+            "layer": "GENERATION",
+            "fields": [
+                "input_text"
+            ],
+            "unit": "chars",
+            "min": null,
+            "max": null,
+            "enforcement": "hard_truncate",
+            "file": "scripts/lib/prompt-sanitize.ts",
+            "lines": "L34,L64-65",
+            "notes": "sanitizeForPrompt(input, maxLen) — hard truncate to maxLen chars"
+        },
+        {
+            "id": "GEN_INPUT.tokens.max",
+            "layer": "GENERATION",
+            "fields": [
+                "input_text"
+            ],
+            "unit": "tokens",
+            "min": null,
+            "max": 900,
+            "enforcement": "hard_truncate",
+            "file": "scripts/lib/limits.ts",
+            "lines": "L13",
+            "notes": "MAX_TOKENS_PER_ARTICLE=900 — configurable via env LIMIT_MAX_TOKENS_PER_ARTICLE"
+        },
+        {
+            "id": "STORAGE_FALLBACK.de_summary.max_chars",
+            "layer": "STORAGE",
+            "fields": [
+                "de_summary"
+            ],
+            "unit": "chars",
+            "min": null,
+            "max": 240,
+            "enforcement": "soft_truncate",
+            "file": "scripts/orchestrator-l6.ts",
+            "lines": "L337",
+            "notes": "fallbackMock slices to 240 chars + '...' when AI fails"
+        },
+        {
+            "id": "PUSH.title.max_chars",
+            "layer": "API",
+            "fields": [
+                "push_title"
+            ],
+            "unit": "chars",
+            "min": null,
+            "max": 60,
+            "enforcement": "soft_truncate",
+            "file": "scripts/push-templates.ts",
+            "lines": "L59,L81,L104,L127",
+            "notes": "All push templates slice title to 60 chars"
+        },
+        {
+            "id": "PUSH.body.max_chars",
+            "layer": "API",
+            "fields": [
+                "push_body"
+            ],
+            "unit": "chars",
+            "min": null,
+            "max": 140,
+            "enforcement": "soft_truncate",
+            "file": "scripts/push-templates.ts",
+            "lines": "L60,L82,L105,L128",
+            "notes": "All push templates slice body to 140 chars"
+        },
+        {
+            "id": "UI_LIST.title.max_words",
+            "layer": "UI_LIST",
+            "fields": [
+                "title"
+            ],
+            "unit": "words",
+            "min": null,
+            "max": 7,
+            "enforcement": "soft_truncate",
+            "file": "src/utils/newsFormat.ts",
+            "lines": "L13-29",
+            "notes": "formatTitle7Words truncates to 7 words + '...'; used by NewsCardContentL6"
+        },
+        {
+            "id": "UI_LIST.summary.no_limit",
+            "layer": "UI_LIST",
+            "fields": [
+                "uk_summary"
+            ],
+            "unit": "none",
+            "min": null,
+            "max": null,
+            "enforcement": "none",
+            "file": "src/components/news/NewsCardContentL6.tsx",
+            "lines": "L13",
+            "notes": "Summary rendered raw with CSS overflow:hidden; no programmatic truncation"
+        },
+        {
+            "id": "UI_DETAIL.title.max_words",
+            "layer": "UI_DETAIL",
+            "fields": [
+                "title"
+            ],
+            "unit": "words",
+            "min": null,
+            "max": 7,
+            "enforcement": "soft_truncate",
+            "file": "src/components/views/NewsDetailView.tsx",
+            "lines": "L13",
+            "notes": "Same formatTitle7Words as list view"
+        },
+        {
+            "id": "UI_DETAIL.content.no_limit",
+            "layer": "UI_DETAIL",
+            "fields": [
+                "content"
+            ],
+            "unit": "none",
+            "min": null,
+            "max": null,
+            "enforcement": "none",
+            "file": "src/components/views/NewsDetailView.tsx",
+            "lines": "L62",
+            "notes": "Content rendered raw in scrollable container; no truncation"
+        },
+        {
+            "id": "UI_DETAIL.hostname.max_chars",
+            "layer": "UI_DETAIL",
+            "fields": [
+                "hostname"
+            ],
+            "unit": "chars",
+            "min": null,
+            "max": 15,
+            "enforcement": "soft_truncate",
+            "file": "src/components/views/NewsDetailView.tsx",
+            "lines": "L27-28",
+            "notes": "Source hostname truncated to 15 chars + '...'"
+        },
+        {
+            "id": "UI_MODAL.title.max_words",
+            "layer": "UI_LIST",
+            "fields": [
+                "title"
+            ],
+            "unit": "words",
+            "min": null,
+            "max": 7,
+            "enforcement": "soft_truncate",
+            "file": "src/components/modals/TaskModal.tsx",
+            "lines": "L33",
+            "notes": "TaskModal uses formatTitle7Words for title"
+        },
+        {
+            "id": "UI_MODAL.summary.max_words",
+            "layer": "UI_LIST",
+            "fields": [
+                "uk_summary"
+            ],
+            "unit": "words",
+            "min": null,
+            "max": 200,
+            "enforcement": "soft_truncate",
+            "file": "src/components/modals/TaskModal.tsx",
+            "lines": "L45",
+            "notes": "TaskModal uses formatSummary200Words for summary"
+        },
+        {
+            "id": "DB.title.no_limit",
+            "layer": "STORAGE",
+            "fields": [
+                "title"
+            ],
+            "unit": "chars",
+            "min": null,
+            "max": null,
+            "enforcement": "none",
+            "file": "supabase (schema)",
+            "lines": "N/A",
+            "notes": "Column type 'text' — no char limit at DB level"
+        },
+        {
+            "id": "DB.content.no_limit",
+            "layer": "STORAGE",
+            "fields": [
+                "content"
+            ],
+            "unit": "chars",
+            "min": null,
+            "max": null,
+            "enforcement": "none",
+            "file": "supabase (schema)",
+            "lines": "N/A",
+            "notes": "Column type 'text' — no char limit at DB level"
+        }
+    ]
+}

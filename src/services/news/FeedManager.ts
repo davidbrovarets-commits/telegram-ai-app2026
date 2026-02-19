@@ -98,8 +98,9 @@ export class FeedManager {
         if (newsIndex === -1) return; // Not found
 
         const action = direction === 'RIGHT' ? 'ARCHIVE' : 'DELETE';
+        const dbStatus = direction === 'RIGHT' ? 'DELETED' : 'ARCHIVED'; // INVERTED IN FEED: RIGHT=DELETE, LEFT=ARCHIVE
 
-        // 1. Update Lists
+        // 1. Update Lists (Optimistic Local)
         const newHistory = { ...state.history };
         if (action === 'ARCHIVE') {
             newHistory.archived = [...newHistory.archived, newsId];
@@ -118,6 +119,17 @@ export class FeedManager {
         }));
 
         this.fillEmptySlots();
+
+        // 2. CR-008: DB Persistence (Fire & Forget)
+        if (state.userId) {
+            supabase.from('news_user_state').upsert({
+                user_id: state.userId,
+                news_id: newsId,
+                status: dbStatus
+            }, { onConflict: 'user_id, news_id' }).then(({ error }) => {
+                if (error) console.error('[FeedManager] DB Sync Failed:', error);
+            });
+        }
     }
 
     static handleArchiveDeletion(newsId: number) {
@@ -133,6 +145,40 @@ export class FeedManager {
             ...prev,
             history: newHistory
         }));
+
+        // CR-008: DB Persistence
+        if (state.userId) {
+            supabase.from('news_user_state').update({
+                status: 'DELETED'
+            }).match({ user_id: state.userId, news_id: newsId })
+                .then(({ error }) => {
+                    if (error) console.error('[FeedManager] Archive Delete Sync Failed:', error);
+                });
+        }
+    }
+
+    static restoreNewsItem(newsId: number) {
+        const state = newsStore.getState();
+        const newHistory = { ...state.history };
+
+        // Remove from archived (and deleted, just in case)
+        newHistory.archived = newHistory.archived.filter(id => id !== newsId);
+        newHistory.deleted = newHistory.deleted.filter(id => id !== newsId);
+
+        newsStore.setState(prev => ({
+            ...prev,
+            history: newHistory
+        }));
+
+        // CR-008: DB Persistence (Delete Row)
+        if (state.userId) {
+            supabase.from('news_user_state')
+                .delete()
+                .match({ user_id: state.userId, news_id: newsId })
+                .then(({ error }) => {
+                    if (error) console.error('[FeedManager] Restore Sync Failed:', error);
+                });
+        }
     }
 
     // --- LOGIC HELPERS ---
@@ -369,6 +415,21 @@ export class FeedManager {
 
         if (usedIdsPositive.length > 0) {
             query = query.not('id', 'in', `(${usedIdsPositive.join(',')})`);
+        }
+
+        // CR-008: Filter out DB-excluded items (ARCHIVED/DELETED)
+        if (state.userId) {
+            const { data: dbExcluded } = await supabase
+                .from('news_user_state')
+                .select('news_id')
+                .eq('user_id', state.userId)
+                .in('status', ['ARCHIVED', 'DELETED']);
+
+            if (dbExcluded && dbExcluded.length > 0) {
+                const dbIds = dbExcluded.map(d => d.news_id);
+                // Filter specifically these IDs
+                query = query.not('id', 'in', `(${dbIds.join(',')})`);
+            }
         }
 
         let { data: candidates } = await query

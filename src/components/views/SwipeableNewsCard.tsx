@@ -4,8 +4,9 @@ import { Trash2, Archive, ArrowRight, ArrowLeft } from 'lucide-react';
 
 interface SwipeableNewsCardProps {
     children: React.ReactNode;
-    onDelete: () => void;
+    onDelete?: () => void;
     onArchive?: () => void; // Optional now, as archive mode might use onDelete for both
+    onRestore?: () => void;
     deleteLabel?: string;
     archiveLabel?: string;
     mode?: 'feed' | 'archive';
@@ -16,6 +17,7 @@ export const SwipeableNewsCard: React.FC<SwipeableNewsCardProps> = ({
     children,
     onDelete,
     onArchive,
+    onRestore,
     deleteLabel = "Kustuta",
     archiveLabel = "Arhiveeri",
     mode = 'feed',
@@ -56,21 +58,25 @@ export const SwipeableNewsCard: React.FC<SwipeableNewsCardProps> = ({
 
         // Check for sufficient distance OR high velocity
         if (info.offset.x > threshold || (info.offset.x > 30 && velocity > 200)) {
-            // Swiped Right -> Delete/Custom
+            // Swiped Right -> Delete/Restore
             setIsPresent(false);
             // Delay for animation
             setTimeout(() => {
-                onDelete();
+                if (mode === 'archive' && onRestore) {
+                    onRestore();
+                } else {
+                    onDelete();
+                }
             }, 300);
         } else if (info.offset.x < -threshold || (info.offset.x < -30 && velocity < -200)) {
-            // Swiped Left -> Archive/Custom
+            // Swiped Left -> Archive/Delete
             setIsPresent(false);
             // Delay for animation
             setTimeout(() => {
-                if (mode === 'archive') {
-                    onDelete();
-                } else if (onArchive) {
+                if (onArchive) {
                     onArchive();
+                } else if (onDelete) {
+                    onDelete();
                 }
             }, 300);
         }

@@ -6,8 +6,9 @@ import type { News } from '../../types';
 interface NewsCardProps {
     item: News;
     onPress: () => void;
-    onDelete: () => void;
+    onDelete?: () => void;
     onArchive?: () => void;
+    onRestore?: () => void;
     deleteLabel?: string;
     variant?: 'feed' | 'archive';
 }
@@ -21,6 +22,7 @@ export const NewsCard: React.FC<NewsCardProps> = ({
     onPress,
     onDelete,
     onArchive,
+    onRestore,
     deleteLabel,
     variant = 'feed'
 }) => {
@@ -28,6 +30,7 @@ export const NewsCard: React.FC<NewsCardProps> = ({
         <SwipeableNewsCard
             onDelete={onDelete}
             onArchive={onArchive}
+            onRestore={onRestore}
             deleteLabel={deleteLabel || (variant === 'archive' ? 'Видалити' : 'Видалити')}
             archiveLabel="В архів"
             mode={variant}

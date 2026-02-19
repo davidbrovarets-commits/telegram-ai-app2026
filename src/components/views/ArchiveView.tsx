@@ -11,43 +11,58 @@ interface ArchiveViewProps {
 }
 
 export const ArchiveView = ({ onBack, onSelectNews }: ArchiveViewProps) => {
-    const { history, handleArchiveDeletion } = useNews();
+    const { userId, handleArchiveDeletion, restoreNewsItem } = useNews();
     const [archivedItems, setArchivedItems] = useState<Record<number, News>>({});
+    const [displayIds, setDisplayIds] = useState<number[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // Fetch archived items
+    // CR-008: Fetch archived items from DB (Source of Truth)
     useEffect(() => {
         const fetchArchived = async () => {
-            const ids = history.archived;
-            if (ids.length === 0) {
+            if (!userId) {
                 setLoading(false);
                 return;
             }
 
             const { data } = await supabase
                 .from('news')
-                .select('*')
-                .in('id', ids);
+                .select('*, news_user_state!inner(status, updated_at)')
+                .eq('news_user_state.user_id', userId)
+                .eq('news_user_state.status', 'ARCHIVED')
+                .order('updated_at', { foreignTable: 'news_user_state', ascending: false });
 
             if (data) {
                 const map: Record<number, News> = {};
-                data.forEach((item: News) => map[item.id] = item);
+                const ids: number[] = [];
+                data.forEach((item: any) => {
+                    map[item.id] = item;
+                    ids.push(item.id);
+                });
                 setArchivedItems(map);
+                setDisplayIds(ids);
             }
             setLoading(false);
         };
         fetchArchived();
-    }, [history.archived]);
+    }, [userId]);
 
     const handleCardClick = (item: News) => {
-        // Just log or maybe expand? For now same as news view but without tracking open rate maybe?
         console.log('Clicked archived item', item.id);
         onSelectNews(item);
     };
 
-    // Sort items by reverse order of addition (newest archived first) roughly, 
-    // but history.archived is array of IDs. We should map in reverse.
-    const displayIds = [...history.archived].reverse();
+    const onDelete = (id: number) => {
+        handleArchiveDeletion(id); // Updates Store + DB
+        setDisplayIds(prev => prev.filter(i => i !== id)); // Optimistic UI
+    };
+
+    const onRestore = (id: number) => {
+        restoreNewsItem(id); // Deletes row from DB + Updates Store
+        setDisplayIds(prev => prev.filter(i => i !== id)); // Optimistic UI
+    };
+
+    // Correction: I should update the component body to destructure restoreNewsItem.
+    // See separate call.
 
     return (
         <div className="archive-view" style={{ maxWidth: '600px', margin: '0 auto', paddingBottom: '40px' }}>
@@ -121,7 +136,8 @@ export const ArchiveView = ({ onBack, onSelectNews }: ArchiveViewProps) => {
                             key={id}
                             item={item}
                             onPress={() => handleCardClick(item)}
-                            onDelete={() => handleArchiveDeletion(id)}
+                            onDelete={() => onDelete(id)}
+                            onRestore={() => onRestore(id)}
                             deleteLabel="Видалити"
                             variant="archive"
                         />

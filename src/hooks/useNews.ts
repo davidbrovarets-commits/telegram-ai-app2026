@@ -31,10 +31,15 @@ export function useNews(options: UseNewsOptions = {}) {
         await FeedManager.handleArchiveDeletion(newsId);
     };
 
+    const restoreNewsItem = async (newsId: number) => {
+        await FeedManager.restoreNewsItem(newsId);
+    };
+
     return {
         ...state,
         handleSwipe,
-        handleArchiveDeletion
+        handleArchiveDeletion,
+        restoreNewsItem
     };
 }
 

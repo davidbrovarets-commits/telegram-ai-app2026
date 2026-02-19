@@ -1,12 +1,29 @@
 # SWIPE INTERACTION CONTRACT
 
-**Status:** Draft (As-Is Snapshot)
-**Version:** 1.0
-**Implemented By:** `SwipeableNewsCard.tsx`
+**Status:** Active
+**Version:** 2.1 (CR-008 Persistence Model Added)
+**Implemented By:** `SwipeableNewsCard.tsx` + `NewsUserStateService.ts`
 
 ---
 
-## 1. Interaction Model
+## 1. Persistence Model (SSOT)
+
+**Source of Truth:** `news_user_state` table (PostgreSQL).
+**Optimistic UI:** `localStorage` (cache only).
+
+| User Action | DB Transition (SSOT) |
+|-------------|----------------------|
+| **Swipe LEFT (Feed)** | `upsert(status='ARCHIVED')` |
+| **Swipe RIGHT (Feed)** | `upsert(status='DELETED')` |
+| **Swipe (Archive View)** | `upsert(status='DELETED')` |
+| **Restore (Archive)** | `delete()` (Row removed -> Item becomes ACTIVE) |
+
+> [!IMPORTANT]
+> **Read Path Rule:**
+> - Feed Query excludes `ARCHIVED` and `DELETED` rows for the current user.
+> - Archive Query includes ONLY `ARCHIVED` rows for the current user.
+
+## 2. Interaction Model
 
 The card interaction model changes based on the **View Mode** (Feed vs Archive).
 

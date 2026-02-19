@@ -21,7 +21,7 @@ export class NewsUserStateService {
             return [];
         }
 
-        return (data || []).map(row => row.news_id);
+        return (data || []).map(row => row.news_id).filter(id => typeof id === 'number');
     }
 
     /**
@@ -34,8 +34,9 @@ export class NewsUserStateService {
             .upsert({
                 user_id: userId,
                 news_id: newsId,
-                status: status
-            }, { onConflict: 'user_id, news_id' });
+                status: status,
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'user_id,news_id' }); // Fixed: No space in onConflict for strict PostgREST
 
         if (error) {
             console.error(`[NewsUserStateService] Failed to set state ${status} for ${newsId}:`, error);

@@ -15,7 +15,7 @@ const { mockGenerateContent, mockGetGenerativeModel, mockConfig } = vi.hoisted((
     }));
 
     const mockConfig = {
-        GEMINI_PRIMARY: { id: 'gemini-3-pro-preview', location: 'global' },
+        GEMINI_PRIMARY: { id: 'gemini-2.5-pro', location: 'global' },
         GEMINI_FALLBACK: { id: 'gemini-2.5-pro', location: 'us-central1' },
         GLM_DECISION: { id: 'glm-4.7', location: 'us-central1' },
         ROUTER_ENABLED: true,
@@ -50,10 +50,10 @@ vi.mock('../model-config', () => ({
 import { routeForTask, invokeWithFallback } from '../model-router';
 
 describe('routeForTask', () => {
-    it('picks gemini-3-pro-preview for UNDERSTAND_DOC', () => {
+    it('picks gemini-2.5-pro for UNDERSTAND_DOC', () => {
         mockConfig.ROUTER_ENABLED = true;
         const route = routeForTask('UNDERSTAND_DOC');
-        expect(route.primary.id).toBe('gemini-3-pro-preview');
+        expect(route.primary.id).toBe('gemini-2.5-pro');
         expect(route.primary.location).toBe('global');
         expect(route.fallback.id).toBe('gemini-2.5-pro');
     });
@@ -90,7 +90,7 @@ describe('invokeWithFallback', () => {
 
         const result = await invokeWithFallback('UNDERSTAND_DOC', ['test prompt']);
         expect(result.text).toBe('hello from primary');
-        expect(result.modelUsed).toBe('gemini-3-pro-preview');
+        expect(result.modelUsed).toBe('gemini-2.5-pro');
         expect(result.fallbackUsed).toBe(false);
     });
 

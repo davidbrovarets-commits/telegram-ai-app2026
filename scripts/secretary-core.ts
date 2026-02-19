@@ -125,7 +125,7 @@ async function parseWithAI(userText: string, nowIso: string): Promise<any> {
     if (!process.env.GOOGLE_PROJECT_ID) return null;
     try {
         const vertexAI = new VertexAI({ project: process.env.GOOGLE_PROJECT_ID, location: process.env.GOOGLE_CLOUD_LOCATION || 'us-central1' });
-        const model = vertexAI.getGenerativeModel({ model: 'gemini-3-pro-preview' }); // Vision-capable model
+        const model = vertexAI.getGenerativeModel({ model: 'gemini-2.5-pro' }); // Vision-capable model
 
         const prompt = `
         Role: Personal Secretary Command Parser.
@@ -256,7 +256,7 @@ export async function runSecretaryCore(options: {
 
                             await sendTelegramMessage("👁️ Pilt salvestatud. Analüüsin...");
                             const vertexAI = new VertexAI({ project: process.env.GOOGLE_PROJECT_ID, location: process.env.GOOGLE_CLOUD_LOCATION || 'us-central1' });
-                            const model = vertexAI.getGenerativeModel({ model: 'gemini-3-pro-preview' });
+                            const model = vertexAI.getGenerativeModel({ model: 'gemini-2.5-pro' });
 
                             const req = {
                                 contents: [{
@@ -313,7 +313,7 @@ export async function runSecretaryCore(options: {
 
                             // AI ANALYSIS
                             const vertexAI = new VertexAI({ project: process.env.GOOGLE_PROJECT_ID, location: process.env.GOOGLE_CLOUD_LOCATION || 'us-central1' });
-                            const model = vertexAI.getGenerativeModel({ model: 'gemini-3-pro-preview' });
+                            const model = vertexAI.getGenerativeModel({ model: 'gemini-2.5-pro' });
 
                             const req = {
                                 contents: [{
@@ -367,7 +367,7 @@ export async function runSecretaryCore(options: {
 
                             // AI TRANSCRIPTION
                             const vertexAI = new VertexAI({ project: process.env.GOOGLE_PROJECT_ID, location: process.env.GOOGLE_CLOUD_LOCATION || 'us-central1' });
-                            const model = vertexAI.getGenerativeModel({ model: 'gemini-3-pro-preview' });
+                            const model = vertexAI.getGenerativeModel({ model: 'gemini-2.5-pro' });
 
                             const req = {
                                 contents: [{

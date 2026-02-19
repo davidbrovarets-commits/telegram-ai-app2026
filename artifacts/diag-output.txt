@@ -1,21 +1,21 @@
 ﻿=== VERTEX DIAG: ENV SNAPSHOT ===
 {
-  "at": "2026-02-19T11:34:34.271Z",
+  "at": "2026-02-19T12:01:54.108Z",
   "project_detected": "top-cascade-485612-c6",
   "location_detected": "us-central1",
-  "model_env": "gemini-3-pro-preview",
+  "model_env": "gemini-2.5-pro",
   "runner": {
     "ga": false
   }
 }
 
 === VERTEX DIAG: MODEL REACHABILITY MATRIX ===
-FAIL {"ok":false,"model":"gemini-3-pro-preview","location":"us-central1","project":"top-cascade-485612-c6","errName":"ClientError","errMessage":"[VertexAI.ClientError]: got status: 404 Not Found. {\"error\":{\"code\":404,\"message\":\"Publisher Model `projects/top-cascade-485612-c6/locations/us-central1/publishers/google/models/gemini-3-pro-preview` was not found or your project does not have access to it. Please ensure you are using a valid model "}
+OK   {"ok":true,"model":"gemini-2.5-pro","location":"us-central1","project":"top-cascade-485612-c6","text":"OK"}
 OK   {"ok":true,"model":"gemini-2.5-pro","location":"us-central1","project":"top-cascade-485612-c6","text":""}
-OK   {"ok":true,"model":"gemini-2.5-flash","location":"us-central1","project":"top-cascade-485612-c6","text":""}
+OK   {"ok":true,"model":"gemini-2.5-flash","location":"us-central1","project":"top-cascade-485612-c6","text":"OK cla"}
 FAIL {"ok":false,"model":"gemini-1.5-pro","location":"us-central1","project":"top-cascade-485612-c6","errName":"ClientError","errMessage":"[VertexAI.ClientError]: got status: 404 Not Found. {\"error\":{\"code\":404,\"message\":\"Publisher Model `projects/top-cascade-485612-c6/locations/us-central1/publishers/google/models/gemini-1.5-pro` was not found or your project does not have access to it. Please ensure you are using a valid model versio"}
 
 === DIAG CONCLUSION HINTS ===
 If Studio works but pipeline FAIL(404): pipeline likely uses different project OR different region OR different credentials.
 Compare project_detected + location_detected with Studio project/region.
-If gemini-2.5-pro works but gemini-3-pro-preview fails: model not enabled/available in this project+region.
+If the configured model works but another FAIL: that model not enabled/available in this project+region.

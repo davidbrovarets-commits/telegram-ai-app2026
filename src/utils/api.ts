@@ -254,7 +254,7 @@ async function probeVertexAccess(): Promise<ProbeReport> {
     const defaultLocation = MODEL_CONFIG.GEMINI_FALLBACK.location; // us-central1
 
     const cases = [
-        { name: 'GEMINI_3_PRO_PREVIEW', model: 'gemini-3-pro-preview', location: 'global' },
+        { name: 'GEMINI_2_5_PRO', model: 'gemini-2.5-pro', location: 'global' },
         { name: 'GLM_4_7', model: 'glm-4.7', location: defaultLocation },
         { name: 'GEMINI_2_5_PRO', model: 'gemini-2.5-pro', location: defaultLocation },
     ];

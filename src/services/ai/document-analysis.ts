@@ -226,7 +226,7 @@ export async function analyzeDocumentStructured(
         if (step1.callResult.fallbackUsed) {
             fallbacks.push({
                 step: 'understand',
-                from: 'gemini-3-pro-preview',
+                from: 'gemini-2.5-pro',
                 to: step1.callResult.modelUsed,
                 reason: step1.callResult.fallbackReason || 'primary failed',
             });

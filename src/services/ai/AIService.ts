@@ -22,7 +22,7 @@ export class AIService {
             // Initialize the generative model
             // 1.5-flash retired in '25. Using 2.0-flash-exp for '26 context.
             this.genModel = getGenerativeModel(ai, {
-                model: 'gemini-3-pro-preview',
+                model: 'gemini-2.5-pro',
                 safetySettings: [
                     {
                         category: "HARM_CATEGORY_HARASSMENT",

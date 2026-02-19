@@ -145,4 +145,4 @@ EXPECT_ZERO_NEWS="YES" FAIL_ON_LEFTOVERS=true npm run admin:verify-zero-news
 
 ## Operations / Diagnostics
 
-- Added manual-only workflow `.github/workflows/vertex-diag.yml` and script `scripts/diag_vertex_text.ts` to verify Vertex text model reachability by (project, region, credentials). Purpose: detect Studio vs Pipeline mismatch causing gemini-3-pro-preview 404 in production. Read-only; no DB/Storage mutations; safe under Mutation Guard.
+- Added manual-only workflow `.github/workflows/vertex-diag.yml` and script `scripts/diag_vertex_text.ts` to verify Vertex text model reachability by (project, region, credentials). Purpose: detect Studio vs Pipeline mismatch causing model 404 in production. Read-only; no DB/Storage mutations; safe under Mutation Guard. Default model stabilized to `gemini-2.5-pro`.

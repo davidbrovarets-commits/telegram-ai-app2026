@@ -14,7 +14,7 @@ export interface ModelDef {
 export const MODEL_CONFIG = {
     /** Primary document understanding model */
     GEMINI_PRIMARY: {
-        id: import.meta.env.VITE_MODEL_GEMINI_PRIMARY || 'gemini-3-pro-preview',
+        id: import.meta.env.VITE_MODEL_GEMINI_PRIMARY || 'gemini-2.5-pro',
         location: import.meta.env.VITE_MODEL_LOCATION_GEMINI_PRIMARY || 'global',
     } as ModelDef,
 

@@ -62,7 +62,7 @@ async function main() {
         process.env.VERTEX_MODEL ||
         process.env.GEMINI_MODEL ||
         process.env.VERTEX_TEXT_MODEL ||
-        'gemini-3-pro-preview';
+        'gemini-2.5-pro';
 
     console.log('=== VERTEX DIAG: ENV SNAPSHOT ===');
     console.log(JSON.stringify({
@@ -102,7 +102,7 @@ async function main() {
         [
             'If Studio works but pipeline FAIL(404): pipeline likely uses different project OR different region OR different credentials.',
             'Compare project_detected + location_detected with Studio project/region.',
-            'If gemini-2.5-pro works but gemini-3-pro-preview fails: model not enabled/available in this project+region.',
+            'If the configured model works but another FAIL: that model not enabled/available in this project+region.',
         ].join('\n')
     );
 

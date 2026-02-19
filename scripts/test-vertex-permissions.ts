@@ -16,7 +16,7 @@ async function testVertex() {
 
     try {
         const vertex_ai = new VertexAI({ project: project, location: location });
-        const model = vertex_ai.getGenerativeModel({ model: 'gemini-3-pro-preview' });
+        const model = vertex_ai.getGenerativeModel({ model: 'gemini-2.5-pro' });
 
         console.log('📤 Sending request...');
         const resp = await model.generateContent('Reply with exactly "OK"');

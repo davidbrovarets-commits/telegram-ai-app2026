@@ -34,9 +34,8 @@ export class NewsUserStateService {
             .upsert({
                 user_id: userId,
                 news_id: newsId,
-                status: status,
-                updated_at: new Date().toISOString()
-            }, { onConflict: 'user_id,news_id' }); // Fixed: No space in onConflict for strict PostgREST
+                status: status
+            }, { onConflict: 'user_id,news_id' }); // updated_at is DB-authoritative via trigger
 
         if (error) {
             console.error(`[NewsUserStateService] Failed to set state ${status} for ${newsId}:`, error);
@@ -75,11 +74,12 @@ export class NewsUserStateService {
             return [];
         }
 
-        // Map to clean News objects (stripping the joined news_user_state property)
-        // We cast to unknown first because Supabase types include the joined generic
-        return (data as any[]).map(item => {
-            const { news_user_state, ...newsFields } = item;
-            return newsFields as News;
+        // Strip the joined news_user_state property, returning clean News[]
+        const rows = (data ?? []) as unknown as Array<Record<string, unknown>>;
+
+        return rows.map((item) => {
+            const { news_user_state: _ignored, ...rest } = item;
+            return rest as unknown as News;
         });
     }
 }

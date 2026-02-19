@@ -65,7 +65,11 @@ The card interaction model changes based on the **View Mode** (Feed vs Archive).
   - Does **NOT** immediately remove card from DOM (parent list handles removal via state update).
 - **Drag Elasticity:** `0.7` (Rubber band effect).
 
-## 5. Correction Roadmap
+## 5. Determinism Rules
+
+- Clients MUST NOT send `updated_at` in write payloads; timestamp is DB-authoritative via trigger.
+
+## 6. Correction Roadmap
 
 1. **Standardize Colors:** Ensure red/gray semantics are consistent.
 2. **Haptic Feedback:** Add vibration on threshold cross.

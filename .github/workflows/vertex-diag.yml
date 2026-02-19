@@ -1,0 +1,46 @@
+name: Vertex DIAG (Text Model Reachability)
+
+on:
+  workflow_dispatch:
+    inputs:
+      vertex_model:
+        description: 'Model to test (overrides env), e.g. gemini-3-pro-preview'
+        required: false
+        default: 'gemini-3-pro-preview'
+      vertex_location:
+        description: 'Vertex region to test, e.g. us-central1'
+        required: false
+        default: 'us-central1'
+
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Auth to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Run Vertex text reachability diag (read-only)
+        env:
+          GOOGLE_CLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
+          VERTEX_LOCATION: ${{ inputs.vertex_location }}
+          VERTEX_MODEL: ${{ inputs.vertex_model }}
+        run: |
+          node -v
+          echo "GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT"
+          echo "VERTEX_LOCATION=$VERTEX_LOCATION"
+          echo "VERTEX_MODEL=$VERTEX_MODEL"
+          npx tsx scripts/diag_vertex_text.ts

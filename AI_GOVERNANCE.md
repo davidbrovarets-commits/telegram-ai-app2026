@@ -29,31 +29,31 @@ Skipping this step INVALIDATES the action.
 Before acting, the agent MUST read and verify compliance with
 the following documents IN THIS EXACT ORDER:
 
-1) project_knowledge.md  
+1) project_knowledge.md
    → System stage, Architecture Freeze, Core vs Extensions rules
 
-2) docs/core_surface.md  
+2) docs/core_surface.md
    → What is protected Core vs allowed Extensions
 
-3) CHANGE_REQUEST.md  
+3) CHANGE_REQUEST.md
    → Whether a valid Change Request exists
 
-4) docs/feature_flags.md  
+4) docs/feature_flags.md
    → Whether a feature flag is required
 
-5) docs/release_sop.md  
+5) docs/release_sop.md
    → Whether the action follows release procedure
 
-6) docs/environment_contract.md  
+6) docs/environment_contract.md
    → Whether environment parity is preserved
 
-7) docs/data_ownership.md  
+7) docs/data_ownership.md
    → Whether data mutation rules are respected
 
-8) docs/incident_sop.md  
+8) docs/incident_sop.md
    → Whether the action is incident-related
 
-9) docs/architecture_ideas.md  
+9) docs/architecture_ideas.md
    → For ideas ONLY (never enforcement)
 
 If ANY document blocks the action → STOP immediately.

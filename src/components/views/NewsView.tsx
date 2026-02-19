@@ -102,6 +102,21 @@ export const NewsView = ({ land, city }: Omit<NewsViewProps, 'onNewsClick'>) => 
 
             {/* 6-Slot Feed */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {/* Empty state: no news in DB */}
+                {(visibleFeed.length === 0 || visibleFeed.every(id => id <= 0)) && (
+                    <div className="news-card" style={{
+                        padding: '40px 20px',
+                        textAlign: 'center',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '12px'
+                    }}>
+                        <span style={{ fontSize: '40px' }}>📭</span>
+                        <span style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-main)' }}>Поки немає новин</span>
+                        <span style={{ fontSize: '13px', color: '#8E8E93' }}>Нові новини з'являться автоматично</span>
+                    </div>
+                )}
                 {visibleFeed.map((id, index) => {
                     const item = getItem(id, index);
                     if (!item) return (

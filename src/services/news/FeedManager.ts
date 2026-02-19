@@ -2,6 +2,7 @@ import { newsStore } from '../../stores/newsStore';
 import { supabase } from '../../supabaseClient';
 import type { News } from '../../types';
 import { CITY_REGISTRY, LAND_NEIGHBORS } from '../../config/cities';
+import { NewsUserStateService } from './NewsUserStateService';
 
 // Slot Configuration
 const SLOTS = [
@@ -122,12 +123,8 @@ export class FeedManager {
 
         // 2. CR-008: DB Persistence (Fire & Forget)
         if (state.userId) {
-            supabase.from('news_user_state').upsert({
-                user_id: state.userId,
-                news_id: newsId,
-                status: dbStatus
-            }, { onConflict: 'user_id, news_id' }).then(({ error }) => {
-                if (error) console.error('[FeedManager] DB Sync Failed:', error);
+            NewsUserStateService.setNewsState(state.userId, newsId, dbStatus as 'ARCHIVED' | 'DELETED').catch(err => {
+                console.error('[FeedManager] DB Sync Failed:', err);
             });
         }
     }
@@ -148,12 +145,9 @@ export class FeedManager {
 
         // CR-008: DB Persistence
         if (state.userId) {
-            supabase.from('news_user_state').update({
-                status: 'DELETED'
-            }).match({ user_id: state.userId, news_id: newsId })
-                .then(({ error }) => {
-                    if (error) console.error('[FeedManager] Archive Delete Sync Failed:', error);
-                });
+            NewsUserStateService.setNewsState(state.userId, newsId, 'DELETED').catch(err => {
+                console.error('[FeedManager] Archive Delete Sync Failed:', err);
+            });
         }
     }
 
@@ -172,12 +166,9 @@ export class FeedManager {
 
         // CR-008: DB Persistence (Delete Row)
         if (state.userId) {
-            supabase.from('news_user_state')
-                .delete()
-                .match({ user_id: state.userId, news_id: newsId })
-                .then(({ error }) => {
-                    if (error) console.error('[FeedManager] Restore Sync Failed:', error);
-                });
+            NewsUserStateService.restoreNewsState(state.userId, newsId).catch(err => {
+                console.error('[FeedManager] Restore Sync Failed:', err);
+            });
         }
     }
 
@@ -417,18 +408,13 @@ export class FeedManager {
             query = query.not('id', 'in', `(${usedIdsPositive.join(',')})`);
         }
 
-        // CR-008: Filter out DB-excluded items (ARCHIVED/DELETED)
+        // CR-008: Filter out DB-excluded items (ARCHIVED/DELETED)Via Service
         if (state.userId) {
-            const { data: dbExcluded } = await supabase
-                .from('news_user_state')
-                .select('news_id')
-                .eq('user_id', state.userId)
-                .in('status', ['ARCHIVED', 'DELETED']);
+            const dbExcluded = await NewsUserStateService.fetchExcludedIds(state.userId);
 
             if (dbExcluded && dbExcluded.length > 0) {
-                const dbIds = dbExcluded.map(d => d.news_id);
                 // Filter specifically these IDs
-                query = query.not('id', 'in', `(${dbIds.join(',')})`);
+                query = query.not('id', 'in', `(${dbExcluded.join(',')})`);
             }
         }
 

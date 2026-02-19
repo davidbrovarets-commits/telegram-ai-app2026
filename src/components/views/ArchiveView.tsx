@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNews } from '../../hooks/useNews';
 import type { News } from '../../types';
-import { supabase } from '../../supabaseClient';
+
 import { NewsCard } from '../news/NewsCard';
 import { ArrowLeft } from 'lucide-react';
+import { NewsUserStateService } from '../../services/news/NewsUserStateService';
 
 interface ArchiveViewProps {
     onBack: () => void;
@@ -24,12 +25,7 @@ export const ArchiveView = ({ onBack, onSelectNews }: ArchiveViewProps) => {
                 return;
             }
 
-            const { data } = await supabase
-                .from('news')
-                .select('*, news_user_state!inner(status, updated_at)')
-                .eq('news_user_state.user_id', userId)
-                .eq('news_user_state.status', 'ARCHIVED')
-                .order('updated_at', { foreignTable: 'news_user_state', ascending: false });
+            const data = await NewsUserStateService.fetchArchivedNews(userId);
 
             if (data) {
                 const map: Record<number, News> = {};

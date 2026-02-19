@@ -70,11 +70,16 @@ export class NewsUserStateService {
             .eq('news_user_state.status', 'ARCHIVED')
             .order('updated_at', { foreignTable: 'news_user_state', ascending: false });
 
-        if (error) {
-            console.error('[NewsUserStateService] Failed to fetch archived news:', error);
+        if (error || !data) {
+            if (error) console.error('[NewsUserStateService] Failed to fetch archived news:', error);
             return [];
         }
 
-        return (data as unknown as News[]) || [];
+        // Map to clean News objects (stripping the joined news_user_state property)
+        // We cast to unknown first because Supabase types include the joined generic
+        return (data as any[]).map(item => {
+            const { news_user_state, ...newsFields } = item;
+            return newsFields as News;
+        });
     }
 }

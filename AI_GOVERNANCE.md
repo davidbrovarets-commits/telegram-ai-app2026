@@ -97,3 +97,19 @@ If unclear → ASK.
 If governance is missing → DO NOTHING.
 
 This document is permanent and mandatory.
+
+────────────────────────────────
+## Mandatory Runtime Execution Protocol (After Governance OK)
+
+Before performing ANY action:
+
+- After completing the Mandatory Governance Check Order AND before taking any action, the agent MUST read:
+  docs/AGENT_RUNTIME_RULES.md
+
+- The agent MUST then confirm explicitly:
+  "Runtime Protocol Check: OK"
+
+- If docs/AGENT_RUNTIME_RULES.md blocks the action → STOP immediately.
+
+- This requirement applies to ALL actions listed in the Binding Rule.
+

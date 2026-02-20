@@ -14,3 +14,8 @@ Status: ACTIVE
 
 - Integrations are credential-driven; no auto-connect. Verification via CLI/script only.
 - Connectivity bootstrap produces INTEGRATION_STATUS_REPORT.md.
+
+
+## Workflow Scheme
+
+Canonical end-to-end operational workflow: `docs/WORKFLOW_SCHEME.md`

@@ -24,4 +24,11 @@ Canonical end-to-end operational workflow: `docs/WORKFLOW_SCHEME.md`
 ## One Chat, Two Modes SOP
 
 - **SOP:** `docs/OPS_ONE_CHAT_SOP.md`
-- **Handover Protocol:** Before switching Antigravity chats, generate a handover doc in `docs/HANDOVER/`. New chats must read the latest handover file first.
+- **Handover Protocol:** Before switching Antigravity chats, generate a handover doc using `docs/HANDOVER/_TEMPLATE.md` in `docs/HANDOVER/`. New chats must read the latest handover file first.
+
+## OPS Quick Links
+- **SOP:** `docs/OPS_ONE_CHAT_SOP.md`
+- **Handovers:** `docs/HANDOVER/` (latest + template)
+- **Task Templates:** `tasks/` directory
+- **Preflight Check:** `scripts/ops/preflight_mutation.ts`
+- **Evidence Pack Generator:** `scripts/ops/write_evidence_pack.ts`

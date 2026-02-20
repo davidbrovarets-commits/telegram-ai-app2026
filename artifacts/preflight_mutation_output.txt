@@ -1,0 +1,11 @@
+﻿--- PREFLIGHT MUTATION CHECK ---
+Ô£à [PASS] GitHub CLI Authenticated
+node.exe : ÔØî [FAIL] Zero "in progress" GitHub Actions runs
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (ÔØî [FAIL] Zero...ub Actions runs:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+   Reason: Found 1 in-progress run(s):
+   - CI Smoke Test (Dry Run) (ID: 22224528416) [in_progress]

@@ -338,9 +338,9 @@ function fallbackMock(text: string, title: string): AIEnrichResult {
     const fallbackDe = normalizeSpace(text).slice(0, 240) + '...';
     return {
         de_summary: fallbackDe,
-        uk_summary: `[UA Fallback] ${fallbackDe}`,
-        uk_content: `[UA Fallback Content] ${fallbackDe}`,
-        uk_title: `[UA Fallback] ${title}`,
+        uk_summary: fallbackDe,
+        uk_content: fallbackDe,
+        uk_title: title,
         action_hint: '',
         actions: [],
         reasonTag: 'AI_FALLBACK',

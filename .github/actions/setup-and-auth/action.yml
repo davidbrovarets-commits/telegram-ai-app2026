@@ -4,7 +4,7 @@ inputs:
   node-version:
     description: 'Node.js version'
     required: false
-    default: '18'
+    default: '20'
   google-credentials:
     description: 'Google Cloud Service Account JSON'
     required: false

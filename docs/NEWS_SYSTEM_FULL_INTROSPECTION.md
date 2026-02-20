@@ -266,3 +266,16 @@ INTROSPECTION COMPLETE
 - **`docs/INTEGRATIONS_CONNECTIVITY.md` is SSOT for integration verification (non-interactive).**
 - **All verification must follow '?? ??????, ? ?????' rule (CLI/script only).**
 
+
+
+## 10. Process OS Enforcement
+
+**Evidence Standard & Preflight Discipline:**
+All patches must run \
+px tsx scripts/ops/preflight_mutation.ts\ before applying mutations (verifies 0 'in progress' runs & active schedules are disabled). After the task, \
+px tsx scripts/ops/write_evidence_pack.ts\ automatically captures the commit SHA, branch metadata, and deterministic test outputs into \rtifacts/\. See \docs/OPS_OPERATING_CARD.md\.
+
+
+## 11. Workflow Scheme Reference
+
+End-to-end operational workflow covering all actors, tools, evidence loops, and mutation discipline: `docs/WORKFLOW_SCHEME.md`.

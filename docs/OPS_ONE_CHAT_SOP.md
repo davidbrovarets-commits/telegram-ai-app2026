@@ -38,4 +38,11 @@ Every task must sequentially follow these 3 blocks:
 Continuous chats eventually degrade in context window or performance. When switching to a new Antigravity chat:
 
 1. **Before leaving the old chat:** Generate `docs/HANDOVER/HANDOVER_YYYY-MM-DD_HHMM.md` summarizing active context, latest evidence packs, and immediate next steps.
-2. **Upon entering the new chat:** Start by reading the latest `HANDOVER_YYYY-MM-DD_HHMM.md` file to resume context immediately.
+2. **Upon entering the new chat:** Start by reading the latest `docs/HANDOVER/HANDOVER_YYYY-MM-DD_HHMM.md` file to resume context immediately.
+
+---
+
+## Quick References
+- **Glossary:** `docs/OPS_GLOSSARY.md` (SSOT, Edge Function vs RPC, etc.)
+- Task Generation Skeletons: `tasks/` directory (`_TEMPLATE_TASK.md`, `_TEMPLATE_INVESTIGATION.md`)
+- Handover Format: `docs/HANDOVER/_TEMPLATE.md`

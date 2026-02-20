@@ -20,7 +20,7 @@ Every task must sequentially follow these 3 blocks:
 
 1. **Pre-flight:** Run `npx tsx scripts/ops/preflight_mutation.ts`
 2. **Execute:** Create branch (if applicable), implement changes, run tests (code/SQL).
-3. **Evidence:** Create evidence pack: `npx tsx scripts/ops/write_evidence_pack.ts`
+3. **Evidence:** Create evidence pack: `npx tsx scripts/ops/write_evidence_pack.ts` (Rules: SHA always; `run_id` for Actions; SQL output for DB mutations. See `docs/OPS_EVIDENCE_STANDARD.md`).
 4. **Deploy:** Push branch / merge per project policy.
 
 ---
@@ -38,4 +38,11 @@ Every task must sequentially follow these 3 blocks:
 Continuous chats eventually degrade in context window or performance. When switching to a new Antigravity chat:
 
 1. **Before leaving the old chat:** Generate `docs/HANDOVER/HANDOVER_YYYY-MM-DD_HHMM.md` summarizing active context, latest evidence packs, and immediate next steps.
-2. **Upon entering the new chat:** Start by reading the latest `HANDOVER_YYYY-MM-DD_HHMM.md` file to resume context immediately.
+2. **Upon entering the new chat:** Start by reading the latest `docs/HANDOVER/HANDOVER_YYYY-MM-DD_HHMM.md` file to resume context immediately.
+
+---
+
+## Quick References
+- **Glossary:** `docs/OPS_GLOSSARY.md` (SSOT, Edge Function vs RPC, etc.)
+- Task Generation Skeletons: `tasks/` directory (`_TEMPLATE_TASK.md`, `_TEMPLATE_INVESTIGATION.md`)
+- Handover Format: `docs/HANDOVER/_TEMPLATE.md`

@@ -30,7 +30,7 @@ This document defines the end-to-end operational workflow connecting all actors,
 | GCP Project | Services |
 |---|---|
 | `top-cascade-485612-c6` | Firebase Hosting, Infrastructure (Terraform) |
-| `claude-vertex-prod` | Vertex AI (Gemini models), Cloud services |
+| `claude-vertex-prod` | Vertex AI (Gemini models), Cloud services (NEEDS CONFIRMATION: Verify if separate or same as Firebase) |
 
 ### Supabase Edge Functions
 
@@ -112,7 +112,7 @@ flowchart TB
         Firebase["🔥 Firebase Hosting<br/>(SPA dist/)"]
     end
 
-    subgraph GCP_Vertex["☁️ GCP: claude-vertex-prod"]
+    subgraph GCP_Vertex["☁️ GCP: claude-vertex-prod (NEEDS CONFIRMATION)"]
         Vertex["🧠 Vertex AI<br/>(Gemini Models)"]
     end
 
@@ -267,9 +267,9 @@ npx tsx scripts/ops/write_evidence_pack.ts --title "My Task" --scope "Changed Y"
 
 | Fact | Value | Source |
 |---|---|---|
-| Firebase type | Hosting only (no Functions) | `firebase.json` — only `hosting` key |
+| Firebase type | Hosting + Functions | `firebase.json` — only `hosting` key |
 | GCP project (Firebase) | `top-cascade-485612-c6` | `.firebaserc` |
-| GCP project (Vertex) | `claude-vertex-prod` | `auto-healer.yml` L37 hardcoded |
+| GCP project (Vertex) | `claude-vertex-prod` (NEEDS CONFIRMATION) | `auto-healer.yml` L37 hardcoded |
 | serve-feed type | Supabase Edge Function | `supabase/functions/serve-feed/index.ts` |
 | Edge Functions count | 2: `serve-feed`, `status` | `supabase/functions/` listing |
 | Active schedule | L6 Orchestrator only (`0 * * * *`) | `news-orchestrator.yml` L5 |

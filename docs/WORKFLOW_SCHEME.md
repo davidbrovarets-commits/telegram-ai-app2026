@@ -248,6 +248,13 @@ David selects the model in the Antigravity Chat model picker before pasting the 
 
 ---
 
+## Quick References
+
+- **SOP:** `docs/OPS_ONE_CHAT_SOP.md`
+- **Glossary:** `docs/OPS_GLOSSARY.md`
+
+---
+
 ## Commands Quickstart
 
 ```bash

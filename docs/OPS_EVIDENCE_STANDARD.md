@@ -3,12 +3,18 @@
 **Status:** ACTIVE  
 **Purpose:** Establish immutable evidence tracking rules for system mutations.
 
-## 1. What Proof is Required?
+## 1. Minimal Evidence Rules (What Proof is Required?)
 
-- **Deployment Proof:** Deployment Commit SHA + Workflow run_id.
-- **Database Mutation Proof:** Explicit SQL log output + Target Environment mapping (e.g., Supabase Prod).
-- **Execution Evidence:** Must capture Git SHA at the time of patch generation.
-- **Status Change Evidence:** "Status 0" test confirming pre-conditions (e.g., no active schedules).
+**ALATI (Kõik muudatused):**
+- **Commit SHA:** Kohustuslik. Tõestab matematiiliselt, et muudatus on repojäljes olemas.
+
+**KUI rakendub (spetsiifilised muudatused):**
+- **Workflow `run_id`:** Lisa see, kui tegevus hõlmas GitHub Actions käivitust (nt deploy, scheduled run või spetsiifiline andmepuhastus workflow).
+- **SQL Output Snippet:** Lisa see ainult siis, kui jooksutasid SQL käsku (read-only query või migration).
+
+### Näited
+- **"Docs-only change" (Dokumentatsiooni muudatus):** Ainult Commit SHA.
+- **"Deploy change" (Koodi/funktsionaalsuse muudatus produktsiooni):** Commit SHA + `run_id`.
 
 ## 2. Where Does Evidence Live?
 

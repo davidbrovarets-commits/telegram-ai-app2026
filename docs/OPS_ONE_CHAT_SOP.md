@@ -20,7 +20,7 @@ Every task must sequentially follow these 3 blocks:
 
 1. **Pre-flight:** Run `npx tsx scripts/ops/preflight_mutation.ts`
 2. **Execute:** Create branch (if applicable), implement changes, run tests (code/SQL).
-3. **Evidence:** Create evidence pack: `npx tsx scripts/ops/write_evidence_pack.ts`
+3. **Evidence:** Create evidence pack: `npx tsx scripts/ops/write_evidence_pack.ts` (Rules: SHA always; `run_id` for Actions; SQL output for DB mutations. See `docs/OPS_EVIDENCE_STANDARD.md`).
 4. **Deploy:** Push branch / merge per project policy.
 
 ---

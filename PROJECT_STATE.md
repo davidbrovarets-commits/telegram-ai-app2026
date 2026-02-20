@@ -19,3 +19,9 @@ Status: ACTIVE
 ## Workflow Scheme
 
 Canonical end-to-end operational workflow: `docs/WORKFLOW_SCHEME.md`
+
+
+## One Chat, Two Modes SOP
+
+- **SOP:** `docs/OPS_ONE_CHAT_SOP.md`
+- **Handover Protocol:** Before switching Antigravity chats, generate a handover doc in `docs/HANDOVER/`. New chats must read the latest handover file first.
